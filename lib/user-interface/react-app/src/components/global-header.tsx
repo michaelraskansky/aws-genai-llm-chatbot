@@ -48,18 +48,19 @@ export default function GlobalHeader() {
 
   return (
     <div
+      dir="rtl"
       style={{ zIndex: 1002, top: 0, left: 0, right: 0, position: "fixed" }}
       id="awsui-top-navigation"
     >
       <TopNavigation
         identity={{
           href: "/",
-          logo: { src: "/images/logo.png", alt: { CHATBOT_NAME } + " Logo" },
+          logo: { src: "/images/Emblem_of_Israel.svg", alt: { CHATBOT_NAME } + " Logo" },
         }}
         utilities={[
           {
             type: "button",
-            text: theme === Mode.Dark ? "Light Mode" : "Dark Mode",
+            text: theme === Mode.Dark ? "מצב חשוך" : "מצב בהיר",
             onClick: onChangeThemeClick,
           },
           {

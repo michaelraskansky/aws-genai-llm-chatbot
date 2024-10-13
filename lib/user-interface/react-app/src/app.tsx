@@ -31,7 +31,7 @@ function App() {
   const Router = appContext?.config.privateWebsite ? HashRouter : BrowserRouter;
 
   return (
-    <div style={{ height: "100%" }}>
+    <div dir="rtl" style={{ height: "100%" }}>
       <Router>
         <GlobalHeader />
         <div style={{ height: "56px", backgroundColor: "#000716" }}>&nbsp;</div>

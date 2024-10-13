@@ -18,6 +18,9 @@ import { StorageHelper } from "../common/helpers/storage-helper";
 import { Mode } from "@cloudscape-design/global-styles";
 import "@aws-amplify/ui-react/styles.css";
 import { CHATBOT_NAME } from "../common/constants";
+import { I18nProvider } from '@cloudscape-design/components/i18n';
+import messages from '@cloudscape-design/components/i18n/messages/all.all';
+
 
 export default function AppConfigured() {
   const { tokens } = useTheme();
@@ -195,7 +198,10 @@ export default function AppConfigured() {
             },
           }}
         >
-          <App />
+
+          <I18nProvider locale="he" messages={[messages]}>
+            <App />
+          </I18nProvider>
         </Authenticator>
       </ThemeProvider>
     </AppContext.Provider>

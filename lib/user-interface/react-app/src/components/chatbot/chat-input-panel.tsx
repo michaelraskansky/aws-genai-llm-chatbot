@@ -271,8 +271,8 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
       const isScrollToTheEnd =
         Math.abs(
           window.innerHeight +
-            window.scrollY -
-            document.documentElement.scrollHeight
+          window.scrollY -
+          document.documentElement.scrollHeight
         ) <= 10;
 
       if (!isScrollToTheEnd) {
@@ -360,10 +360,10 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
       action: ChatBotAction.Run,
       modelInterface:
         (props.configuration.files && props.configuration.files.length > 0) ||
-        (hasImagesInChatHistory() &&
-          state.selectedModelMetadata?.inputModalities.includes(
-            ChabotInputModality.Image
-          ))
+          (hasImagesInChatHistory() &&
+            state.selectedModelMetadata?.inputModalities.includes(
+              ChabotInputModality.Image
+            ))
           ? "multimodal"
           : (state.selectedModelMetadata!.interface as ModelInterface),
       data: {
@@ -451,7 +451,7 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
   return (
     <SpaceBetween direction="vertical" size="l">
       <Container>
-        <div className={styles.input_textarea_container}>
+        <div dir="rtl" className={styles.input_textarea_container}>
           <SpaceBetween size="xxs" direction="horizontal" alignItems="center">
             {browserSupportsSpeechRecognition ? (
               <Button
@@ -469,25 +469,25 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
             {state.selectedModelMetadata?.inputModalities.includes(
               ChabotInputModality.Image
             ) && (
-              <Button
-                variant="icon"
-                onClick={() => setImageDialogVisible(true)}
-                iconSvg={
-                  <svg viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg">
-                    <rect
-                      x="2"
-                      y="2"
-                      width="19"
-                      height="19"
-                      rx="2"
-                      ry="2"
-                    ></rect>
-                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                    <polyline points="21 15 16 10 5 21"></polyline>
-                  </svg>
-                }
-              ></Button>
-            )}
+                <Button
+                  variant="icon"
+                  onClick={() => setImageDialogVisible(true)}
+                  iconSvg={
+                    <svg viewBox="0 0 22 22" xmlns="http://www.w3.org/2000/svg">
+                      <rect
+                        x="2"
+                        y="2"
+                        width="19"
+                        height="19"
+                        rx="2"
+                        ry="2"
+                      ></rect>
+                      <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                      <polyline points="21 15 16 10 5 21"></polyline>
+                    </svg>
+                  }
+                ></Button>
+              )}
           </SpaceBetween>
           <ImageDialog
             sessionId={props.session.id}
@@ -501,6 +501,7 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
             className={styles.input_textarea}
             maxRows={6}
             minRows={1}
+            dir="rtl"
             spellCheck={true}
             autoFocus
             onChange={(e) =>
@@ -513,7 +514,7 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
               }
             }}
             value={state.value}
-            placeholder={listening ? "Listening..." : "Send a message"}
+            placeholder={listening ? "Listening..." : "כאן כותבים את ההנחיה"}
           />
           <div style={{ marginLeft: "8px" }}>
             {state.selectedModelMetadata?.inputModalities.includes(
@@ -551,11 +552,11 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
             >
               {props.running ? (
                 <>
-                  Loading&nbsp;&nbsp;
+                  טוען&nbsp;&nbsp;
                   <Spinner />
                 </>
               ) : (
-                "Send"
+                "שלח"
               )}
             </Button>
           </div>
@@ -650,11 +651,11 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
                   ? "success"
                   : readyState === ReadyState.CONNECTING ||
                     readyState === ReadyState.UNINSTANTIATED
-                  ? "in-progress"
-                  : "error"
+                    ? "in-progress"
+                    : "error"
               }
             >
-              {readyState === ReadyState.OPEN ? "Connected" : connectionStatus}
+              {readyState === ReadyState.OPEN ? "מחובר" : connectionStatus}
             </StatusIndicator>
           </SpaceBetween>
         </div>

@@ -22,22 +22,22 @@ export default function NavigationPanel() {
       },
       {
         type: "section",
-        text: "Chatbot",
+        text: "אפשרויות",
         items: [
-          { type: "link", text: "Playground", href: "/chatbot/playground" },
+          { type: "link", text: "צ׳אטבוט", href: "/chatbot/playground" },
           {
             type: "link",
-            text: "Multi-chat playground",
+            text: "השוואת מודלים",
             href: "/chatbot/multichat",
           },
           {
             type: "link",
-            text: "Sessions",
+            text: "היסטוריה",
             href: "/chatbot/sessions",
           },
           {
             type: "link",
-            text: "Models",
+            text: "מודלים",
             href: "/chatbot/models",
           },
         ],
@@ -48,12 +48,12 @@ export default function NavigationPanel() {
       const crossEncodersItems: SideNavigationProps.Item[] = appContext?.config
         .cross_encoders_enabled
         ? [
-            {
-              type: "link",
-              text: "Cross-encoders",
-              href: "/rag/cross-encoders",
-            },
-          ]
+          {
+            type: "link",
+            text: "Cross-encoders",
+            href: "/rag/cross-encoders",
+          },
+        ]
         : [];
 
       items.push({
@@ -82,7 +82,7 @@ export default function NavigationPanel() {
       { type: "divider" },
       {
         type: "link",
-        text: "Documentation",
+        text: "דוקומנטציה",
         href: "https://aws-samples.github.io/aws-genai-llm-chatbot/",
         external: true,
       }

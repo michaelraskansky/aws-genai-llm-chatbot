@@ -182,8 +182,7 @@ export default function Sessions(props: SessionsProps) {
         ariaLabels={{
           selectionGroupLabel: "Items selection",
           allItemsSelectionLabel: ({ selectedItems }) =>
-            `${selectedItems.length} ${
-              selectedItems.length === 1 ? "item" : "items"
+            `${selectedItems.length} ${selectedItems.length === 1 ? "item" : "items"
             } selected`,
           // @ts-expect-error no-unused-var
           itemSelectionLabel: (e, item) => item.title!,
@@ -214,7 +213,7 @@ export default function Sessions(props: SessionsProps) {
         }
         header={
           <Header
-            description="List of past sessions"
+            description="רשימת הפעלות קודמות"
             variant="awsui-h1-sticky"
             actions={
               <SpaceBetween direction="horizontal" size="m" alignItems="center">
@@ -223,7 +222,7 @@ export default function Sessions(props: SessionsProps) {
                   href={`/chatbot/playground/${uuidv4()}`}
                   variant="inline-link"
                 >
-                  New session
+                  הפעלה חדשה
                 </RouterButton>
                 <Button
                   iconAlt="Refresh list"
@@ -231,7 +230,7 @@ export default function Sessions(props: SessionsProps) {
                   variant="inline-link"
                   onClick={() => getSessions()}
                 >
-                  Refresh
+                  רענן
                 </Button>
                 <Button
                   disabled={selectedItems.length == 0}
@@ -242,7 +241,7 @@ export default function Sessions(props: SessionsProps) {
                     if (selectedItems.length > 0) setShowModalDelete(true);
                   }}
                 >
-                  Delete
+                  מחק
                 </Button>
                 <Button
                   iconAlt="Delete all sessions"
@@ -250,19 +249,19 @@ export default function Sessions(props: SessionsProps) {
                   variant="inline-link"
                   onClick={() => setDeleteAllSessions(true)}
                 >
-                  Delete all sessions
+                  מחק הכל
                 </Button>
               </SpaceBetween>
             }
           >
-            Session History
+            הסטוריה
           </Header>
         }
         columnDefinitions={
           [
             {
               id: "title",
-              header: "Title",
+              header: "תיאור",
               sortingField: "title",
               width: 800,
               minWidth: 200,
@@ -273,7 +272,7 @@ export default function Sessions(props: SessionsProps) {
             },
             {
               id: "startTime",
-              header: "Time",
+              header: "זמן",
               sortingField: "startTime",
               cell: (e: Session) =>
                 DateTime.fromISO(

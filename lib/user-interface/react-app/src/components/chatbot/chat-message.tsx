@@ -97,7 +97,7 @@ export default function ChatMessage(props: ChatMessageProps) {
   }
 
   return (
-    <div>
+    <div dir="rtl">
       {props.message?.type === ChatBotMessageType.AI && (
         <Container
           data-locator="chatbot-ai-container"
@@ -125,7 +125,7 @@ export default function ChatMessage(props: ChatMessageProps) {
                 />
                 {props.message.metadata.documents &&
                   (props.message.metadata.documents as RagDocument[]).length >
-                    0 && (
+                  0 && (
                     <>
                       <div className={styles.btn_chabot_metadata_copy}>
                         <Popover
@@ -201,7 +201,7 @@ export default function ChatMessage(props: ChatMessageProps) {
                           onClick={() => {
                             navigator.clipboard.writeText(
                               (props.message.metadata.prompts as string[][])[
-                                parseInt(promptIndex)
+                              parseInt(promptIndex)
                               ][0]
                             );
                           }}
@@ -213,12 +213,11 @@ export default function ChatMessage(props: ChatMessageProps) {
                         (p, i) => {
                           return {
                             id: `${i}`,
-                            label: `Prompt ${
-                              (props.message.metadata.prompts as string[][])
-                                .length > 1
-                                ? i + 1
-                                : ""
-                            }`,
+                            label: `Prompt ${(props.message.metadata.prompts as string[][])
+                              .length > 1
+                              ? i + 1
+                              : ""
+                              }`,
                             content: (
                               <>
                                 <Textarea
@@ -271,44 +270,50 @@ export default function ChatMessage(props: ChatMessageProps) {
               </Popover>
             </div>
           ) : null}
-          <ReactMarkdown
-            children={content}
-            remarkPlugins={[remarkGfm]}
-            components={{
-              pre(props) {
-                const { children, ...rest } = props;
-                return (
-                  <pre {...rest} className={styles.codeMarkdown}>
-                    {children}
-                  </pre>
-                );
-              },
-              table(props) {
-                const { children, ...rest } = props;
-                return (
-                  <table {...rest} className={styles.markdownTable}>
-                    {children}
-                  </table>
-                );
-              },
-              th(props) {
-                const { children, ...rest } = props;
-                return (
-                  <th {...rest} className={styles.markdownTableCell}>
-                    {children}
-                  </th>
-                );
-              },
-              td(props) {
-                const { children, ...rest } = props;
-                return (
-                  <td {...rest} className={styles.markdownTableCell}>
-                    {children}
-                  </td>
-                );
-              },
-            }}
-          />
+          <div dir="rtl">
+            <ReactMarkdown
+              children={content}
+              remarkPlugins={[remarkGfm]}
+              components={{
+                pre(props) {
+                  const { children, ...rest } = props;
+                  return (
+
+                    <pre {...rest} className={styles.codeMarkdown}>
+                      <div dir="ltr">
+                        {children}
+                      </div>
+                    </pre>
+
+                  );
+                },
+                table(props) {
+                  const { children, ...rest } = props;
+                  return (
+                    <table {...rest} className={styles.markdownTable}>
+                      {children}
+                    </table>
+                  );
+                },
+                th(props) {
+                  const { children, ...rest } = props;
+                  return (
+                    <th {...rest} className={styles.markdownTableCell}>
+                      {children}
+                    </th>
+                  );
+                },
+                td(props) {
+                  const { children, ...rest } = props;
+                  return (
+                    <td {...rest} className={styles.markdownTableCell}>
+                      {children}
+                    </td>
+                  );
+                },
+              }}
+            />
+          </div>
           <div className={styles.thumbsContainer}>
             {(selectedIcon === 1 || selectedIcon === null) && (
               <Button

@@ -142,7 +142,7 @@ export default function Chat(props: { sessionId?: string }) {
       </SpaceBetween>
       <div className={styles.welcome_text}>
         {messageHistory.length == 0 && !session?.loading && (
-          <center>{CHATBOT_NAME}</center>
+          <center>שלום, כיצד אוכל לעזור לך היום?</center>
         )}
         {session?.loading && (
           <center>
