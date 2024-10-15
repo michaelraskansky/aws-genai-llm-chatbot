@@ -34,7 +34,7 @@ export default function Welcome() {
             <Header
               variant="h1"
               data-locator="welcome-header"
-              description="An opensource, modular and comprehensive solution to deploy a multi-model and multi-RAG powered chatbot using AWS CDK on AWS."
+              description="פתרון פתוח, מודולרי ומקיף לפריסה של צ'אטבוט רב-מודל ורב-RAG באמצעות AWS CDK ב-AWS."
               actions={
                 <RouterButton
                   iconAlign="right"
@@ -42,11 +42,11 @@ export default function Welcome() {
                   variant="primary"
                   href="/chatbot/playground"
                 >
-                  Getting Started
+                  התחלת עבודה
                 </RouterButton>
               }
             >
-              Chatbot Home
+              דף הבית של הצ'אטבוט
             </Header>
           }
         >
@@ -83,7 +83,7 @@ export default function Welcome() {
                   },
                   {
                     id: "type",
-                    header: "Type",
+                    header: "סוג",
                     content: (item) => item.type,
                   },
                 ],
@@ -93,28 +93,28 @@ export default function Welcome() {
                 {
                   name: "Amazon Bedrock",
                   external: true,
-                  type: "AWS Fully Managed",
+                  type: "AWS ניהול מלא",
                   href: "https://aws.amazon.com/bedrock/",
                   img: "/images/welcome/amazon-bedrock.png",
                   description:
-                    "Amazon Bedrock is a fully managed service that makes foundation models (FMs) from Amazon and leading AI startups available through an API.",
+                    "Amazon Bedrock הוא שירות מנוהל מלא שמספק מודלים מבוססי תשתית (FMs) מאמזון וחברות סטארט-אפ מובילות בתחום ה-AI, דרך ממשק API.",
                 },
                 {
                   name: "Amazon SageMaker",
                   external: true,
-                  type: "AWS Self hosted",
+                  type: "AWS אחסון עצמי",
                   href: "https://aws.amazon.com/sagemaker/",
                   img: "/images/welcome/self-hosted.jpg",
                   description:
-                    "CDK construct to deploy and run self hosted models on Amazon SageMaker. Deploy pre-trained models from SageMaker Foundation/Jumpstart and HuggingFace.",
+                    "מבנה CDK לפריסת והרצת מודלים באחסון עצמי על Amazon SageMaker. פריסת מודלים מוכנים מראש מ-SageMaker Foundation/Jumpstart ו-HuggingFace.",
                 },
                 {
-                  name: "3P Models",
-                  type: "External API",
+                  name: "מודלים מצד שלישי",
+                  type: "ממשק API חיצוני",
                   href: "#",
                   img: "/images/welcome/3p.png",
                   description:
-                    "Interface with 3rd party models via provided API. Such as AI21 Labs, OpenAI, HuggingFace Interface Endpoints etc.",
+                    "ממשק עם מודלים מצד שלישי באמצעות API. כגון AI21 Labs, OpenAI, HuggingFace ועוד.",
                 },
               ]}
             />
@@ -129,42 +129,41 @@ export default function Welcome() {
             >
               <Header
                 variant="h1"
-                description="CDK construct available to deploy a React based webapp"
+                description="מבנה CDK זמין לפריסה של אפליקציית ווב מבוססת React."
               >
-                Full-fledged user interface
+                ממשק משתמש מלא
               </Header>
               <p>
-                The web app is hosted on{" "}
+                האפליקציה מאוחסנת ב-
                 <Link external href="https://aws.amazon.com/s3/">
                   Amazon S3
                 </Link>{" "}
-                behind{" "}
+                מאחורי{" "}
                 <Link external href="https://aws.amazon.com/cloudfront/">
                   Amazon CloudFront
                 </Link>{" "}
-                with{" "}
+                עם{" "}
                 <Link external href="https://aws.amazon.com/cognito/">
-                  Cognito Authentication
+                  הזדהות דרך Cognito
                 </Link>{" "}
-                to help you interact and experiment with{" "}
-                <strong>multiple Models</strong>,{" "}
-                <strong>multiple RAG sources</strong>,{" "}
-                <strong>conversational history support</strong> and{" "}
-                <strong>documents upload</strong>.
+                על מנת לאפשר לך לתקשר ולהתנסות עם{" "}
+                <strong>מודלים מרובים</strong>,{" "}
+                <strong>מקורות RAG מרובים</strong>,{" "}
+                <strong>תמיכה בהיסטוריית שיחות</strong> ו-{" "}
+                <strong>העלאת מסמכים</strong>.
               </p>
               <p>
-                The interface layer between the UI and backend is build on top
-                of{" "}
+                שכבת הממשק בין ה-UI וה-backend נבנית על בסיס{" "}
                 <Link
                   external
                   href="https://docs.aws.amazon.com/appsync/latest/devguide/aws-appsync-real-time-data.html"
                 >
-                  Amazon AppSync subscriptions.
+                  מנויים של Amazon AppSync.
                 </Link>
                 <p>
-                  The UI components are provided by{" "}
+                  רכיבי ה-UI מסופקים על ידי{" "}
                   <Link external href="https://cloudscape.design/">
-                    AWS Cloudscape design system
+                    מערכת עיצוב Cloudscape של AWS
                   </Link>
                 </p>
               </p>
@@ -178,32 +177,33 @@ export default function Welcome() {
                 position: "side",
               }}
             >
-              <Header variant="h1">Capabilities</Header>
-              <Header variant="h3">Multi-modal chat</Header>
+              <Header variant="h1">יכולות</Header>
+              <Header variant="h3">שיחה רב-מודלית</Header>
               <p>
-                You can <Link href="/chatbot/playground">chat</Link> with text
-                or upload images and use multimodal chats. Currently we support
-                multimodal capabilities with Anthropic Claude 3 via Amazon
-                Bedrock and Idefics deployed via SageMaker.
+                אתה יכול{" "}
+                <Link href="/chatbot/playground">לשוחח</Link> עם טקסט או להעלות
+                תמונות ולהשתמש בשיחות רב-מודליות. כעת אנו תומכים ביכולות
+                רב-מודליות עם Anthropic Claude 3 דרך Amazon Bedrock ו-Idefics
+                המופעלים דרך SageMaker.
               </p>
-              <h3>Compare multiple LLMs and RAG sources</h3>
+              <h3>השוואת מודלים ומקורות RAG מרובים</h3>
               <p>
-                In the{" "}
-                <Link href="/chatbot/playground">multi-chat playground</Link>{" "}
-                you can use multiple models and RAG sources simultaneously and
-                compare their answers.
+                ב-{" "}
+                <Link href="/chatbot/playground">מגרש המשחקים הרב-שיחתי</Link>{" "}
+                ניתן להשתמש במודלים ובמקורות RAG מרובים בו זמנית ולהשוות
+                ביניהם.
               </p>
-              <h3>Test RAG sources, embedding and cross-encoders</h3>
+              <h3>בדיקת מקורות RAG, embeddings ו-cross-encoders</h3>
               <p>
-                We provide easy to use interface to test search in RAG data
-                source, text embeddings and cross-encoder scoring.
+                אנו מספקים ממשק קל לשימוש לבדיקת חיפוש במקור נתונים של RAG,
+                embeddings של טקסט ודירוג של cross-encoders.
               </p>
             </Container>
             <Header
               variant="h1"
-              description="You can optionally experiment with one or more of the following CDK constructs to implement RAG requests."
+              description="תוכל להתנסות באחת או יותר מהבניינים הבאים של CDK כדי ליישם בקשות RAG."
             >
-              Retrieval Augmented Generation (RAG) sources
+              מקורות של Generation Augmented Generation (RAG)
             </Header>
             <Cards
               cardDefinition={{
@@ -222,7 +222,7 @@ export default function Welcome() {
                   },
                   {
                     id: "type",
-                    header: "Type",
+                    header: "סוג",
                     content: (item) => item.type,
                   },
                 ],
@@ -230,38 +230,38 @@ export default function Welcome() {
               cardsPerRow={[{ cards: 1 }, { minWidth: 700, cards: 3 }]}
               items={[
                 {
-                  name: "Amazon Aurora with pgvector",
-                  type: "Vector Database",
+                  name: "Amazon Aurora עם pgvector",
+                  type: "בסיס נתונים וקטורי",
                   external: true,
                   href: "https://aws.amazon.com/about-aws/whats-new/2023/07/amazon-aurora-postgresql-pgvector-vector-storage-similarity-search/",
                   description:
-                    "Amazon Aurora PostgreSQL-Compatible Edition now supports the pgvector extension to store embeddings from machine learning (ML) models in your database and to perform efficient similarity searches.",
-                  tags: ["Fully managed"],
+                    "מהדורת Amazon Aurora PostgreSQL-Compatible תומכת כעת בהרחבת pgvector לאחסון embeddings ממודלים של למידת מכונה (ML) בבסיס הנתונים שלך ולביצוע חיפושי דמיון יעילים.",
+                  tags: ["ניהול מלא"],
                 },
                 {
                   name: "Amazon Opensearch VectorSearch",
-                  type: "Vector Database",
+                  type: "בסיס נתונים וקטורי",
                   external: true,
                   href: "https://aws.amazon.com/blogs/big-data/amazon-opensearch-services-vector-database-capabilities-explained/",
                   description:
-                    "With OpenSearch Service’s vector database capabilities, you can implement semantic search, Retrieval Augmented Generation (RAG) with LLMs, recommendation engines, and search rich media.",
+                    "עם היכולות של בסיס הנתונים הווקטורי של OpenSearch Service, תוכל ליישם חיפוש סמנטי, Generation Augmented Generation (RAG) עם LLMs, מנועי המלצה וחיפוש מדיה עשירה.",
                 },
 
                 {
-                  name: "Amazon Bedrock Knowledge Bases",
+                  name: "מאגרי ידע של Amazon Bedrock",
                   external: true,
-                  type: "Search Engine",
+                  type: "מנוע חיפוש",
                   href: "https://aws.amazon.com/bedrock/knowledge-bases/",
                   description:
-                    "With Knowledge Bases for Amazon Bedrock, you can give FMs and agents contextual information from your company’s private data sources for Retrieval Augmented Generation (RAG) to deliver more relevant, accurate, and customized responses",
+                    "עם מאגרי הידע של Amazon Bedrock, תוכל לספק למודלים בסיסיים ולסוכנים מידע הקשרי ממקורות הנתונים הפרטיים של החברה שלך עבור Generation Augmented Generation (RAG) כדי לספק תשובות יותר רלוונטיות, מדויקות ומותאמות אישית.",
                 },
                 {
                   name: "Amazon Kendra",
                   external: true,
-                  type: "Search Engine",
+                  type: "מנוע חיפוש",
                   href: "https://aws.amazon.com/kendra/",
                   description:
-                    "Amazon Kendra is an intelligent search service powered by machine learning (ML).",
+                    "Amazon Kendra הוא שירות חיפוש חכם המופעל על ידי למידת מכונה (ML).",
                 },
               ]}
             />

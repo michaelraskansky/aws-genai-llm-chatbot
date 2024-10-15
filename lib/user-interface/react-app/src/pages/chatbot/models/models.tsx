@@ -95,7 +95,7 @@ export default function Models() {
               href: "/",
             },
             {
-              text: "Models",
+              text: "מודלים",
               href: "/chatbot/models",
             },
           ]}
@@ -119,7 +119,7 @@ export default function Models() {
             variant="full-page"
             stickyHeader={true}
             resizableColumns={true}
-            header={<Header variant="awsui-h1-sticky">Models</Header>}
+            header={<Header variant="awsui-h1-sticky">מודלים</Header>}
             loading={loading}
             loadingText="Loading Models"
             filter={
