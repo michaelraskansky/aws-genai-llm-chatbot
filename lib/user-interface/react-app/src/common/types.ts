@@ -7,12 +7,12 @@ export interface AppConfig {
   aws_user_pools_web_client_id: string;
   config: {
     auth_federated_provider?:
-      | { auto_redirect: boolean; custom: true; name: string }
-      | {
-          auto_redirect: boolean;
-          custom: false;
-          name: CognitoHostedUIIdentityProvider;
-        };
+    | { auto_redirect: boolean; custom: true; name: string }
+    | {
+      auto_redirect: boolean;
+      custom: false;
+      name: CognitoHostedUIIdentityProvider;
+    };
     oauth?: {
       domain: string;
       redirectSignIn: string;
@@ -28,6 +28,7 @@ export interface AppConfig {
     default_embeddings_model: string;
     default_cross_encoder_model: string;
     privateWebsite: boolean;
+    locale?: string;
   };
 }
 

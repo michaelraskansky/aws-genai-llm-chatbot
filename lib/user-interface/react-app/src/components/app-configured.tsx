@@ -18,8 +18,9 @@ import { StorageHelper } from "../common/helpers/storage-helper";
 import { Mode } from "@cloudscape-design/global-styles";
 import "@aws-amplify/ui-react/styles.css";
 import { CHATBOT_NAME } from "../common/constants";
-import { I18nProvider } from '@cloudscape-design/components/i18n';
-import messages from '@cloudscape-design/components/i18n/messages/all.all';
+import { I18nProvider, I18nProviderProps } from '@cloudscape-design/components/i18n';
+import messages from '@cloudscape-design/components/i18n/messages/all.en';
+import { Theme, applyTheme } from '@cloudscape-design/components/theming';
 
 
 export default function AppConfigured() {
@@ -27,6 +28,7 @@ export default function AppConfigured() {
   const [config, setConfig] = useState<AppConfig | null>(null);
   const [error, setError] = useState<boolean | null>(null);
   const [theme, setTheme] = useState(StorageHelper.getTheme());
+  const [customMessages, setCustomMessages] = useState<I18nProviderProps.Messages | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -34,6 +36,11 @@ export default function AppConfigured() {
         const result = await fetch("/aws-exports.json");
         const awsExports = await result.json();
         const currentConfig = Amplify.configure(awsExports) as AppConfig | null;
+        const customMesagesReulst = await fetch("/custom_messages.json");
+        const customMessages = { '@cloudscape-design/components': await customMesagesReulst.json() }
+        const customThemeResult = await fetch("/theme.json");
+        const customTheme = await customThemeResult.json();
+        applyTheme(customTheme);
 
         // Extract the query string from the current URL
         const queryString = window.location.search;
@@ -68,7 +75,7 @@ export default function AppConfigured() {
             return;
           }
         }
-
+        setCustomMessages(customMessages);
         setConfig(currentConfig);
       } catch (e) {
         console.error(e);
@@ -198,8 +205,7 @@ export default function AppConfigured() {
             },
           }}
         >
-
-          <I18nProvider locale="he" messages={[messages]}>
+          <I18nProvider locale={config.config.locale} messages={customMessages ? [messages, customMessages] : [messages]}>
             <App />
           </I18nProvider>
         </Authenticator>

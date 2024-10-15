@@ -106,23 +106,25 @@ export default function ChatMessage(props: ChatMessageProps) {
               (props.message.metadata &&
                 props.configuration?.showMetadata)) && (
               <ExpandableSection variant="footer" headerText="Metadata">
-                <JsonView
-                  shouldInitiallyExpand={(level) => level < 2}
-                  data={JSON.parse(
-                    JSON.stringify(props.message.metadata).replace(
-                      /\\n/g,
-                      "\\\\n"
-                    )
-                  )}
-                  style={{
-                    ...darkStyles,
-                    stringValue: "jsonStrings",
-                    numberValue: "jsonNumbers",
-                    booleanValue: "jsonBool",
-                    nullValue: "jsonNull",
-                    container: "jsonContainer",
-                  }}
-                />
+                <div dir="ltr">
+                  <JsonView
+                    shouldInitiallyExpand={(level) => level < 2}
+                    data={JSON.parse(
+                      JSON.stringify(props.message.metadata).replace(
+                        /\\n/g,
+                        "\\\\n"
+                      )
+                    )}
+                    style={{
+                      ...darkStyles,
+                      stringValue: "jsonStrings",
+                      numberValue: "jsonNumbers",
+                      booleanValue: "jsonBool",
+                      nullValue: "jsonNull",
+                      container: "jsonContainer",
+                    }}
+                  />
+                </div>
                 {props.message.metadata.documents &&
                   (props.message.metadata.documents as RagDocument[]).length >
                   0 && (

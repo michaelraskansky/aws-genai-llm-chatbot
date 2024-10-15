@@ -1,0 +1,16 @@
+{"theme": {
+    "tokens": {
+        "colorBackgroundLayoutMain": {
+            "light": "white",
+            "dark": "blue"
+        },
+        "colorTextAccenut": "#0073bb"
+     },
+    "contexts": {
+       "top-navigation": {
+          "tokens": {
+             "colorBackgroundContainerContent": "#0a3d7b"
+          }
+       }
+    }
+ }}

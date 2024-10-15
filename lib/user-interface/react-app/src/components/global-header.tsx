@@ -54,6 +54,7 @@ export default function GlobalHeader() {
     >
       <TopNavigation
         identity={{
+          title: "צ׳אטבוא הממשלתי",
           href: "/",
           logo: { src: "/images/Emblem_of_Israel.svg", alt: { CHATBOT_NAME } + " Logo" },
         }}
