@@ -9,38 +9,38 @@ export default function DashboardHeader() {
       actions={
         <SpaceBetween direction="horizontal" size="xs">
           <RouterButton href="/rag/semantic-search">
-            Semantic search
+            חיפוש סמנטי
           </RouterButton>
           <RouterButtonDropdown
             items={[
               {
                 id: "upload-file",
-                text: "Upload files",
+                text: "העלה קובץ",
                 href: "/rag/workspaces/add-data?tab=file",
               },
               {
                 id: "add-text",
-                text: "Add texts",
+                text: "הוספת טקסט",
                 href: "/rag/workspaces/add-data?tab=text",
               },
               {
                 id: "add-qna",
-                text: "Add Q&A",
+                text: "הוסף שאלות ותשובות",
                 href: "/rag/workspaces/add-data?tab=qna",
               },
               {
                 id: "crawl-website",
-                text: "Crawl website",
+                text: "סרוק אתר חיצוני (Webcrawl)",
                 href: "/rag/workspaces/add-data?tab=website",
               },
             ]}
           >
-            Add data
+            הוסף מידע
           </RouterButtonDropdown>
         </SpaceBetween>
       }
     >
-      Dashboard
+      לוח בקרה
     </Header>
   );
 }

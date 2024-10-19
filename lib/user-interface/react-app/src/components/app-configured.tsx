@@ -20,7 +20,7 @@ import "@aws-amplify/ui-react/styles.css";
 import { CHATBOT_NAME } from "../common/constants";
 import { I18nProvider, I18nProviderProps } from '@cloudscape-design/components/i18n';
 import messages from '@cloudscape-design/components/i18n/messages/all.en';
-import { Theme, applyTheme } from '@cloudscape-design/components/theming';
+import { applyTheme } from '@cloudscape-design/components/theming';
 
 
 export default function AppConfigured() {

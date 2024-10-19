@@ -1,10 +1,5 @@
 {"theme": {
     "tokens": {
-        "colorBackgroundLayoutMain": {
-            "light": "white",
-            "dark": "blue"
-        },
-        "colorTextAccenut": "#0073bb"
      },
     "contexts": {
        "top-navigation": {

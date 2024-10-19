@@ -12,7 +12,7 @@ export const WorkspacesColumnDefinitions: TableProps.ColumnDefinition<Workspace>
   [
     {
       id: "name",
-      header: "Name",
+      header: "שם",
       sortingField: "name",
       cell: (item: Workspace) => (
         <RouterLink href={`/rag/workspaces/${item.id}`}>{item.name}</RouterLink>
@@ -21,13 +21,13 @@ export const WorkspacesColumnDefinitions: TableProps.ColumnDefinition<Workspace>
     },
     {
       id: "engine",
-      header: "Engine",
+      header: "מנוע",
       sortingField: "engine",
       cell: (item: Workspace) => Labels.engineMap[item.engine],
     },
     {
       id: "starus",
-      header: "Status",
+      header: "סטאטוס",
       sortingField: "status",
       cell: (item) => (
         <StatusIndicator type={Labels.statusTypeMap[item.status!]}>
@@ -38,13 +38,13 @@ export const WorkspacesColumnDefinitions: TableProps.ColumnDefinition<Workspace>
     },
     {
       id: "documents",
-      header: "Documents",
+      header: "מסמכים",
       sortingField: "documents",
       cell: (item: Workspace) => item.documents,
     },
     {
       id: "timestamp",
-      header: "Creation Date",
+      header: "תאריך יצירה",
       sortingField: "timestamp",
       cell: (item: Workspace) =>
         DateTime.fromISO(new Date(item.createdAt).toISOString()).toLocaleString(
@@ -58,25 +58,25 @@ export const WorkspacesColumnDefinitions: TableProps.ColumnDefinition<Workspace>
 
 export const WorkspaceColumnFilteringProperties: PropertyFilterProperty[] = [
   {
-    propertyLabel: "Name",
+    propertyLabel: "שם",
     key: "name",
     groupValuesLabel: "Name values",
     operators: [":", "!:", "=", "!="] as PropertyFilterOperator[],
   },
   {
-    propertyLabel: "Engine",
+    propertyLabel: "מנוע",
     key: "engine",
     groupValuesLabel: "Engine values",
     operators: [":", "!:", "=", "!="] as PropertyFilterOperator[],
   },
   {
-    propertyLabel: "Status",
+    propertyLabel: "סטאטוס",
     key: "status",
     groupValuesLabel: "Status values",
     operators: [":", "!:", "=", "!="] as PropertyFilterOperator[],
   },
   {
-    propertyLabel: "Documents",
+    propertyLabel: "מסמכים",
     key: "documents",
     groupValuesLabel: "Documents",
     defaultOperator: ">" as PropertyFilterOperator,

@@ -1,0 +1,23 @@
+{
+    "aws_project_region": "eu-central-1",
+    "aws_cognito_region": "eu-central-1",
+    "aws_user_pools_id": "eu-central-1_15C3b6KEs",
+    "aws_user_pools_web_client_id": "6tsg2frhk5vlo7bbmhtnkfo3de",
+    "Auth": {
+        "region": "eu-central-1",
+        "userPoolId": "eu-central-1_15C3b6KEs",
+        "userPoolWebClientId": "6tsg2frhk5vlo7bbmhtnkfo3de"
+    },
+    "aws_appsync_graphqlEndpoint": "https://ajvdcz7bq5bzxmi546wlgnbj44.appsync-api.eu-central-1.amazonaws.com/graphql",
+    "aws_appsync_region": "eu-central-1",
+    "aws_appsync_authenticationType": "AMAZON_COGNITO_USER_POOLS",
+    "config": {
+        "rag_enabled": false,
+        "cross_encoders_enabled": false,
+        "sagemaker_embeddings_enabled": false,
+        "default_embeddings_model": "sagemaker::1024::intfloat/multilingual-e5-large",
+        "default_cross_encoder_model": "sagemaker::cross-encoder/ms-marco-MiniLM-L-12-v2",
+        "privateWebsite": false,
+        "locale": "he"
+    }
+}

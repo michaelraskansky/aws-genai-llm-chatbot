@@ -58,22 +58,30 @@ export default function NavigationPanel() {
 
       items.push({
         type: "section",
-        text: "Retrieval-Augmented Generation (RAG)",
+        text: "יצירה מעושרת נתונים (RAG)",
         items: [
-          { type: "link", text: "Dashboard", href: "/rag" },
           {
             type: "link",
-            text: "Semantic search",
+            text: "לוח בקרה",
+            href: "/rag"
+          },
+          {
+            type: "link",
+            text: "חיפוש סמנטי",
             href: "/rag/semantic-search",
           },
-          { type: "link", text: "Workspaces", href: "/rag/workspaces" },
           {
             type: "link",
-            text: "Embeddings",
+            text: "סביבות עבודה",
+            href: "/rag/workspaces"
+          },
+          {
+            type: "link",
+            text: "הטבעות (Embeddings)",
             href: "/rag/embeddings",
           },
           ...crossEncodersItems,
-          { type: "link", text: "Engines", href: "/rag/engines" },
+          { type: "link", text: "מנועי RAG", href: "/rag/engines" },
         ],
       });
     }
