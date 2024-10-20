@@ -11,6 +11,7 @@ export function getTestConfig(): SystemConfig {
     privateWebsite: true,
     enableWaf: true,
     enableS3TransferAcceleration: true,
+    cloudfrontLogBucketArn: "",
     certificate: "",
     cfGeoRestrictEnable: true,
     cfGeoRestrictList: [],
