@@ -159,6 +159,7 @@ export class AwsGenAILLMChatbotStack extends cdk.Stack {
       api: chatBotApi,
       chatbotFilesBucket: chatBotApi.filesBucket,
       uploadBucket: ragEngines?.uploadBucket,
+      cloudfrontLogBucketArn: props.config.cloudfrontLogBucketArn,
       crossEncodersEnabled:
         typeof ragEngines?.sageMakerRagModels?.model !== "undefined",
       sagemakerEmbeddingsEnabled:
@@ -270,20 +271,20 @@ export class AwsGenAILLMChatbotStack extends cdk.Stack {
       ragImportStateMachineProcessing: [
         ...(ragEngines
           ? [
-              ragEngines.dataImport.fileImportWorkflow,
-              ragEngines.dataImport.websiteCrawlingWorkflow,
-            ]
+            ragEngines.dataImport.fileImportWorkflow,
+            ragEngines.dataImport.websiteCrawlingWorkflow,
+          ]
           : []),
       ],
       ragEngineStateMachineProcessing: [
         ...(ragEngines
           ? [
-              ragEngines.auroraPgVector?.createAuroraWorkspaceWorkflow,
-              ragEngines.openSearchVector?.createOpenSearchWorkspaceWorkflow,
-              ragEngines.kendraRetrieval?.createKendraWorkspaceWorkflow,
-              ragEngines.deleteDocumentWorkflow,
-              ragEngines.deleteWorkspaceWorkflow,
-            ]
+            ragEngines.auroraPgVector?.createAuroraWorkspaceWorkflow,
+            ragEngines.openSearchVector?.createOpenSearchWorkspaceWorkflow,
+            ragEngines.kendraRetrieval?.createKendraWorkspaceWorkflow,
+            ragEngines.deleteDocumentWorkflow,
+            ragEngines.deleteWorkspaceWorkflow,
+          ]
           : []),
       ],
     });
@@ -331,15 +332,15 @@ export class AwsGenAILLMChatbotStack extends cdk.Stack {
         `/${this.stackName}/IdeficsInterface/MultiModalInterfaceRequestHandler/ServiceRole/Resource`,
         ...(langchainInterface
           ? [
-              `/${this.stackName}/LangchainInterface/RequestHandler/ServiceRole/Resource`,
-              `/${this.stackName}/LangchainInterface/RequestHandler/ServiceRole/DefaultPolicy/Resource`,
-            ]
+            `/${this.stackName}/LangchainInterface/RequestHandler/ServiceRole/Resource`,
+            `/${this.stackName}/LangchainInterface/RequestHandler/ServiceRole/DefaultPolicy/Resource`,
+          ]
           : []),
         ...(ideficsModels.length > 0
           ? [
-              `/${this.stackName}/IdeficsInterface/ChatbotFilesPrivateApi/CloudWatchRole/Resource`,
-              `/${this.stackName}/IdeficsInterface/S3IntegrationRole/DefaultPolicy/Resource`,
-            ]
+            `/${this.stackName}/IdeficsInterface/ChatbotFilesPrivateApi/CloudWatchRole/Resource`,
+            `/${this.stackName}/IdeficsInterface/S3IntegrationRole/DefaultPolicy/Resource`,
+          ]
           : []),
       ],
       [

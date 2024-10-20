@@ -127,6 +127,8 @@ export class ApiResolvers extends Construct {
               ?.bucketName ?? "",
           RSS_FEED_INGESTOR_FUNCTION:
             props.ragEngines?.dataImport.rssIngestorFunction?.functionArn ?? "",
+          UPLOAD_S3_TRANSFER_ACCELERATION: props.config.enableS3TransferAcceleration ? "TRUE" : "FALSE",
+          UPLOAD_BUCKET_REGION: cdk.Stack.of(scope).region,
         },
       }
     );
@@ -220,10 +222,8 @@ export class ApiResolvers extends Construct {
                 new iam.PolicyStatement({
                   actions: ["bedrock:Retrieve"],
                   resources: [
-                    `arn:${cdk.Aws.PARTITION}:bedrock:${
-                      item.region ?? cdk.Aws.REGION
-                    }:${cdk.Aws.ACCOUNT_ID}:knowledge-base/${
-                      item.knowledgeBaseId
+                    `arn:${cdk.Aws.PARTITION}:bedrock:${item.region ?? cdk.Aws.REGION
+                    }:${cdk.Aws.ACCOUNT_ID}:knowledge-base/${item.knowledgeBaseId
                     }`,
                   ],
                 })
@@ -245,8 +245,7 @@ export class ApiResolvers extends Construct {
               new iam.PolicyStatement({
                 actions: ["kendra:Retrieve", "kendra:Query"],
                 resources: [
-                  `arn:${cdk.Aws.PARTITION}:kendra:${
-                    item.region ?? cdk.Aws.REGION
+                  `arn:${cdk.Aws.PARTITION}:kendra:${item.region ?? cdk.Aws.REGION
                   }:${cdk.Aws.ACCOUNT_ID}:index/${item.kendraId}`,
                 ],
               })

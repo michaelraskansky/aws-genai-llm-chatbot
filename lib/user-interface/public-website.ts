@@ -21,6 +21,7 @@ export interface PublicWebsiteProps {
   readonly websiteBucket: s3.Bucket;
   readonly chatbotFilesBucket: s3.Bucket;
   readonly uploadBucket?: s3.Bucket;
+  readonly cloudfrontLogBucketArn?: string;
 }
 
 export class PublicWebsite extends Construct {
@@ -38,7 +39,7 @@ export class PublicWebsite extends Construct {
     const cfGeoRestrictEnable = props.config.cfGeoRestrictEnable;
     const cfGeoRestrictList = props.config.cfGeoRestrictList;
 
-    const distributionLogsBucket = new s3.Bucket(
+    const distributionLogsBucket = props.cloudfrontLogBucketArn ? s3.Bucket.fromBucketArn(this, "DistributionLogsBucket", props.cloudfrontLogBucketArn!) : new s3.Bucket(
       this,
       "DistributionLogsBucket",
       {
@@ -86,12 +87,10 @@ export class PublicWebsite extends Construct {
           contentSecurityPolicy: {
             contentSecurityPolicy:
               "default-src 'self';" +
-              `connect-src 'self' https://cognito-idp.${
-                cdk.Stack.of(scope).region
+              `connect-src 'self' https://cognito-idp.${cdk.Stack.of(scope).region
               }.amazonaws.com/ ` +
               (congnitoFederationDomain ? `${congnitoFederationDomain} ` : "") +
-              `${websocketURL} ${fileBucketURLs.join(" ")} ${
-                props.api.graphqlApi.graphqlUrl
+              `${websocketURL} ${fileBucketURLs.join(" ")} ${props.api.graphqlApi.graphqlUrl
               };` +
               "font-src 'self' data:; " + // Fonts are inline in the CSS files
               `img-src 'self' ${fileBucketURLs.join(" ")} blob:; ` +
@@ -127,17 +126,18 @@ export class PublicWebsite extends Construct {
       // 2. After the deployment, in your Route53 Hosted Zone, add an "A Record" that points to the Cloudfront Alias (https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-to-cloudfront-distribution.html)
       ...(props.config.certificate &&
         props.config.domain && {
-          certificate: acm.Certificate.fromCertificateArn(
-            this,
-            "CloudfrontAcm",
-            props.config.certificate
-          ),
-          domainNames: [props.config.domain],
-        }),
+        certificate: acm.Certificate.fromCertificateArn(
+          this,
+          "CloudfrontAcm",
+          props.config.certificate
+        ),
+        domainNames: [props.config.domain],
+      }),
 
       priceClass: cf.PriceClass.PRICE_CLASS_ALL,
       httpVersion: cf.HttpVersion.HTTP2_AND_3,
       minimumProtocolVersion: cf.SecurityPolicyProtocol.TLS_V1_2_2021,
+      //TODO: make this configurable
       enableLogging: true,
       logBucket: distributionLogsBucket,
       logIncludesCookies: false,

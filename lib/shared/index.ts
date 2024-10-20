@@ -45,7 +45,7 @@ export class Shared extends Construct {
     this.kmsKeyAlias = props.config.prefix + "genaichatbot-shared-key";
     this.queueKmsKeyAlias =
       props.config.prefix + "genaichatbot-queue-shared-key";
-    const powerToolsLayerVersion = "46";
+    const powerToolsLayerVersion = "1";
 
     this.defaultEnvironmentVariables = {
       POWERTOOLS_DEV: "false",
@@ -148,11 +148,13 @@ export class Shared extends Construct {
         open: true,
       });
 
-      // Create VPC Endpoint for SageMaker Runtime
-      vpc.addInterfaceEndpoint("SageMakerRuntimeEndpoint", {
-        service: ec2.InterfaceVpcEndpointAwsService.SAGEMAKER_RUNTIME,
-        open: true,
-      });
+      if (props.config.llms.sagemaker.length > 0) {
+        // Create VPC Endpoint for SageMaker Runtime
+        vpc.addInterfaceEndpoint("SageMakerRuntimeEndpoint", {
+          service: ec2.InterfaceVpcEndpointAwsService.SAGEMAKER_RUNTIME,
+          open: true,
+        });
+      }
 
       if (props.config.privateWebsite) {
         // Create VPC Endpoint for AppSync
@@ -195,8 +197,7 @@ export class Shared extends Construct {
           if (props.config.bedrock?.region !== cdk.Stack.of(this).region) {
             throw new Error(
               `Bedrock is only supported in the same region as the stack when using private website (Bedrock region: ${props
-                .config.bedrock?.region}, Stack region: ${
-                cdk.Stack.of(this).region
+                .config.bedrock?.region}, Stack region: ${cdk.Stack.of(this).region
               }).`
             );
           }
@@ -260,8 +261,8 @@ export class Shared extends Construct {
 
     const powerToolsArn =
       lambdaArchitecture === lambda.Architecture.X86_64
-        ? `arn:${cdk.Aws.PARTITION}:lambda:${cdk.Aws.REGION}:017000801446:layer:AWSLambdaPowertoolsPythonV2:${powerToolsLayerVersion}`
-        : `arn:${cdk.Aws.PARTITION}:lambda:${cdk.Aws.REGION}:017000801446:layer:AWSLambdaPowertoolsPythonV2-Arm64:${powerToolsLayerVersion}`;
+        ? `arn:${cdk.Aws.PARTITION}:lambda:${cdk.Aws.REGION}:509877531266:layer:AWSLambdaPowertoolsPythonV2:${powerToolsLayerVersion}`
+        : `arn:${cdk.Aws.PARTITION}:lambda:${cdk.Aws.REGION}:509877531266:layer:AWSLambdaPowertoolsPythonV2-Arm64:${powerToolsLayerVersion}`;
 
     const powerToolsLayer = lambda.LayerVersion.fromLayerVersionArn(
       this,

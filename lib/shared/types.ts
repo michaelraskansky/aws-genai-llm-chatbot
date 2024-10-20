@@ -72,6 +72,9 @@ export enum Direction {
 
 export interface SystemConfig {
   prefix: string;
+  enableWaf: boolean;
+  enableS3TransferAcceleration: boolean;
+  cloudfrontLogBucketArn?: string;
   createCMKs?: boolean;
   retainOnDelete?: boolean;
   vpc?: {

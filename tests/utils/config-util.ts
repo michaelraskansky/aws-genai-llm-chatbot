@@ -9,6 +9,8 @@ export function getTestConfig(): SystemConfig {
   return {
     prefix: "prefix",
     privateWebsite: true,
+    enableWaf: true,
+    enableS3TransferAcceleration: true,
     certificate: "",
     cfGeoRestrictEnable: true,
     cfGeoRestrictList: [],

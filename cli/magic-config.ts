@@ -77,7 +77,8 @@ function isValidDate(dateString: string): boolean {
 
 const timeZoneData = getTimeZonesWithCurrentTime();
 const cfCountries = getCountryCodesAndNames();
-
+// test s3 bucket arn regexp
+const s3BucketArnRegExp = RegExp(/^arn:aws:s3:::(?!-)[a-z0-9.-]{3,63}(?<!-)$/);
 const iamRoleRegExp = RegExp(/arn:aws:iam::\d+:role\/[\w-_]+/);
 const acmCertRegExp = RegExp(/arn:aws:acm:[\w-_]+:\d+:certificate\/[\w-_]+/);
 const cfAcmCertRegExp = RegExp(
@@ -145,6 +146,9 @@ const embeddingModels = [
         fs.readFileSync("./bin/config.json").toString("utf8")
       );
       options.prefix = config.prefix;
+      options.enableWaf = config.enableWaf;
+      options.enableS3TransferAcceleration = config.enableS3TransferAcceleration;
+      options.cloudfrontLogBucketArn = config.cloudfrontLogBucketArn;
       options.createCMKs = config.createCMKs;
       options.retainOnDelete = config.retainOnDelete;
       options.vpcId = config.vpc?.vpcId;
@@ -268,6 +272,36 @@ async function processCreateOptions(options: any): Promise<void> {
           ? true
           : "Only letters, numbers, and dashes are allowed. The max length is 10 characters.";
       },
+    },
+    {
+      type: "confirm",
+      name: "enableWaf",
+      message: "Do you want to enable waf rules?",
+      initial: options.enableWaf ?? true,
+
+    },
+    {
+      type: "confirm",
+      name: "enableS3TransferAcceleration",
+      message: "Do you want to enable S3 transfer acceleration",
+      initial: options.enableS3TransferAcceleration ?? true,
+    },
+    {
+      type: "input",
+      name: "cloudfrontLogBucketArn",
+      message: "Cloudfront log bucket arn - leave empty to create one",
+      hint: "this should be used when Cloudfront dosen't support a log bucket in your target region",
+      initial: options.cloudfrontLogBucketArn ?? "",
+      validate(bucketArn: string) {
+        console.log(options.cloudfrontLogBucketArn);
+        console.log(bucketArn);
+        return (this as any).skipped || bucketArn === ""
+          ? true
+          : s3BucketArnRegExp.test(bucketArn)
+            ? true
+            : "Enter a valid S3 Bucket ARN in the format arn:aws:s3::bucket";
+      },
+
     },
     {
       type: "confirm",
@@ -674,9 +708,8 @@ async function processCreateOptions(options: any): Promise<void> {
         limit: 8,
         name: "region",
         choices: Object.values(SupportedRegion),
-        message: `Region of the Kendra index${
-          existingIndex?.region ? " (" + existingIndex?.region + ")" : ""
-        }`,
+        message: `Region of the Kendra index${existingIndex?.region ? " (" + existingIndex?.region + ")" : ""
+          }`,
         initial: Object.values(SupportedRegion).indexOf(existingIndex?.region),
       },
       {
@@ -749,9 +782,8 @@ async function processCreateOptions(options: any): Promise<void> {
         limit: 8,
         name: "region",
         choices: ["us-east-1", "us-west-2"],
-        message: `Region of the Bedrock Knowledge Base index${
-          existingIndex?.region ? " (" + existingIndex?.region + ")" : ""
-        }`,
+        message: `Region of the Bedrock Knowledge Base index${existingIndex?.region ? " (" + existingIndex?.region + ")" : ""
+          }`,
         initial: ["us-east-1", "us-west-2"].indexOf(existingIndex?.region),
       },
       {
@@ -1158,13 +1190,16 @@ async function processCreateOptions(options: any): Promise<void> {
   // Create the config object
   const config = {
     prefix: answers.prefix,
+    enableS3TransferAcceleration: answers.enableS3TransferAcceleration,
+    enableWaf: answers.enableWaf,
+    cloudfrontLogBucketArn: answers.cloudfrontLogBucketArn,
     createCMKs: answers.createCMKs,
     retainOnDelete: answers.retainOnDelete,
     vpc: answers.existingVpc
       ? {
-          vpcId: answers.vpcId.toLowerCase(),
-          createVpcEndpoints: advancedSettings.createVpcEndpoints,
-        }
+        vpcId: answers.vpcId.toLowerCase(),
+        createVpcEndpoints: advancedSettings.createVpcEndpoints,
+      }
       : undefined,
     privateWebsite: advancedSettings.privateWebsite,
     advancedMonitoring: advancedSettings.advancedMonitoring,
@@ -1178,45 +1213,45 @@ async function processCreateOptions(options: any): Promise<void> {
     domain: advancedSettings.domain,
     cognitoFederation: advancedSettings.cognitoFederationEnabled
       ? {
-          enabled: advancedSettings.cognitoFederationEnabled,
-          autoRedirect: advancedSettings.cognitoAutoRedirect,
-          customProviderName: advancedSettings.cognitoCustomProviderName,
-          customProviderType: advancedSettings.cognitoCustomProviderType,
-          customSAML:
-            advancedSettings.cognitoCustomProviderType == "SAML"
-              ? {
-                  metadataDocumentUrl:
-                    advancedSettings.cognitoCustomProviderSAMLMetadata,
-                }
-              : undefined,
-          customOIDC:
-            advancedSettings.cognitoCustomProviderType == "OIDC"
-              ? {
-                  OIDCClient: advancedSettings.cognitoCustomProviderOIDCClient,
-                  OIDCSecret: advancedSettings.cognitoCustomProviderOIDCSecret,
-                  OIDCIssuerURL:
-                    advancedSettings.cognitoCustomProviderOIDCIssuerURL,
-                }
-              : undefined,
-          cognitoDomain: advancedSettings.cognitoDomain
-            ? advancedSettings.cognitoDomain
-            : `llm-cb-${randomSuffix}`,
-        }
+        enabled: advancedSettings.cognitoFederationEnabled,
+        autoRedirect: advancedSettings.cognitoAutoRedirect,
+        customProviderName: advancedSettings.cognitoCustomProviderName,
+        customProviderType: advancedSettings.cognitoCustomProviderType,
+        customSAML:
+          advancedSettings.cognitoCustomProviderType == "SAML"
+            ? {
+              metadataDocumentUrl:
+                advancedSettings.cognitoCustomProviderSAMLMetadata,
+            }
+            : undefined,
+        customOIDC:
+          advancedSettings.cognitoCustomProviderType == "OIDC"
+            ? {
+              OIDCClient: advancedSettings.cognitoCustomProviderOIDCClient,
+              OIDCSecret: advancedSettings.cognitoCustomProviderOIDCSecret,
+              OIDCIssuerURL:
+                advancedSettings.cognitoCustomProviderOIDCIssuerURL,
+            }
+            : undefined,
+        cognitoDomain: advancedSettings.cognitoDomain
+          ? advancedSettings.cognitoDomain
+          : `llm-cb-${randomSuffix}`,
+      }
       : undefined,
     cfGeoRestrictEnable: advancedSettings.cfGeoRestrictEnable,
     cfGeoRestrictList: advancedSettings.cfGeoRestrictList,
     bedrock: answers.bedrockEnable
       ? {
-          enabled: answers.bedrockEnable,
-          region: answers.bedrockRegion,
-          roleArn:
-            answers.bedrockRoleArn === "" ? undefined : answers.bedrockRoleArn,
-          guardrails: {
-            enabled: answers.guardrailsEnable,
-            identifier: answers.guardrailsIdentifier,
-            version: answers.guardrailsVersion,
-          },
-        }
+        enabled: answers.bedrockEnable,
+        region: answers.bedrockRegion,
+        roleArn:
+          answers.bedrockRoleArn === "" ? undefined : answers.bedrockRoleArn,
+        guardrails: {
+          enabled: answers.guardrailsEnable,
+          identifier: answers.guardrailsIdentifier,
+          version: answers.guardrailsVersion,
+        },
+      }
       : undefined,
     llms: {
       rateLimitPerAIP: advancedSettings?.llmRateLimitPerIP
@@ -1226,17 +1261,17 @@ async function processCreateOptions(options: any): Promise<void> {
       huggingfaceApiSecretArn: answers.huggingfaceApiSecretArn,
       sagemakerSchedule: answers.enableSagemakerModelsSchedule
         ? {
-            enabled: answers.enableSagemakerModelsSchedule,
-            timezonePicker: answers.timezonePicker,
-            enableCronFormat: answers.enableCronFormat,
-            sagemakerCronStartSchedule: answers.sagemakerCronStartSchedule,
-            sagemakerCronStopSchedule: answers.sagemakerCronStopSchedule,
-            daysForSchedule: answers.daysForSchedule,
-            scheduleStartTime: answers.scheduleStartTime,
-            scheduleStopTime: answers.scheduleStopTime,
-            enableScheduleEndDate: answers.enableScheduleEndDate,
-            startScheduleEndDate: answers.startScheduleEndDate,
-          }
+          enabled: answers.enableSagemakerModelsSchedule,
+          timezonePicker: answers.timezonePicker,
+          enableCronFormat: answers.enableCronFormat,
+          sagemakerCronStartSchedule: answers.sagemakerCronStartSchedule,
+          sagemakerCronStopSchedule: answers.sagemakerCronStopSchedule,
+          daysForSchedule: answers.daysForSchedule,
+          scheduleStartTime: answers.scheduleStartTime,
+          scheduleStopTime: answers.scheduleStopTime,
+          enableScheduleEndDate: answers.enableScheduleEndDate,
+          startScheduleEndDate: answers.startScheduleEndDate,
+        }
         : undefined,
     },
     rag: {

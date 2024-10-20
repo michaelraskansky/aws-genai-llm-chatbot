@@ -14,6 +14,9 @@ export function getConfig(): SystemConfig {
        vpcDefaultSecurityGroup: "sg-00000000000"
     },*/
     privateWebsite: false,
+    enableS3TransferAcceleration: true,
+    enableWaf: true,
+    cloudfrontLogBucketArn: "",
     certificate: "",
     cfGeoRestrictEnable: false,
     cfGeoRestrictList: [],

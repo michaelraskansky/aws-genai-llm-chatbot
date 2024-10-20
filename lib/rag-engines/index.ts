@@ -93,6 +93,7 @@ export class RagEngines extends Construct {
       documentsByCompoundKeyIndexName: tables.documentsByCompoundKeyIndexName,
       openSearchVector: openSearchVector ?? undefined,
       kendraRetrieval: kendraRetrieval ?? undefined,
+      s3TransferAcceleration: props.config.enableS3TransferAcceleration,
     });
 
     const workspaces = new Workspaces(this, "Workspaces", {

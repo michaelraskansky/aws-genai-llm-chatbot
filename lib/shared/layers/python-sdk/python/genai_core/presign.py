@@ -6,12 +6,17 @@ import genai_core.workspaces
 import genai_core.types
 import unicodedata
 
+UPLOAD_BUCKET_REGION = os.environ.get("UPLOAD_BUCKET_REGION")
+UPLOAD_S3_TRANSFER_ACCELERATION = os.environ.get(
+    "UPLOAD_S3_TRANSFER_ACCELERATION") == "TRUE"
 UPLOAD_BUCKET_NAME = os.environ.get("UPLOAD_BUCKET_NAME")
 CHATBOT_FILES_BUCKET_NAME = os.environ.get("CHATBOT_FILES_BUCKET_NAME")
 MAX_FILE_SIZE = 100 * 1000 * 1000  # 100Mb
 
 s3_client = boto3.client(
     "s3",
+    region_name=UPLOAD_BUCKET_REGION,
+    endpoint_url=f"https://s3.{UPLOAD_BUCKET_REGION}.amazonaws.com",
     config=botocore.config.Config(
         # Presign URLs only work with CMK if sigv4 is used
         # (boto3 default to v2 in some cases)
@@ -42,9 +47,13 @@ def generate_workspace_presigned_post(
     if not response:
         return None
 
-    response["url"] = f"https://{UPLOAD_BUCKET_NAME}.s3-accelerate.amazonaws.com"
+    response["url"] = f"https://{UPLOAD_BUCKET_NAME}.{resolve_s3_endpoint()}"
 
     return response
+
+
+def resolve_s3_endpoint():
+    return "s3-accelerate.amazonaws.com" if UPLOAD_S3_TRANSFER_ACCELERATION else f"s3.{UPLOAD_BUCKET_REGION}.amazonaws.com"
 
 
 def generate_user_presigned_post(user_id: str, file_name: str, expiration=3600):
@@ -69,7 +78,7 @@ def generate_user_presigned_post(user_id: str, file_name: str, expiration=3600):
     if not response:
         return None
 
-    response["url"] = f"https://{CHATBOT_FILES_BUCKET_NAME}.s3-accelerate.amazonaws.com"
+    response["url"] = f"https://{CHATBOT_FILES_BUCKET_NAME}.{resolve_s3_endpoint()}"
 
     return response
 

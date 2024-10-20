@@ -51,6 +51,7 @@ export class ChatBotApi extends Construct {
     const chatBuckets = new ChatBotS3Buckets(this, "ChatBuckets", {
       kmsKey: props.shared.kmsKey,
       retainOnDelete: props.config.retainOnDelete,
+      s3transferAcceleration: props.config.enableS3TransferAcceleration,
     });
 
     const loggingRole = new iam.Role(this, "apiLoggingRole", {
@@ -97,7 +98,7 @@ export class ChatBotApi extends Construct {
         : appsync.Visibility.GLOBAL,
     });
 
-    if (props.shared.webACLRules.length > 0) {
+    if (props.config.enableWaf && props.shared.webACLRules.length > 0) {
       new wafv2.CfnWebACLAssociation(this, "WebACLAssociation", {
         webAclArn: new wafv2.CfnWebACL(this, "WafAppsync", {
           defaultAction: { allow: {} },
