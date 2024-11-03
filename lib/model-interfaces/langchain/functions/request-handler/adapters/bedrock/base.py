@@ -7,7 +7,7 @@ import genai_core.clients
 
 from aws_lambda_powertools import Logger
 
-from langchain_core.messages import BaseMessage
+from langchain_core.messages import BaseMessage, SystemMessage
 from langchain_core.messages.ai import AIMessage
 from langchain_core.messages.human import HumanMessage
 from langchain_aws import ChatBedrockConverse
@@ -47,17 +47,21 @@ class BedrockChatAdapter(ModelAdapter):
         )
 
     def get_prompt(self):
+
         prompt_template = ChatPromptTemplate(
             [
-                (
-                    "system",
-                    (
-                        "The following is a friendly conversation between "
-                        "a human and an AI."
-                        "If the AI does not know the answer to a question, it "
-                        "truthfully says it does not know."
-                    ),
-                ),
+                SystemMessage(content=f"""
+                You are an AI assistant designed to help public sector employees working
+                for the government of Israel solve problems and answer questions.
+                Your responses should always be in
+                {os.environ.get("LANGUAGE", "Hebrew")}
+                and never translated into any other language.
+                Use only the data provided to answer the user's query accurately.
+                If you don't know the answer, clearly state that you do not know.
+                Do not invent or fabricate information.
+                Maintain a professional and respectful tone at all times, considering
+                the specific needs of government employees
+                """),
                 MessagesPlaceholder(variable_name="chat_history"),
                 ("human", "{input}"),
             ]
