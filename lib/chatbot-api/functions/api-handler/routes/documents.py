@@ -134,6 +134,7 @@ allowed_session_extensions = set(
         ".jpg",
         ".jpeg",
         ".png",
+        ".pdf",
     ]
 )
 

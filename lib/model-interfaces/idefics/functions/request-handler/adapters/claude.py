@@ -1,5 +1,7 @@
 from aws_lambda_powertools import Logger
 import boto3
+from langchain_aws import ChatBedrockConverse
+from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 from .base import MultiModalModelBase
 from genai_core.types import ChatbotMessageType
 import os
@@ -12,7 +14,18 @@ logger = Logger()
 s3 = boto3.resource("s3")
 
 
-def get_image_message(file: dict, user_id: str):
+def get_system_prompt():
+    return f"""
+    You are an AI assistant that is trained to help users solve problems and answer
+    questions. You must use the provided data to help the user answer the question.
+    You will always answer in {os.environ.get("LANGUAGE", "Hebrew")} and never
+    translate the answer to the user. if you don't know the answer, say that you
+    don't know. Do not make up an answer if you don't know the answer.
+    the audniace is public sector employees that work for the goverment of Israel.
+    """
+
+
+def get_image_message(file: dict, user_id: str, idx: int = 0):
     if file["key"] is None:
         raise Exception("Invalid S3 Key " + file["key"])
 
@@ -22,15 +35,38 @@ def get_image_message(file: dict, user_id: str):
     )
 
     response = s3.Object(os.environ["CHATBOT_FILES_BUCKET_NAME"], key)
-    img = str(b64encode(response.get()["Body"].read()), "ascii")
-    return {
-        "type": "image",
-        "source": {
-            "type": "base64",
-            "media_type": "image/jpeg",
-            "data": img,
-        },
-    }
+
+    # check if the file is pdf
+    if file["key"].endswith(".pdf"):
+        doc = response.get()["Body"].read()
+        return [{
+            "document": {
+                "format": "pdf",
+                "name": f"qa_document_{idx}",
+                "source": {
+                    "bytes": doc
+                }
+            }
+        }]
+    else:
+        img = str(b64encode(response.get()["Body"].read()), "ascii")
+        return [{
+            "type": "image",
+            "source": {
+                "type": "base64",
+                "media_type": "image/jpeg",
+                "data": img,
+            },
+        }]
+
+
+def to_base_messages(msg):
+    if msg["role"] == "user":
+        return HumanMessage(content=msg["content"])
+    elif msg["role"] == "assistant":
+        return AIMessage(content=msg["content"])
+    else:
+        raise Exception("Invalid message type")
 
 
 class Claude3(MultiModalModelBase):
@@ -47,7 +83,7 @@ class Claude3(MultiModalModelBase):
         prompts = []
 
         # Chat history
-        for message in messages:
+        for idx, message in enumerate(messages):
             if message.type.lower() == ChatbotMessageType.Human.value.lower():
                 user_msg = {
                     "role": "user",
@@ -56,7 +92,8 @@ class Claude3(MultiModalModelBase):
                 prompts.append(user_msg)
                 message_files = message.additional_kwargs.get("files", [])
                 for message_file in message_files:
-                    user_msg["content"].append(get_image_message(message_file, user_id))
+                    user_msg["content"].extend(
+                        get_image_message(message_file, user_id, idx + 1))
             if message.type.lower() == ChatbotMessageType.AI.value.lower():
                 prompts.append({"role": "assistant", "content": message.content})
 
@@ -67,46 +104,44 @@ class Claude3(MultiModalModelBase):
         }
         prompts.append(user_msg)
         for file in files:
-            user_msg["content"].append(get_image_message(file, user_id))
+            user_msg["content"].extend(get_image_message(file, user_id))
 
-        return json.dumps(
-            {
-                "anthropic_version": "bedrock-2023-05-31",
-                "max_tokens": 512,
-                "messages": prompts,
-                "temperature": 0.3,
-            }
-        )
+        return {
+            "anthropic_version": "bedrock-2023-05-31",
+            "max_tokens": 512,
+            "messages": prompts,
+            "temperature": 0.3,
+        }
 
     def handle_run(self, prompt: str, model_kwargs: dict):
         logger.info("Incoming request for claude", model_kwargs=model_kwargs)
-        body = json.loads(prompt)
+        messages = [to_base_messages(msg) for msg in prompt["messages"]]
+        logger.info("prompt messages", messages=messages)
 
-        if "temperature" in model_kwargs:
-            body["temperature"] = model_kwargs["temperature"]
-        if "topP" in model_kwargs:
-            body["top_p"] = model_kwargs["topP"]
-        if "maxTokens" in model_kwargs:
-            body["max_tokens"] = model_kwargs["maxTokens"]
-        if "topK" in model_kwargs:
-            body["top_k"] = model_kwargs["topK"]
-
-        body_str = json.dumps(body)
-        mlm_response = self.client.invoke_model(
-            modelId=self.model_id,
-            body=body_str,
-            accept="application/json",
-            contentType="application/json",
+        llm = ChatBedrockConverse(
+            client=self.client,
+            model=self.model_id,
+            disable_streaming=True
         )
+        if "temperature" in model_kwargs:
+            llm.temperature = model_kwargs["temperature"]
+        if "topP" in model_kwargs:
+            llm.top_p = model_kwargs["topP"]
+        if "maxTokens" in model_kwargs:
+            llm.max_tokens = model_kwargs["maxTokens"]
+        logger.info("Prompt", prompt=prompt)
+        messages.insert(0, SystemMessage(get_system_prompt()))
+        ai_message = llm.invoke(messages)
 
-        return json.loads(mlm_response["body"].read())["content"][0]["text"]
+        return ai_message.content
 
-    def clean_prompt(self, prompt: str) -> str:
-        p = json.loads(prompt)
+    def clean_prompt(self, p) -> str:
         for m in p["messages"]:
             if m["role"] == "user" and type(m["content"]) == type([]):  # noqa: E721
                 for c in m["content"]:
-                    if c["type"] == "image":
+                    if "document" in c:
+                        c["document"]["source"]["bytes"] = ""
+                    elif c["type"] == "image":
                         c["source"]["data"] = ""
         return json.dumps(p)
 
