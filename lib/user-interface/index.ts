@@ -88,7 +88,7 @@ export class UserInterface extends Construct {
         websiteBucket: websiteBucket,
         chatbotFilesBucket: props.chatbotFilesBucket,
         uploadBucket: props.uploadBucket,
-        cloudfrontLogBucketArn: props.cloudfrontLogBucketArn
+        cloudfrontLogBucketArn: props.cloudfrontLogBucketArn,
       });
       this.cloudFrontDistribution = publicWebsite.distribution;
       this.publishedDomain = props.config.domain
@@ -97,6 +97,9 @@ export class UserInterface extends Construct {
       redirectSignIn = `https://${this.publishedDomain}`;
     }
 
+    const sagemakerEmbedingModels = props.config.rag.embeddingsModels.filter(
+      (i) => i.provider === "sagemaker"
+    );
     const exportsAsset = s3deploy.Source.jsonData("aws-exports.json", {
       aws_project_region: cdk.Aws.REGION,
       aws_cognito_region: cdk.Aws.REGION,
@@ -109,12 +112,12 @@ export class UserInterface extends Construct {
       },
       oauth: props.config.cognitoFederation?.enabled
         ? {
-          domain: `${props.config.cognitoFederation.cognitoDomain}.auth.${cdk.Aws.REGION}.amazoncognito.com`,
-          redirectSignIn: redirectSignIn,
-          redirectSignOut: `https://${this.publishedDomain}`,
-          Scopes: ["email", "openid"],
-          responseType: "code",
-        }
+            domain: `${props.config.cognitoFederation.cognitoDomain}.auth.${cdk.Aws.REGION}.amazoncognito.com`,
+            redirectSignIn: redirectSignIn,
+            redirectSignOut: `https://${this.publishedDomain}`,
+            Scopes: ["email", "openid"],
+            responseType: "code",
+          }
         : undefined,
       aws_appsync_graphqlEndpoint: props.api.graphqlApi.graphqlUrl,
       aws_appsync_region: cdk.Aws.REGION,
@@ -122,18 +125,22 @@ export class UserInterface extends Construct {
       config: {
         auth_federated_provider: props.config.cognitoFederation?.enabled
           ? {
-            auto_redirect: props.config.cognitoFederation?.autoRedirect,
-            custom: true,
-            name: props.config.cognitoFederation?.customProviderName,
-          }
+              auto_redirect: props.config.cognitoFederation?.autoRedirect,
+              custom: true,
+              name: props.config.cognitoFederation?.customProviderName,
+            }
           : undefined,
         rag_enabled: props.config.rag.enabled,
-        cross_encoders_enabled: props.crossEncodersEnabled,
-        sagemaker_embeddings_enabled: props.sagemakerEmbeddingsEnabled,
-        default_embeddings_model: Utils.getDefaultEmbeddingsModel(props.config),
-        default_cross_encoder_model: Utils.getDefaultCrossEncoderModel(
-          props.config
-        ),
+        cross_encoders_enabled: props.config.rag.crossEncoderModels.length > 0,
+        sagemaker_embeddings_enabled: sagemakerEmbedingModels.length > 0,
+        default_embeddings_model:
+          props.config.rag.embeddingsModels.length > 0
+            ? Utils.getDefaultEmbeddingsModel(props.config)
+            : undefined,
+        default_cross_encoder_model:
+          props.config.rag.crossEncoderModels.length > 0
+            ? Utils.getDefaultCrossEncoderModel(props.config)
+            : undefined,
         privateWebsite: props.config.privateWebsite ? true : false,
       },
     });

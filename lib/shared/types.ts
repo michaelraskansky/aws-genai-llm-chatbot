@@ -70,6 +70,13 @@ export enum Direction {
   Out = "OUT",
 }
 
+export interface ModelConfig {
+  provider: ModelProvider;
+  name: string;
+  dimensions?: number;
+  default?: boolean;
+}
+
 export interface SystemConfig {
   prefix: string;
   enableWaf: boolean;
@@ -135,6 +142,7 @@ export interface SystemConfig {
   };
   rag: {
     enabled: boolean;
+    deployDefaultSagemakerModels?: boolean;
     engines: {
       aurora: {
         enabled: boolean;
@@ -163,17 +171,9 @@ export interface SystemConfig {
         }[];
       };
     };
-    embeddingsModels: {
-      provider: ModelProvider;
-      name: string;
-      dimensions: number;
-      default?: boolean;
-    }[];
-    crossEncoderModels: {
-      provider: ModelProvider;
-      name: string;
-      default?: boolean;
-    }[];
+    embeddingsModels: ModelConfig[];
+    crossEncodingEnabled: boolean;
+    crossEncoderModels: ModelConfig[];
   };
 }
 

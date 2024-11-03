@@ -72,10 +72,6 @@ export default function Embeddings() {
     validate: (form) => {
       const errors: Record<string, string | string[]> = {};
 
-      if (!form.embeddingsModel) {
-        errors.embeddingsModel = "Embeddings model is required";
-      }
-
       for (let i = 0; i < form.input.length; i++) {
         const input = form.input[i];
         if (input.trim().length === 0) {
@@ -187,6 +183,7 @@ export default function Embeddings() {
   };
 
   const embeddingsModelOptions = EmbeddingsModelHelper.getSelectOptions(
+    appContext,
     embeddingsModelsResults
   );
 
