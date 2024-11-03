@@ -16,16 +16,19 @@ s3 = boto3.resource("s3")
 
 def get_system_prompt():
     return f"""
-    You are an AI assistant that is trained to help users solve problems and answer
-    questions. You must use the provided data to help the user answer the question.
-    You will always answer in {os.environ.get("LANGUAGE", "Hebrew")} and never
-    translate the answer to the user. if you don't know the answer, say that you
-    don't know. Do not make up an answer if you don't know the answer.
-    the audniace is public sector employees that work for the goverment of Israel.
+    You are an AI assistant designed to help public sector employees working for
+    the government of Israel solve problems and answer questions.
+    Your responses should always be in {os.environ.get("LANGUAGE", "Hebrew")} and never
+    translated into any other language.
+    Use only the data provided to answer the user's query accurately.
+    If you don't know the answer, clearly state that you do not know.
+    Do not invent or fabricate information.
+    Maintain a professional and respectful tone at all times, considering the specific
+    needs of government employees
     """
 
 
-def get_image_message(file: dict, user_id: str, idx: int = 0):
+def get_image_message(file: dict, user_id: str, file_name: str):
     if file["key"] is None:
         raise Exception("Invalid S3 Key " + file["key"])
 
@@ -42,7 +45,7 @@ def get_image_message(file: dict, user_id: str, idx: int = 0):
         return [{
             "document": {
                 "format": "pdf",
-                "name": f"qa_document_{idx}",
+                "name": file_name,
                 "source": {
                     "bytes": doc
                 }
@@ -83,7 +86,7 @@ class Claude3(MultiModalModelBase):
         prompts = []
 
         # Chat history
-        for idx, message in enumerate(messages):
+        for message in messages:
             if message.type.lower() == ChatbotMessageType.Human.value.lower():
                 user_msg = {
                     "role": "user",
@@ -91,9 +94,9 @@ class Claude3(MultiModalModelBase):
                 }
                 prompts.append(user_msg)
                 message_files = message.additional_kwargs.get("files", [])
-                for message_file in message_files:
+                for idx, message_file in enumerate(message_files):
                     user_msg["content"].extend(
-                        get_image_message(message_file, user_id, idx + 1))
+                        get_image_message(message_file, user_id, f"history_file_{idx}"))
             if message.type.lower() == ChatbotMessageType.AI.value.lower():
                 prompts.append({"role": "assistant", "content": message.content})
 
@@ -103,8 +106,9 @@ class Claude3(MultiModalModelBase):
             "content": [{"type": "text", "text": prompt}],
         }
         prompts.append(user_msg)
-        for file in files:
-            user_msg["content"].extend(get_image_message(file, user_id))
+        for idx, file in enumerate(files):
+            user_msg["content"].extend(get_image_message(
+                file, user_id, f"session_file_{idx}"))
 
         return {
             "anthropic_version": "bedrock-2023-05-31",
