@@ -28,29 +28,34 @@ export default function NavigationPanel() {
         text: "בית",
         href: "/",
       },
+      { type: "link", text: "צ׳אטבוט", href: "/chatbot/playground" },
       {
-        type: "section",
-        text: "אפשרויות",
-        items: [
-          { type: "link", text: "צ׳אטבוט", href: "/chatbot/playground" },
-          {
-            type: "link",
-            text: "השוואת מודלים",
-            href: "/chatbot/multichat",
-          },
-          {
-            type: "link",
-            text: "היסטוריה",
-            href: "/chatbot/sessions",
-          },
-          {
-            type: "link",
-            text: "מודלים",
-            href: "/chatbot/models",
-          },
-        ],
+        type: "link",
+        text: "היסטוריה",
+        href: "/chatbot/sessions",
       },
     ];
+
+    if (hasRagAccess()) {
+    items.push({
+      type: "section",
+      text: "אפשרויות מתדדמות",
+      items: [
+        {
+          type: "link",
+          text: "מודלים",
+          href: "/chatbot/models",
+        },
+        {
+          type: "link",
+          text: "השוואת מודלים",
+          href: "/chatbot/multichat",
+        },
+
+      ],
+    })
+  }
+ 
 
     if (appContext?.config.rag_enabled && hasRagAccess()) {
       const crossEncodersItems: SideNavigationProps.Item[] = appContext?.config
