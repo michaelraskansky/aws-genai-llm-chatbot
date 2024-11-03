@@ -13,6 +13,14 @@ export default function NavigationPanel() {
   const onFollow = useOnFollow();
   const [navigationPanelState, setNavigationPanelState] =
     useNavigationPanelState();
+
+  const hasRagAccess = () => {
+    // check if groups contains the rag_admins group
+    if (appContext?.config.userInfo?.groups?.includes("rag_admins")) {
+      return true;
+    }
+  };
+
   const [items] = useState<SideNavigationProps.Item[]>(() => {
     const items: SideNavigationProps.Item[] = [
       {
@@ -44,7 +52,7 @@ export default function NavigationPanel() {
       },
     ];
 
-    if (appContext?.config.rag_enabled) {
+    if (appContext?.config.rag_enabled && hasRagAccess()) {
       const crossEncodersItems: SideNavigationProps.Item[] = appContext?.config
         .cross_encoders_enabled
         ? [
