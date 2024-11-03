@@ -26,7 +26,7 @@ export interface ImageDialogProps {
   setConfiguration: Dispatch<React.SetStateAction<ChatBotConfiguration>>;
 }
 
-const ALLOWED_MIME_TYPES = ["image/png", "image/jpg", "image/jpeg"];
+const ALLOWED_MIME_TYPES = ["image/png", "image/jpg", "image/jpeg", "application/pdf"];
 
 export default function ImageDialog(props: ImageDialogProps) {
   const appContext = useContext(AppContext);
@@ -154,66 +154,68 @@ export default function ImageDialog(props: ImageDialogProps) {
   };
 
   return (
-    <Modal
-      onDismiss={() => props.setVisible(false)}
-      visible={props.visible}
-      footer={
-        <Box float="right">
-          <SpaceBetween direction="horizontal" size="xs" alignItems="center">
-            <Button variant="link" onClick={cancelChanges}>
-              Cancel
-            </Button>
-            <Button
-              variant="primary"
-              disabled={loading || !files.length}
-              onClick={saveConfig}
+      <Modal
+        onDismiss={() => props.setVisible(false)}
+        visible={props.visible}
+        footer={
+          <Box float="right">
+            <SpaceBetween direction="horizontal" size="xs" alignItems="center">
+              <Button variant="link" onClick={cancelChanges}>
+                בטל
+              </Button>
+              <Button
+                variant="primary"
+                disabled={loading || !files.length}
+                onClick={saveConfig}
+              >
+                הוסף
+              </Button>
+            </SpaceBetween>
+          </Box>
+        }
+        header="הוסף תמונות להודעה"
+      >
+      <div dir="rtl">
+        <Form>
+          <SpaceBetween size="m">
+            <FormField
+              label="העלה מהמכשיר"
+              errorText={errors.files}
+              description="אתה יכול לעלות קובץ לשימוש בשיחה"
             >
-              Add
-            </Button>
+              <FileUpload
+                onChange={({ detail }) => {
+                  onChange({ files: detail.value });
+                  setFiles(detail.value);
+                }}
+                value={files}
+                i18nStrings={{
+                  uploadButtonText: (e) => (e ? "בחר קבצים" : "בחר קובץ"),
+                  dropzoneText: (e) =>
+                    e ? "העלה קבצים כאן" : "תעל קובץ כאל",
+                  removeFileAriaLabel: (e) => `הסר קובץ ${e + 1}`,
+                  limitShowFewer: "הצג פחות קבצים",
+                  limitShowMore: "הצג יותר קבצים",
+                  errorIconAriaLabel: "שגיאה",
+                }}
+                multiple={true}
+                errorText={error}
+                showFileThumbnail
+                tokenLimit={3}
+                constraintText=".png, .jpg, .jpeg, .pdf. Max 10MB."
+              />
+            </FormField>
+            {loading && (
+              <>
+                <div>
+                  <Spinner />
+                  <span style={{ marginLeft: "5px" }}>מוסיף קובץ...</span>
+                </div>
+              </>
+            )}
           </SpaceBetween>
-        </Box>
-      }
-      header="Add images to your message"
-    >
-      <Form>
-        <SpaceBetween size="m">
-          <FormField
-            label="Upload from device"
-            errorText={errors.files}
-            description="You can upload an image to be used for this conversation."
-          >
-            <FileUpload
-              onChange={({ detail }) => {
-                onChange({ files: detail.value });
-                setFiles(detail.value);
-              }}
-              value={files}
-              i18nStrings={{
-                uploadButtonText: (e) => (e ? "Choose files" : "Choose file"),
-                dropzoneText: (e) =>
-                  e ? "Drop files to upload" : "Drop file to upload",
-                removeFileAriaLabel: (e) => `Remove file ${e + 1}`,
-                limitShowFewer: "Show fewer files",
-                limitShowMore: "Show more files",
-                errorIconAriaLabel: "Error",
-              }}
-              multiple={true}
-              errorText={error}
-              showFileThumbnail
-              tokenLimit={3}
-              constraintText=".png, .jpg, .jpeg. Max 10MB."
-            />
-          </FormField>
-          {loading && (
-            <>
-              <div>
-                <Spinner />
-                <span style={{ marginLeft: "5px" }}>Adding file...</span>
-              </div>
-            </>
-          )}
-        </SpaceBetween>
-      </Form>
-    </Modal>
+        </Form>
+        </div>
+      </Modal>
   );
 }
