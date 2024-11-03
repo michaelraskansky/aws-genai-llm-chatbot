@@ -1,6 +1,7 @@
 import {
   Box,
   Button,
+  Icon,
   Container,
   ExpandableSection,
   Popover,
@@ -351,17 +352,29 @@ export default function ChatMessage(props: ChatMessageProps) {
         <>
           {files.map((file, idx) => (
             <a
-              key={idx}
-              href={file.url as string}
-              target="_blank"
-              rel="noreferrer"
-              style={{ marginLeft: "5px", marginRight: "5px" }}
-            >
-              <img
-                src={file.url as string}
-                className={styles.img_chabot_message}
-              />
-            </a>
+            key={idx}
+            href={file.url as string}
+            target="_blank"
+            rel="noreferrer"
+            style={{ marginLeft: "5px", marginRight: "5px" }}
+          >
+            {
+              !(new URL(file.url).pathname.endsWith(".pdf")) ? (
+                <img
+                  src={file.url as string}
+                  className={styles.img_chabot_message}
+                  alt="Image"
+                />
+              ) : (
+                <Icon
+                  name="file"
+                  size="medium"
+                  variant="normal"
+                  alt="PDF file"
+                />
+              )
+            }
+          </a>
           ))}
         </>
       )}

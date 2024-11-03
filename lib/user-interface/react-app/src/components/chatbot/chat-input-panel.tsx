@@ -521,20 +521,47 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
               ChabotInputModality.Image
             ) &&
               files.length > 0 &&
-              files.map((file, idx) => (
-                <img
-                  key={idx}
-                  onClick={() => setImageDialogVisible(true)}
-                  src={file.url}
-                  style={{
-                    borderRadius: "4px",
-                    cursor: "pointer",
-                    maxHeight: "30px",
-                    float: "left",
-                    marginRight: "8px",
-                  }}
-                />
-              ))}
+              files.map((file, idx) => {
+                const isImage = !(new URL(file.url)).pathname.endsWith(".pdf");
+                return isImage ? (
+                  <img
+                    key={idx}
+                    onClick={() => setImageDialogVisible(true)}
+                    src={file.url}
+                    alt={`Uploaded file ${idx + 1}`}
+                    onError={(e) => console.error("Image failed to load:", e)}
+                    style={{
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                      maxHeight: "30px",
+                      float: "left",
+                      marginRight: "8px",
+                    }}
+                  />
+                ) : (
+                  <div
+                    key={idx}
+                    className="pdf-icon"
+                    style={{
+                      width: '30px',
+                      height: '30px',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      float: 'left',
+                      marginRight: '8px',
+                    }}
+                  >
+                    <Icon
+                      name="file"
+                      size="medium"
+                      variant="normal"
+                      alt="PDF file"
+                    />
+                  </div>
+                );
+              })
+            }
             <Button
               data-locator="submit-prompt"
               disabled={
