@@ -88,7 +88,7 @@ export class UserInterface extends Construct {
         websiteBucket: websiteBucket,
         chatbotFilesBucket: props.chatbotFilesBucket,
         uploadBucket: props.uploadBucket,
-        cloudfrontLogBucketArn: props.cloudfrontLogBucketArn
+        cloudfrontLogBucketArn: props.cloudfrontLogBucketArn,
       });
       this.cloudFrontDistribution = publicWebsite.distribution;
       this.publishedDomain = props.config.domain
@@ -109,12 +109,12 @@ export class UserInterface extends Construct {
       },
       oauth: props.config.cognitoFederation?.enabled
         ? {
-          domain: `${props.config.cognitoFederation.cognitoDomain}.auth.${cdk.Aws.REGION}.amazoncognito.com`,
-          redirectSignIn: redirectSignIn,
-          redirectSignOut: `https://${this.publishedDomain}`,
-          Scopes: ["email", "openid"],
-          responseType: "code",
-        }
+            domain: `${props.config.cognitoFederation.cognitoDomain}.auth.${cdk.Aws.REGION}.amazoncognito.com`,
+            redirectSignIn: redirectSignIn,
+            redirectSignOut: `https://${this.publishedDomain}`,
+            Scopes: ["email", "openid"],
+            responseType: "code",
+          }
         : undefined,
       aws_appsync_graphqlEndpoint: props.api.graphqlApi.graphqlUrl,
       aws_appsync_region: cdk.Aws.REGION,
@@ -122,10 +122,10 @@ export class UserInterface extends Construct {
       config: {
         auth_federated_provider: props.config.cognitoFederation?.enabled
           ? {
-            auto_redirect: props.config.cognitoFederation?.autoRedirect,
-            custom: true,
-            name: props.config.cognitoFederation?.customProviderName,
-          }
+              auto_redirect: props.config.cognitoFederation?.autoRedirect,
+              custom: true,
+              name: props.config.cognitoFederation?.customProviderName,
+            }
           : undefined,
         rag_enabled: props.config.rag.enabled,
         cross_encoders_enabled: props.crossEncodersEnabled,
