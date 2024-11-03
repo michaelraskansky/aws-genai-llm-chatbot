@@ -29,12 +29,17 @@ export interface AppConfig {
     default_cross_encoder_model: string;
     privateWebsite: boolean;
     locale?: string;
+    userInfo?: UserInfo;
   };
 }
 
 export interface NavigationPanelState {
   collapsed?: boolean;
   collapsedSections?: Record<number, boolean>;
+}
+
+interface UserInfo {
+  groups: string[];
 }
 
 export type LoadingStatus = "pending" | "loading" | "finished" | "error";
