@@ -76,14 +76,6 @@ export default function AppConfigured() {
           }
         }
 
-        const user = await Auth.currentAuthenticatedUser();
-        const groups = user.signInUserSession.accessToken.payload["cognito:groups"];
-        // set currentConfig user info
-        if (currentConfig && currentConfig.config) {
-          currentConfig.config.userInfo = {
-            groups: groups ? groups : [],
-          };
-        }
       
         setCustomMessages(customMessages);
         setConfig(currentConfig);
