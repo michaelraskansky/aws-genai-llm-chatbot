@@ -138,6 +138,14 @@ allowed_session_extensions = set(
         ".jpeg",
         ".png",
         ".pdf",
+        ".csv",
+        ".doc",
+        ".docx",
+        ".xls",
+        ".xlsx",
+        ".html",
+        ".txt",
+        ".md",
     ]
 )
 

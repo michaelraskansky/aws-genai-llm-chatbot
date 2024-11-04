@@ -104,6 +104,16 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
     ReadyState.UNINSTANTIATED
   );
 
+  const isDocument = (file: ImageFile)  => (
+    new URL(file.url).pathname.endsWith(".pdf") || 
+    new URL(file.url).pathname.endsWith(".csv") ||
+    new URL(file.url).pathname.endsWith(".xlsx") ||
+    new URL(file.url).pathname.endsWith(".doc") ||
+    new URL(file.url).pathname.endsWith(".docx") ||
+    new URL(file.url).pathname.endsWith(".xls")
+  );
+
+
   const messageHistoryRef = useRef<ChatBotHistoryItem[]>([]);
 
   useEffect(() => {
@@ -522,23 +532,7 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
             ) &&
               files.length > 0 &&
               files.map((file, idx) => {
-                const isImage = !(new URL(file.url)).pathname.endsWith(".pdf");
-                return isImage ? (
-                  <img
-                    key={idx}
-                    onClick={() => setImageDialogVisible(true)}
-                    src={file.url}
-                    alt={`Uploaded file ${idx + 1}`}
-                    onError={(e) => console.error("Image failed to load:", e)}
-                    style={{
-                      borderRadius: "4px",
-                      cursor: "pointer",
-                      maxHeight: "30px",
-                      float: "left",
-                      marginRight: "8px",
-                    }}
-                  />
-                ) : (
+                return isDocument(file) ? (
                   <div
                     key={idx}
                     className="pdf-icon"
@@ -559,6 +553,21 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
                       alt="PDF file"
                     />
                   </div>
+                ) : (
+                  <img
+                    key={idx}
+                    onClick={() => setImageDialogVisible(true)}
+                    src={file.url}
+                    alt={`Uploaded file ${idx + 1}`}
+                    onError={(e) => console.error("Image failed to load:", e)}
+                    style={{
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                      maxHeight: "30px",
+                      float: "left",
+                      marginRight: "8px",
+                    }}
+                  />
                 );
               })
             }

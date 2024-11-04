@@ -26,7 +26,14 @@ export interface ImageDialogProps {
   setConfiguration: Dispatch<React.SetStateAction<ChatBotConfiguration>>;
 }
 
-const ALLOWED_MIME_TYPES = ["image/png", "image/jpg", "image/jpeg", "application/pdf"];
+const ALLOWED_MIME_TYPES = [
+  "image/png", 
+  "image/jpg", 
+  "image/jpeg", 
+  "application/pdf",
+  "text/csv",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+];
 
 export default function ImageDialog(props: ImageDialogProps) {
   const appContext = useContext(AppContext);
@@ -202,7 +209,7 @@ export default function ImageDialog(props: ImageDialogProps) {
                 errorText={error}
                 showFileThumbnail
                 tokenLimit={3}
-                constraintText=".png, .jpg, .jpeg, .pdf. Max 10MB."
+                constraintText=".png, .jpg, .jpeg, .pdf, .csv, .xlsx. Max 10MB."
               />
             </FormField>
             {loading && (

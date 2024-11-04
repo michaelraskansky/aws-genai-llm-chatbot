@@ -43,13 +43,15 @@ def get_image_message(file: dict, user_id: str, file_name: str):
     )
 
     response = s3.Object(os.environ["CHATBOT_FILES_BUCKET_NAME"], key)
+    basename = os.path.basename(file["key"])
+    file_ext = os.path.splitext(basename)[1][1:]
 
     # check if the file is pdf
-    if file["key"].endswith(".pdf"):
+    if file_ext in ["pdf", "csv", "xlsx", "xls", "docx", "doc"]:
         doc = response.get()["Body"].read()
         return [{
             "document": {
-                "format": "pdf",
+                "format": file_ext,
                 "name": file_name,
                 "source": {
                     "bytes": doc
