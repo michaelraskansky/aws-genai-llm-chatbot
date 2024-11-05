@@ -36,38 +36,42 @@ export class PublicWebsite extends Construct {
     props.websiteBucket.grantRead(originAccessIdentity);
     const cfGeoRestrictEnable = props.config.cfGeoRestrictEnable;
     const cfGeoRestrictList = props.config.cfGeoRestrictList;
+    //get the current region
+    const region = cdk.Stack.of(this).region;
 
-    const distributionLogsBucket = props.cloudfrontLogBucketArn ? s3.Bucket.fromBucketArn(this, "DistributionLogsBucket", props.cloudfrontLogBucketArn!) : new s3.Bucket(
-      this,
-      "DistributionLogsBucket",
-      {
-        objectOwnership: s3.ObjectOwnership.OBJECT_WRITER,
-        blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
-        removalPolicy:
-          props.config.retainOnDelete === true
-            ? cdk.RemovalPolicy.RETAIN_ON_UPDATE_OR_DELETE
-            : cdk.RemovalPolicy.DESTROY,
-        autoDeleteObjects: props.config.retainOnDelete !== true,
-        enforceSSL: true,
-        encryption: props.shared.kmsKey
-          ? s3.BucketEncryption.KMS
-          : s3.BucketEncryption.S3_MANAGED,
-        encryptionKey: props.shared.kmsKey,
-        versioned: true,
-      }
-    );
+    const distributionLogsBucket = props.cloudfrontLogBucketArn
+      ? s3.Bucket.fromBucketArn(
+          this,
+          "DistributionLogsBucket",
+          props.cloudfrontLogBucketArn!
+        )
+      : new s3.Bucket(this, "DistributionLogsBucket", {
+          objectOwnership: s3.ObjectOwnership.OBJECT_WRITER,
+          blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+          removalPolicy:
+            props.config.retainOnDelete === true
+              ? cdk.RemovalPolicy.RETAIN_ON_UPDATE_OR_DELETE
+              : cdk.RemovalPolicy.DESTROY,
+          autoDeleteObjects: props.config.retainOnDelete !== true,
+          enforceSSL: true,
+          encryption: props.shared.kmsKey
+            ? s3.BucketEncryption.KMS
+            : s3.BucketEncryption.S3_MANAGED,
+          encryptionKey: props.shared.kmsKey,
+          versioned: true,
+        });
 
     const fileBucketURLs = [
       `https://${props.chatbotFilesBucket.bucketName}.s3-accelerate.amazonaws.com`,
       `https://${props.chatbotFilesBucket.bucketName}.s3.amazonaws.com`,
+      `https://${props.chatbotFilesBucket.bucketName}.s3.${region}.amazonaws.com`,
     ];
     if (props.uploadBucket) {
       // Bucket used to upload documents to workspaces
       fileBucketURLs.push(
-        `https://${props.uploadBucket.bucketName}.s3-accelerate.amazonaws.com`
-      );
-      fileBucketURLs.push(
-        `https://${props.uploadBucket.bucketName}.s3.amazonaws.com`
+        `https://${props.uploadBucket.bucketName}.s3-accelerate.amazonaws.com`,
+        `https://${props.uploadBucket.bucketName}.s3.amazonaws.com`,
+        `https://${props.uploadBucket.bucketName}.s3.${region}.amazonaws.com`
       );
     }
 
@@ -85,10 +89,12 @@ export class PublicWebsite extends Construct {
           contentSecurityPolicy: {
             contentSecurityPolicy:
               "default-src 'self';" +
-              `connect-src 'self' https://cognito-idp.${cdk.Stack.of(scope).region
+              `connect-src 'self' https://cognito-idp.${
+                cdk.Stack.of(scope).region
               }.amazonaws.com/ ` +
               (congnitoFederationDomain ? `${congnitoFederationDomain} ` : "") +
-              `${websocketURL} ${fileBucketURLs.join(" ")} ${props.api.graphqlApi.graphqlUrl
+              `${websocketURL} ${fileBucketURLs.join(" ")} ${
+                props.api.graphqlApi.graphqlUrl
               };` +
               "font-src 'self' data:; " + // Fonts are inline in the CSS files
               `img-src 'self' ${fileBucketURLs.join(" ")} blob:; ` +
@@ -124,13 +130,13 @@ export class PublicWebsite extends Construct {
       // 2. After the deployment, in your Route53 Hosted Zone, add an "A Record" that points to the Cloudfront Alias (https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-to-cloudfront-distribution.html)
       ...(props.config.certificate &&
         props.config.domain && {
-        certificate: acm.Certificate.fromCertificateArn(
-          this,
-          "CloudfrontAcm",
-          props.config.certificate
-        ),
-        domainNames: [props.config.domain],
-      }),
+          certificate: acm.Certificate.fromCertificateArn(
+            this,
+            "CloudfrontAcm",
+            props.config.certificate
+          ),
+          domainNames: [props.config.domain],
+        }),
 
       priceClass: cf.PriceClass.PRICE_CLASS_ALL,
       httpVersion: cf.HttpVersion.HTTP2_AND_3,
