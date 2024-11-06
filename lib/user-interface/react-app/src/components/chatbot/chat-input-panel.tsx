@@ -2,7 +2,6 @@ import {
   Button,
   Container,
   Icon,
-  Select,
   SelectProps,
   SpaceBetween,
   Spinner,
@@ -17,7 +16,6 @@ import {
   useRef,
   useState,
 } from "react";
-import { useNavigate } from "react-router-dom";
 import SpeechRecognition, {
   useSpeechRecognition,
 } from "react-speech-recognition";
@@ -86,7 +84,6 @@ const workspaceDefaultOptions: SelectProps.Option[] = [
 
 export default function ChatInputPanel(props: ChatInputPanelProps) {
   const appContext = useContext(AppContext);
-  const navigate = useNavigate();
   const { transcript, listening, browserSupportsSpeechRecognition } =
     useSpeechRecognition();
   const [state, setState] = useState<ChatInputState>({
@@ -103,6 +100,16 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
   const [readyState, setReadyState] = useState<ReadyState>(
     ReadyState.UNINSTANTIATED
   );
+
+  const isDocument = (file: ImageFile)  => (
+    new URL(file.url).pathname.endsWith(".pdf") || 
+    new URL(file.url).pathname.endsWith(".csv") ||
+    new URL(file.url).pathname.endsWith(".xlsx") ||
+    new URL(file.url).pathname.endsWith(".doc") ||
+    new URL(file.url).pathname.endsWith(".docx") ||
+    new URL(file.url).pathname.endsWith(".xls")
+  );
+
 
   const messageHistoryRef = useRef<ChatBotHistoryItem[]>([]);
 
@@ -441,12 +448,7 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
     [ReadyState.UNINSTANTIATED]: "Uninstantiated",
   }[readyState];
 
-  const modelsOptions = OptionsHelper.getSelectOptionGroups(state.models ?? []);
 
-  const workspaceOptions = [
-    ...workspaceDefaultOptions,
-    ...OptionsHelper.getSelectOptions(state.workspaces ?? []),
-  ];
 
   return (
     <SpaceBetween direction="vertical" size="l">
@@ -521,20 +523,46 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
               ChabotInputModality.Image
             ) &&
               files.length > 0 &&
-              files.map((file, idx) => (
-                <img
-                  key={idx}
-                  onClick={() => setImageDialogVisible(true)}
-                  src={file.url}
-                  style={{
-                    borderRadius: "4px",
-                    cursor: "pointer",
-                    maxHeight: "30px",
-                    float: "left",
-                    marginRight: "8px",
-                  }}
-                />
-              ))}
+              files.map((file, idx) => {
+                return isDocument(file) ? (
+                  <div
+                    key={idx}
+                    className="pdf-icon"
+                    style={{
+                      width: '30px',
+                      height: '30px',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      float: 'left',
+                      marginRight: '8px',
+                    }}
+                  >
+                    <Icon
+                      name="file"
+                      size="medium"
+                      variant="normal"
+                      alt="PDF file"
+                    />
+                  </div>
+                ) : (
+                  <img
+                    key={idx}
+                    onClick={() => setImageDialogVisible(true)}
+                    src={file.url}
+                    alt={`Uploaded file ${idx + 1}`}
+                    onError={(e) => console.error("Image failed to load:", e)}
+                    style={{
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                      maxHeight: "30px",
+                      float: "left",
+                      marginRight: "8px",
+                    }}
+                  />
+                );
+              })
+            }
             <Button
               data-locator="submit-prompt"
               disabled={
@@ -570,64 +598,6 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
               : styles.input_controls_selects_1
           }
         >
-          <Select
-            disabled={props.running}
-            data-locator="select-model"
-            statusType={state.modelsStatus}
-            loadingText="Loading models (might take few seconds)..."
-            placeholder="Select a model"
-            empty={
-              <div>
-                No models available. Please make sure you have access to Amazon
-                Bedrock or alternatively deploy a self hosted model on SageMaker
-                or add API_KEY to Secrets Manager
-              </div>
-            }
-            filteringType="auto"
-            selectedOption={state.selectedModel}
-            onChange={({ detail }) => {
-              setState((state) => ({
-                ...state,
-                selectedModel: detail.selectedOption,
-                selectedModelMetadata: getSelectedModelMetadata(
-                  state.models,
-                  detail.selectedOption
-                ),
-              }));
-              if (detail.selectedOption?.value) {
-                StorageHelper.setSelectedLLM(detail.selectedOption.value);
-              }
-            }}
-            options={modelsOptions}
-          />
-          {appContext?.config.rag_enabled && (
-            <Select
-              disabled={
-                props.running || !state.selectedModelMetadata?.ragSupported
-              }
-              loadingText="Loading workspaces (might take few seconds)..."
-              statusType={state.workspacesStatus}
-              placeholder="Select a workspace (RAG data source)"
-              filteringType="auto"
-              selectedOption={state.selectedWorkspace}
-              options={workspaceOptions}
-              onChange={({ detail }) => {
-                if (detail.selectedOption?.value === "__create__") {
-                  navigate("/rag/workspaces/create");
-                } else {
-                  setState((state) => ({
-                    ...state,
-                    selectedWorkspace: detail.selectedOption,
-                  }));
-
-                  StorageHelper.setSelectedWorkspaceId(
-                    detail.selectedOption?.value ?? ""
-                  );
-                }
-              }}
-              empty={"No Workspaces available"}
-            />
-          )}
         </div>
         <div className={styles.input_controls_right}>
           <SpaceBetween direction="horizontal" size="xxs" alignItems="center">
@@ -638,6 +608,10 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
                 setVisible={setConfigDialogVisible}
                 configuration={props.configuration}
                 setConfiguration={props.setConfiguration}
+                chatInputPanelProps={props}
+                chatInputState={state}
+                setChatInputState={setState}
+                workspaceDefaultOptions={workspaceDefaultOptions}
               />
               <Button
                 iconName="settings"
@@ -700,9 +674,13 @@ function getSelectedModelOption(models: Model[]): SelectProps.Option | null {
     );
 
     if (targetModel) {
-      selectedModelOption = OptionsHelper.getSelectOptionGroups([
-        targetModel,
-      ])[0].options[0];
+      const groups = OptionsHelper.getSelectOptionGroups([targetModel]).filter(
+        (i) => (i as SelectProps.OptionGroup).options
+      ) as SelectProps.OptionGroup[];
+      selectedModelOption =
+        groups.length > 0 && groups[0].options.length > 0
+          ? groups[0].options[0]
+          : null;
     }
   }
 
@@ -746,8 +724,13 @@ function getSelectedModelOption(models: Model[]): SelectProps.Option | null {
     }
 
     if (candidate) {
-      selectedModelOption = OptionsHelper.getSelectOptionGroups([candidate])[0]
-        .options[0];
+      const groups = OptionsHelper.getSelectOptionGroups([candidate]).filter(
+        (i) => (i as SelectProps.OptionGroup).options
+      ) as SelectProps.OptionGroup[];
+      selectedModelOption =
+        groups.length > 0 && groups[0].options.length > 0
+          ? groups[0].options[0]
+          : null;
     }
   }
 

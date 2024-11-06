@@ -1,6 +1,7 @@
-from typing import Annotated, List
+from typing import Annotated, List, Optional
 from common.constant import (
     SAFE_SHORT_STR_VALIDATION,
+    SAFE_SHORT_STR_VALIDATION_OPTIONAL,
 )
 from common.validation import WorkspaceIdValidation
 import genai_core.types
@@ -27,9 +28,13 @@ class CreateWorkspaceAuroraRequest(BaseModel):
     kind: str = SAFE_SHORT_STR_VALIDATION
     name: str = Field(min_length=1, max_length=100, pattern=name_regex)
     embeddingsModelProvider: str = SAFE_SHORT_STR_VALIDATION
-    embeddingsModelName: str = SAFE_SHORT_STR_VALIDATION
-    crossEncoderModelProvider: str = SAFE_SHORT_STR_VALIDATION
-    crossEncoderModelName: str = SAFE_SHORT_STR_VALIDATION
+    embeddingsModelName: str = Field(
+        min_length=0, max_length=500, pattern=r"^[A-Za-z0-9-_. /]*$", default=None
+    )
+    crossEncoderModelProvider: Optional[str] = SAFE_SHORT_STR_VALIDATION_OPTIONAL
+    crossEncoderModelName: Optional[str] = Field(
+        min_length=0, max_length=500, pattern=r"^[A-Za-z0-9-_. /]*$", default=None
+    )
     languages: List[Annotated[str, SAFE_SHORT_STR_VALIDATION]]
     metric: str = SAFE_SHORT_STR_VALIDATION
     index: bool
@@ -43,9 +48,13 @@ class CreateWorkspaceOpenSearchRequest(BaseModel):
     kind: str = SAFE_SHORT_STR_VALIDATION
     name: str = Field(min_length=1, max_length=100, pattern=name_regex)
     embeddingsModelProvider: str = SAFE_SHORT_STR_VALIDATION
-    embeddingsModelName: str = SAFE_SHORT_STR_VALIDATION
-    crossEncoderModelProvider: str = SAFE_SHORT_STR_VALIDATION
-    crossEncoderModelName: str = SAFE_SHORT_STR_VALIDATION
+    embeddingsModelName: str = Field(
+        min_length=0, max_length=500, pattern=r"^[A-Za-z0-9-_. /]*$", default=None
+    )
+    crossEncoderModelProvider: Optional[str] = SAFE_SHORT_STR_VALIDATION_OPTIONAL
+    crossEncoderModelName: Optional[str] = Field(
+        min_length=0, max_length=500, pattern=r"^[A-Za-z0-9-_. /]*$", default=None
+    )
     languages: List[Annotated[str, SAFE_SHORT_STR_VALIDATION]]
     hybridSearch: bool
     chunkingStrategy: str = SAFE_SHORT_STR_VALIDATION
@@ -165,7 +174,7 @@ def _create_workspace_aurora(request: CreateWorkspaceAuroraRequest, config: dict
     if embeddings_model is None:
         raise genai_core.types.CommonError("Embeddings model not found")
 
-    if cross_encoder_model is None:
+    if request.crossEncoderModelName is not None and cross_encoder_model is None:
         raise genai_core.types.CommonError("Cross encoder model not found")
 
     embeddings_model_dimensions = embeddings_model["dimensions"]
@@ -232,7 +241,7 @@ def _create_workspace_open_search(
     if embeddings_model is None:
         raise genai_core.types.CommonError("Embeddings model not found")
 
-    if cross_encoder_model is None:
+    if request.crossEncoderModelName is not None and cross_encoder_model is None:
         raise genai_core.types.CommonError("Cross encoder model not found")
 
     embeddings_model_dimensions = embeddings_model["dimensions"]

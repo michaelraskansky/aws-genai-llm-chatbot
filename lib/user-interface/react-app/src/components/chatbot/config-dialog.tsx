@@ -2,15 +2,23 @@ import {
   Box,
   Button,
   Form,
+  Select,
   FormField,
   Input,
   Modal,
   SpaceBetween,
   Toggle,
+  SelectProps,
 } from "@cloudscape-design/components";
 import { useForm } from "../../common/hooks/use-form";
-import { ChatBotConfiguration } from "./types";
-import { Dispatch } from "react";
+import { ChatBotConfiguration, ChatInputState } from "./types";
+import { Dispatch, useContext } from "react";
+import { ChatInputPanelProps} from "./chat-input-panel";
+import { OptionsHelper } from "../../common/helpers/options-helper";
+import { StorageHelper } from "../../common/helpers/storage-helper";
+import { getSelectedModelMetadata } from "./utils";
+import { useNavigate } from "react-router-dom";
+import { AppContext } from "../../common/app-context";
 
 export interface ConfigDialogProps {
   sessionId: string;
@@ -18,6 +26,10 @@ export interface ConfigDialogProps {
   setVisible: (visible: boolean) => void;
   configuration: ChatBotConfiguration;
   setConfiguration: Dispatch<React.SetStateAction<ChatBotConfiguration>>;
+  setChatInputState: Dispatch<React.SetStateAction<ChatInputState>>;
+  chatInputPanelProps: ChatInputPanelProps;
+  chatInputState: ChatInputState;
+  workspaceDefaultOptions: SelectProps.Option[];
 }
 
 interface ChatConfigDialogData {
@@ -29,6 +41,8 @@ interface ChatConfigDialogData {
 }
 
 export default function ConfigDialog(props: ConfigDialogProps) {
+  const appContext = useContext(AppContext);
+  const navigate = useNavigate();
   const { data, onChange, errors, validate } = useForm<ChatConfigDialogData>({
     initialValue: () => {
       const retValue = {
@@ -75,6 +89,12 @@ export default function ConfigDialog(props: ConfigDialogProps) {
 
     props.setVisible(false);
   };
+
+  const modelsOptions = OptionsHelper.getSelectOptionGroups(props.chatInputState.models ?? []);
+  const workspaceOptions = [
+    ...props.workspaceDefaultOptions,
+    ...OptionsHelper.getSelectOptions(props.chatInputState.workspaces ?? []),
+  ];
 
   return (
     <Modal
@@ -165,6 +185,74 @@ export default function ConfigDialog(props: ConfigDialogProps) {
               }}
             />
           </FormField>
+          <FormField
+          label="Large Language Model"
+          description="choose large language mode you want to use."
+        >
+        <Select
+            disabled={props.chatInputPanelProps.running}
+            data-locator="select-model"
+            statusType={props.chatInputState.modelsStatus}
+            loadingText="Loading models (might take few seconds)..."
+            placeholder="Select a model"
+            empty={
+              <div>
+                No models available. Please make sure you have access to Amazon
+                Bedrock or alternatively deploy a self hosted model on SageMaker
+                or add API_KEY to Secrets Manager
+              </div>
+            }
+            filteringType="auto"
+            selectedOption={props.chatInputState.selectedModel}
+            onChange={({ detail }) => {
+              props.setChatInputState((state) => ({
+                ...state,
+                selectedModel: detail.selectedOption,
+                selectedModelMetadata: getSelectedModelMetadata(
+                  state.models,
+                  detail.selectedOption
+                ),
+              }));
+              if (detail.selectedOption?.value) {
+                StorageHelper.setSelectedLLM(detail.selectedOption.value);
+              }
+            }}
+            options={modelsOptions}
+          />
+          </FormField>
+          <FormField
+            label="Workspace"
+            description="choose workspace"
+          >
+          {appContext?.config.rag_enabled && (
+            <Select
+              disabled={
+                props.chatInputPanelProps.running || !props.chatInputState.selectedModelMetadata?.ragSupported
+              }
+              loadingText="Loading workspaces (might take few seconds)..."
+              statusType={props.chatInputState.workspacesStatus}
+              placeholder="Select a workspace (RAG data source)"
+              filteringType="auto"
+              selectedOption={props.chatInputState.selectedWorkspace}
+              options={workspaceOptions}
+              onChange={({ detail }) => {
+                if (detail.selectedOption?.value === "__create__") {
+                  navigate("/rag/workspaces/create");
+                } else {
+                  props.setChatInputState((state) => ({
+                    ...state,
+                    selectedWorkspace: detail.selectedOption,
+                  }));
+
+                  StorageHelper.setSelectedWorkspaceId(
+                    detail.selectedOption?.value ?? ""
+                  );
+                }
+              }}
+              empty={"No Workspaces available"}
+            />
+          )}
+        </FormField>
         </SpaceBetween>
       </Form>
     </Modal>

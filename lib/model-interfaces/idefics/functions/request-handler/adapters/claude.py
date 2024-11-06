@@ -2,6 +2,7 @@ from aws_lambda_powertools import Logger
 import boto3
 from langchain_aws import ChatBedrockConverse
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
+from langchain_core.prompts import ChatPromptTemplate
 from .base import MultiModalModelBase
 from genai_core.types import ChatbotMessageType
 import os
@@ -9,6 +10,10 @@ from genai_core.clients import get_bedrock_client
 import json
 from base64 import b64encode
 from genai_core.registry import registry
+from langchain_community.tools import DuckDuckGoSearchRun
+from langchain_community.tools import WikipediaQueryRun
+from langchain_community.utilities import WikipediaAPIWrapper
+from langchain.agents import AgentExecutor, create_tool_calling_agent
 
 logger = Logger()
 s3 = boto3.resource("s3")
@@ -16,16 +21,19 @@ s3 = boto3.resource("s3")
 
 def get_system_prompt():
     return f"""
-    You are an AI assistant that is trained to help users solve problems and answer
-    questions. You must use the provided data to help the user answer the question.
-    You will always answer in {os.environ.get("LANGUAGE", "Hebrew")} and never
-    translate the answer to the user. if you don't know the answer, say that you
-    don't know. Do not make up an answer if you don't know the answer.
-    the audniace is public sector employees that work for the goverment of Israel.
+    You are an AI assistant designed to help public sector employees working for
+    the government of Israel solve problems and answer questions.
+    Your responses should always be in {os.environ.get("LANGUAGE", "Hebrew")} and never
+    translated into any other language.
+    Use only the data provided to answer the user's query accurately.
+    If you don't know the answer, clearly state that you do not know.
+    Do not invent or fabricate information.
+    Maintain a professional and respectful tone at all times, considering the specific
+    needs of government employees
     """
 
 
-def get_image_message(file: dict, user_id: str, idx: int = 0):
+def get_image_message(file: dict, user_id: str, file_name: str):
     if file["key"] is None:
         raise Exception("Invalid S3 Key " + file["key"])
 
@@ -35,14 +43,16 @@ def get_image_message(file: dict, user_id: str, idx: int = 0):
     )
 
     response = s3.Object(os.environ["CHATBOT_FILES_BUCKET_NAME"], key)
+    basename = os.path.basename(file["key"])
+    file_ext = os.path.splitext(basename)[1][1:]
 
     # check if the file is pdf
-    if file["key"].endswith(".pdf"):
+    if file_ext in ["pdf", "csv", "xlsx", "xls", "docx", "doc"]:
         doc = response.get()["Body"].read()
         return [{
             "document": {
-                "format": "pdf",
-                "name": f"qa_document_{idx}",
+                "format": file_ext,
+                "name": file_name,
                 "source": {
                     "bytes": doc
                 }
@@ -73,9 +83,14 @@ class Claude3(MultiModalModelBase):
     model_id: str
     client: any
 
-    def __init__(self, model_id: str):
+    def __init__(self, model_id: str, bedrock_client=get_bedrock_client()):
         self.model_id = model_id
-        self.client = get_bedrock_client()
+        self.client = bedrock_client
+        self.llm = ChatBedrockConverse(
+            client=self.client,
+            model=self.model_id,
+            disable_streaming=True
+        )
 
     def format_prompt(
         self, prompt: str, messages: list, files: list, user_id: str
@@ -83,7 +98,7 @@ class Claude3(MultiModalModelBase):
         prompts = []
 
         # Chat history
-        for idx, message in enumerate(messages):
+        for message in messages:
             if message.type.lower() == ChatbotMessageType.Human.value.lower():
                 user_msg = {
                     "role": "user",
@@ -91,9 +106,9 @@ class Claude3(MultiModalModelBase):
                 }
                 prompts.append(user_msg)
                 message_files = message.additional_kwargs.get("files", [])
-                for message_file in message_files:
+                for idx, message_file in enumerate(message_files):
                     user_msg["content"].extend(
-                        get_image_message(message_file, user_id, idx + 1))
+                        get_image_message(message_file, user_id, f"history_file_{idx}"))
             if message.type.lower() == ChatbotMessageType.AI.value.lower():
                 prompts.append({"role": "assistant", "content": message.content})
 
@@ -103,8 +118,9 @@ class Claude3(MultiModalModelBase):
             "content": [{"type": "text", "text": prompt}],
         }
         prompts.append(user_msg)
-        for file in files:
-            user_msg["content"].extend(get_image_message(file, user_id))
+        for idx, file in enumerate(files):
+            user_msg["content"].extend(get_image_message(
+                file, user_id, f"session_file_{idx}"))
 
         return {
             "anthropic_version": "bedrock-2023-05-31",
@@ -113,27 +129,30 @@ class Claude3(MultiModalModelBase):
             "temperature": 0.3,
         }
 
-    def handle_run(self, prompt: str, model_kwargs: dict):
-        logger.info("Incoming request for claude", model_kwargs=model_kwargs)
-        messages = [to_base_messages(msg) for msg in prompt["messages"]]
-        logger.info("prompt messages", messages=messages)
+    def handle_run(self, prompt: dict[str], model_kwargs: dict):
 
-        llm = ChatBedrockConverse(
-            client=self.client,
-            model=self.model_id,
-            disable_streaming=True
-        )
         if "temperature" in model_kwargs:
-            llm.temperature = model_kwargs["temperature"]
+            self.llm.temperature = model_kwargs["temperature"]
         if "topP" in model_kwargs:
-            llm.top_p = model_kwargs["topP"]
+            self.top_p = model_kwargs["topP"]
         if "maxTokens" in model_kwargs:
-            llm.max_tokens = model_kwargs["maxTokens"]
-        logger.info("Prompt", prompt=prompt)
-        messages.insert(0, SystemMessage(get_system_prompt()))
-        ai_message = llm.invoke(messages)
+            self.max_tokens = model_kwargs["maxTokens"]
 
-        return ai_message.content
+        messages = [SystemMessage(get_system_prompt())]
+        messages.extend([to_base_messages(msg) for msg in prompt["messages"]])
+        messages.append(("placeholder", "{agent_scratchpad}"))
+
+        tools = [
+            DuckDuckGoSearchRun(name="search"),
+            WikipediaQueryRun(api_wrapper=WikipediaAPIWrapper(
+                top_k_results=1, lang="he", doc_content_chars_max=1000)),
+        ]
+
+        llm_prompt = ChatPromptTemplate.from_messages(messages)
+        agent = create_tool_calling_agent(self.llm, tools, llm_prompt)
+        agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
+        result = agent_executor.invoke({})
+        return result["output"]
 
     def clean_prompt(self, p) -> str:
         for m in p["messages"]:

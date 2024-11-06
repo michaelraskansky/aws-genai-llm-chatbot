@@ -43,6 +43,7 @@ export class ImageRepositoryMapping extends Construct {
         "eu-west-3": { account: "763104351884" },
         "eu-south-1": { account: "692866216735" },
         "eu-south-2": { account: "503227376785" },
+        "il-central-1": { account: "780543022126" },
         "me-south-1": { account: "217643126080" },
         "me-central-1": { account: "914824155844" },
         "sa-east-1": { account: "763104351884" },

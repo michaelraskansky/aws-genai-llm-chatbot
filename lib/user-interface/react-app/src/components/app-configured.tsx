@@ -75,6 +75,8 @@ export default function AppConfigured() {
             return;
           }
         }
+
+      
         setCustomMessages(customMessages);
         setConfig(currentConfig);
       } catch (e) {

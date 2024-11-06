@@ -1,6 +1,7 @@
 import {
   Box,
   Button,
+  Icon,
   Container,
   ExpandableSection,
   Popover,
@@ -44,7 +45,15 @@ export default function ChatMessage(props: ChatMessageProps) {
   const [documentIndex, setDocumentIndex] = useState("0");
   const [promptIndex, setPromptIndex] = useState("0");
   const [selectedIcon, setSelectedIcon] = useState<1 | 0 | null>(null);
-
+  
+  const isDocument = (file: ImageFile)  => (
+    new URL(file.url).pathname.endsWith(".pdf") || 
+    new URL(file.url).pathname.endsWith(".csv") ||
+    new URL(file.url).pathname.endsWith(".xlsx") ||
+    new URL(file.url).pathname.endsWith(".doc") ||
+    new URL(file.url).pathname.endsWith(".docx") ||
+    new URL(file.url).pathname.endsWith(".xls")
+  );
   useEffect(() => {
     if (!appContext) return;
 
@@ -351,17 +360,26 @@ export default function ChatMessage(props: ChatMessageProps) {
         <>
           {files.map((file, idx) => (
             <a
-              key={idx}
-              href={file.url as string}
-              target="_blank"
-              rel="noreferrer"
-              style={{ marginLeft: "5px", marginRight: "5px" }}
-            >
-              <img
+            key={idx}
+            href={file.url as string}
+            target="_blank"
+            rel="noreferrer"
+            style={{ marginLeft: "5px", marginRight: "5px" }}
+          >
+            { 
+              (isDocument(file)) ? (
+                <Icon
+                name="file"
+                size="medium"
+                variant="normal"
+                alt="PDF file"
+              /> ) : (<img
                 src={file.url as string}
                 className={styles.img_chabot_message}
-              />
-            </a>
+                alt="Image"
+              />)
+            }
+          </a>
           ))}
         </>
       )}
