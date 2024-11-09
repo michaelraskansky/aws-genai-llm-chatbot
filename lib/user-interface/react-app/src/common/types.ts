@@ -40,6 +40,7 @@ export interface NavigationPanelState {
 export interface UserInfo {
   cognitoUser: CognitoUser;
   cognitoGroups: string[];
+  isAdmin: boolean;
 }
 
 export type LoadingStatus = "pending" | "loading" | "finished" | "error";

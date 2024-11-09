@@ -51,7 +51,6 @@ import { sendQuery } from "../../graphql/mutations";
 import { getSelectedModelMetadata, updateMessageHistoryRef } from "./utils";
 import { receiveMessages } from "../../graphql/subscriptions";
 import { Utils } from "../../common/utils";
-import { UserContext } from "../../common/user-context";
 
 export interface ChatInputPanelProps {
   running: boolean;
@@ -80,7 +79,6 @@ const workspaceDefaultOptions: SelectProps.Option[] = [
 
 export default function ChatInputPanel(props: ChatInputPanelProps) {
   const appContext = useContext(AppContext);
-  const userContext = useContext(UserContext);
 
   const { transcript, listening, browserSupportsSpeechRecognition } =
     useSpeechRecognition();
@@ -92,7 +90,6 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
     modelsStatus: "loading",
     workspacesStatus: "loading",
   });
-  const [isAdmin, setIsAdmin] = useState(false);
   const [configDialogVisible, setConfigDialogVisible] = useState(false);
   const [imageDialogVisible, setImageDialogVisible] = useState(false);
   const [files, setFiles] = useState<ImageFile[]>([]);
@@ -111,13 +108,6 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
 
 
   const messageHistoryRef = useRef<ChatBotHistoryItem[]>([]);
-
-  useEffect(() => {
-    console.log("userContext", userContext);
-    console.log("cognitoGroups", userContext?.cognitoGroups);
-
-    setIsAdmin((userContext && userContext.cognitoGroups.includes("rag_admins")) ? true : false)
-  }, [userContext]);
 
   useEffect(() => {
     messageHistoryRef.current = props.messageHistory;
@@ -617,7 +607,6 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
                 chatInputPanelProps={props}
                 chatInputState={state}
                 setChatInputState={setState}
-                isAdmin={isAdmin}
                 workspaceDefaultOptions={workspaceDefaultOptions}
               />
               <Button

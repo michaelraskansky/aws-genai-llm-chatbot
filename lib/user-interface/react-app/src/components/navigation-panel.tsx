@@ -7,37 +7,17 @@ import { useNavigationPanelState } from "../common/hooks/use-navigation-panel-st
 import { AppContext } from "../common/app-context";
 import { useContext, useState, useEffect } from "react";
 import { CHATBOT_NAME } from "../common/constants";
-import { Auth } from 'aws-amplify'; // Import Amplify Auth
+import { UserContext } from "../common/user-context";
 
 export default function NavigationPanel() {
   const appContext = useContext(AppContext);
+  const userContext = useContext(UserContext);
+
   const onFollow = useOnFollow();
   const [navigationPanelState, setNavigationPanelState] =
     useNavigationPanelState();
 
-  const [hasRagAccess, setHasRagAccess] = useState(false); // State to track RAG access
   const [items, setItems] = useState<SideNavigationProps.Item[]>([]); // State for navigation items
-  const [loading, setLoading] = useState(true); // Track loading state
-
-  // Fetch user groups from Cognito and determine RAG access
-  useEffect(() => {
-    const fetchUserGroups = async () => {
-      try {
-        const user = await Auth.currentAuthenticatedUser(); // Get current user
-        const groups = user.signInUserSession.accessToken.payload['cognito:groups'] || []; // Get groups from token
-
-        if (groups.includes("rag_admins")) {
-          setHasRagAccess(true); // Set RAG access if the user is in rag_admins group
-        }
-      } catch (error) {
-        console.error("Error fetching user groups:", error);
-      } finally {
-        setLoading(false); // Set loading to false after fetching is complete
-      }
-    };
-
-    fetchUserGroups();
-  }, []); // Empty dependency array ensures this runs once on component mount
 
   // Update navigation items when hasRagAccess or appContext changes
   useEffect(() => {
@@ -56,7 +36,7 @@ export default function NavigationPanel() {
         },
       ];
 
-      if (hasRagAccess) {
+      if (userContext?.isAdmin) {
         newItems.push({
           type: "section",
           text: "אפשרויות מתדדמות",
@@ -75,7 +55,7 @@ export default function NavigationPanel() {
         });
       }
 
-      if (appContext?.config.rag_enabled && hasRagAccess) {
+      if (appContext?.config.rag_enabled && userContext?.isAdmin) {
         const crossEncodersItems: SideNavigationProps.Item[] = appContext?.config
           .cross_encoders_enabled
           ? [
@@ -132,7 +112,7 @@ export default function NavigationPanel() {
     };
 
     setItems(generateItems());
-  }, [hasRagAccess, appContext]); // Re-run when hasRagAccess or appContext changes
+  }, [userContext, appContext]); // Re-run when hasRagAccess or appContext changes
 
   const onChange = ({
     detail,
@@ -147,10 +127,6 @@ export default function NavigationPanel() {
       },
     });
   };
-
-  if (loading) {
-    return <div>...</div>; // Show loading indicator while fetching user data
-  }
 
   return (
     <SideNavigation

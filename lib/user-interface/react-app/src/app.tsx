@@ -36,9 +36,11 @@ function App() {
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
 
   useEffect(() => {
+    const groups = user.getSignInUserSession()?.getAccessToken().payload['cognito:groups'];
     setUserInfo({
       cognitoUser: user,
-      cognitoGroups: user.getSignInUserSession()?.getAccessToken().payload['cognito:groups'],
+      cognitoGroups: groups,
+      isAdmin: groups.includes("rag_admins"),
     })
   }, [user])
 

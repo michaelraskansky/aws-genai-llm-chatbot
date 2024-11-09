@@ -19,6 +19,7 @@ import { StorageHelper } from "../../common/helpers/storage-helper";
 import { getSelectedModelMetadata } from "./utils";
 import { useNavigate } from "react-router-dom";
 import { AppContext } from "../../common/app-context";
+import { UserContext } from "../../common/user-context";
 
 export interface ConfigDialogProps {
   sessionId: string;
@@ -30,7 +31,6 @@ export interface ConfigDialogProps {
   chatInputPanelProps: ChatInputPanelProps;
   chatInputState: ChatInputState;
   workspaceDefaultOptions: SelectProps.Option[];
-  isAdmin: boolean;
 }
 
 interface ChatConfigDialogData {
@@ -43,6 +43,7 @@ interface ChatConfigDialogData {
 
 export default function ConfigDialog(props: ConfigDialogProps) {
   const appContext = useContext(AppContext);
+  const userContext = useContext(UserContext);
   const navigate = useNavigate();
   const { data, onChange, errors, validate } = useForm<ChatConfigDialogData>({
     initialValue: () => {
@@ -92,7 +93,7 @@ export default function ConfigDialog(props: ConfigDialogProps) {
   };
 
   const modelsOptions = OptionsHelper.getSelectOptionGroups(props.chatInputState.models ?? []);
-  const adminOptions = (props.isAdmin)
+  const adminOptions = (userContext?.isAdmin)
   ? 
     [
       {
