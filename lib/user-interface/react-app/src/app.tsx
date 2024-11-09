@@ -40,7 +40,7 @@ function App() {
     setUserInfo({
       cognitoUser: user,
       cognitoGroups: groups,
-      isAdmin: groups.includes("rag_admins"),
+      isAdmin: groups && groups.includes("rag_admins"),
     })
   }, [user])
 
