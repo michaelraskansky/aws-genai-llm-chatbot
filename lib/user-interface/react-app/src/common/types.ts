@@ -1,5 +1,5 @@
 import { SelectProps } from "@cloudscape-design/components";
-import { CognitoHostedUIIdentityProvider } from "@aws-amplify/auth";
+import { CognitoHostedUIIdentityProvider, CognitoUser } from "@aws-amplify/auth";
 
 export interface AppConfig {
   aws_project_region: string;
@@ -29,7 +29,6 @@ export interface AppConfig {
     default_cross_encoder_model: string;
     privateWebsite: boolean;
     locale?: string;
-    userInfo?: UserInfo;
   };
 }
 
@@ -38,8 +37,9 @@ export interface NavigationPanelState {
   collapsedSections?: Record<number, boolean>;
 }
 
-interface UserInfo {
-  groups: string[];
+export interface UserInfo {
+  cognitoUser: CognitoUser;
+  cognitoGroups: string[];
 }
 
 export type LoadingStatus = "pending" | "loading" | "finished" | "error";

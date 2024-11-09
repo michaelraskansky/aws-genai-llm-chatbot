@@ -30,6 +30,7 @@ export interface ConfigDialogProps {
   chatInputPanelProps: ChatInputPanelProps;
   chatInputState: ChatInputState;
   workspaceDefaultOptions: SelectProps.Option[];
+  isAdmin: boolean;
 }
 
 interface ChatConfigDialogData {
@@ -91,8 +92,20 @@ export default function ConfigDialog(props: ConfigDialogProps) {
   };
 
   const modelsOptions = OptionsHelper.getSelectOptionGroups(props.chatInputState.models ?? []);
+  const adminOptions = (props.isAdmin)
+  ? 
+    [
+      {
+        label: "Create new workspace",
+        value: "__create__",
+        iconName: "add-plus" as const,
+      },
+    ]
+  : [];
+
   const workspaceOptions = [
     ...props.workspaceDefaultOptions,
+    ...adminOptions,
     ...OptionsHelper.getSelectOptions(props.chatInputState.workspaces ?? []),
   ];
 
