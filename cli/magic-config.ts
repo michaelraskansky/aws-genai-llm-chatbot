@@ -154,6 +154,7 @@ const embeddingModels: ModelConfig[] = [
       );
       options.prefix = config.prefix;
       options.enableWaf = config.enableWaf;
+      options.caCerts = config.caCerts;
       options.enableS3TransferAcceleration = config.enableS3TransferAcceleration;
       options.cloudfrontLogBucketArn = config.cloudfrontLogBucketArn;
       options.createCMKs = config.createCMKs;
@@ -292,13 +293,19 @@ async function processCreateOptions(options: any): Promise<void> {
       name: "enableWaf",
       message: "Do you want to enable waf rules?",
       initial: options.enableWaf ?? true,
-
     },
     {
       type: "confirm",
       name: "enableS3TransferAcceleration",
       message: "Do you want to enable S3 transfer acceleration",
       initial: options.enableS3TransferAcceleration ?? true,
+    },
+    {
+      type: "input",
+      name: "caCert",
+      message: "add ca certificates that will be trusted",
+      hint: "this is required when called are being proxied",
+      initial: "",
     },
     {
       type: "input",
@@ -315,7 +322,6 @@ async function processCreateOptions(options: any): Promise<void> {
             ? true
             : "Enter a valid S3 Bucket ARN in the format arn:aws:s3::bucket";
       },
-
     },
     {
       type: "confirm",

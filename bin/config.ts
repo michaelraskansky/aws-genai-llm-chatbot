@@ -18,6 +18,7 @@ export function getConfig(): SystemConfig {
     privateWebsite: false,
     enableS3TransferAcceleration: true,
     enableWaf: true,
+    caCerts: "",
     cloudfrontLogBucketArn: "",
     certificate: "",
     cfGeoRestrictEnable: false,

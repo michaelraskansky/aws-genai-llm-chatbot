@@ -8,7 +8,7 @@ import * as logs from "aws-cdk-lib/aws-logs";
 import * as wafv2 from "aws-cdk-lib/aws-wafv2";
 import { Construct } from "constructs";
 import * as path from "path";
-import { Layer } from "../layer";
+import { CaCertLayer, Layer } from "../layer";
 import { SystemConfig, SupportedBedrockRegion } from "./types";
 import { SharedAssetBundler } from "./shared-asset-bundler";
 import { NagSuppressions } from "cdk-nag";
@@ -35,6 +35,7 @@ export class Shared extends Construct {
   readonly apiKeysSecret: secretsmanager.Secret;
   readonly commonLayer: lambda.ILayerVersion;
   readonly powerToolsLayer: lambda.ILayerVersion;
+  readonly caCertLayer?: lambda.ILayerVersion;
   readonly sharedCode: SharedAssetBundler;
   readonly s3vpcEndpoint: ec2.InterfaceVpcEndpoint;
   readonly webACLRules: wafv2.CfnWebACL.RuleProperty[] = [];
@@ -57,6 +58,16 @@ export class Shared extends Construct {
       POWERTOOLS_TRACE_DISABLED: props.config.advancedMonitoring
         ? "false"
         : "true",
+    };
+
+    this.defaultEnvironmentVariables = {
+      ...this.defaultEnvironmentVariables,
+      ...(props.config.caCerts != undefined && props.config.caCerts != ""
+        ? {
+            AWS_CA_BUNDLE: "/opt/cacert.pem",
+            NODE_EXTRA_CA_CERTS: "/opt/cacert.pem",
+          }
+        : {}),
     };
 
     if (props.config.createCMKs) {
@@ -278,6 +289,21 @@ export class Shared extends Construct {
       architecture: lambdaArchitecture,
       path: path.join(__dirname, "./layers/common"),
     });
+
+    if (props.config.caCerts != undefined && props.config.caCerts.length > 0) {
+      const caCertLayer = new CaCertLayer(this, "CaCertLayer", {
+        runtimes: [
+          pythonRuntime,
+          lambda.Runtime.NODEJS_18_X,
+          lambda.Runtime.NODEJS_20_X,
+          lambda.Runtime.NODEJS_LATEST,
+        ],
+        architecture: lambdaArchitecture,
+        path: path.join(__dirname, "./layers/common"),
+        caCerts: props.config.caCerts,
+      });
+      this.caCertLayer = caCertLayer.layer;
+    }
 
     this.sharedCode = new SharedAssetBundler(this, "genai-core", [
       path.join(__dirname, "layers", "python-sdk", "python", "genai_core"),

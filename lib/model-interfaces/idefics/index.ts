@@ -55,7 +55,11 @@ export class IdeficsInterface extends Construct {
         description: "Multi modal request handler",
         runtime: props.shared.pythonRuntime,
         handler: "index.handler",
-        layers: [props.shared.powerToolsLayer, props.shared.commonLayer],
+        layers: [
+          props.shared.powerToolsLayer,
+          props.shared.commonLayer,
+          ...(props.shared.caCertLayer ? [props.shared.caCertLayer] : []),
+        ],
         architecture: props.shared.lambdaArchitecture,
         tracing: props.config.advancedMonitoring
           ? lambda.Tracing.ACTIVE

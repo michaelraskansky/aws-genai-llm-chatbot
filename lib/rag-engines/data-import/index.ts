@@ -233,7 +233,11 @@ export class DataImport extends Construct {
         : lambda.Tracing.DISABLED,
       logRetention: props.config.logRetention ?? logs.RetentionDays.ONE_WEEK,
       loggingFormat: lambda.LoggingFormat.JSON,
-      layers: [props.shared.powerToolsLayer, props.shared.commonLayer],
+      layers: [
+        props.shared.powerToolsLayer,
+        props.shared.commonLayer,
+        ...(props.shared.caCertLayer ? [props.shared.caCertLayer] : []),
+      ],
       vpc: props.shared.vpc,
       vpcSubnets: props.shared.vpc.privateSubnets as ec2.SubnetSelection,
       environment: {

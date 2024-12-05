@@ -81,6 +81,7 @@ export interface SystemConfig {
   prefix: string;
   enableWaf: boolean;
   enableS3TransferAcceleration: boolean;
+  caCerts?: string;
   cloudfrontLogBucketArn?: string;
   createCMKs?: boolean;
   retainOnDelete?: boolean;

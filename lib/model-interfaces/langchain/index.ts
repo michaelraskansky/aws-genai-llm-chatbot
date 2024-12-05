@@ -46,7 +46,11 @@ export class LangChainInterface extends Construct {
       memorySize: 1024,
       logRetention: props.config.logRetention ?? logs.RetentionDays.ONE_WEEK,
       loggingFormat: lambda.LoggingFormat.JSON,
-      layers: [props.shared.powerToolsLayer, props.shared.commonLayer],
+      layers: [
+        props.shared.powerToolsLayer,
+        props.shared.commonLayer,
+        ...(props.shared.caCertLayer ? [props.shared.caCertLayer] : []),
+      ],
       environment: {
         ...props.shared.defaultEnvironmentVariables,
         CONFIG_PARAMETER_NAME: props.shared.configParameter.parameterName,

@@ -10,6 +10,7 @@ export function getTestConfig(): SystemConfig {
     prefix: "prefix",
     privateWebsite: true,
     enableWaf: true,
+    caCerts: "",
     enableS3TransferAcceleration: true,
     cloudfrontLogBucketArn: "",
     certificate: "",

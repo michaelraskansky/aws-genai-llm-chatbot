@@ -37,7 +37,8 @@ export class AwsGenAILLMChatbotStack extends cdk.Stack {
     const authentication = new Authentication(
       this,
       "Authentication",
-      props.config
+      props.config,
+      shared
     );
     const models = new Models(this, "Models", {
       config: props.config,

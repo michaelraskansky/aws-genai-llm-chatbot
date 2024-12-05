@@ -58,7 +58,11 @@ export class RealtimeResolvers extends Construct {
       },
       logRetention: props.logRetention,
       loggingFormat: LoggingFormat.JSON,
-      layers: [props.shared.powerToolsLayer],
+      layers: [
+        props.shared.powerToolsLayer,
+        props.shared.commonLayer,
+        ...(props.shared.caCertLayer ? [props.shared.caCertLayer] : []),
+      ],
       vpc: props.shared.vpc,
     });
 
@@ -73,7 +77,10 @@ export class RealtimeResolvers extends Construct {
         bundling: {
           externalModules: ["aws-xray-sdk-core", "@aws-sdk"],
         },
-        layers: [powertoolsLayerJS],
+        layers: [
+          powertoolsLayerJS,
+          ...(props.shared.caCertLayer ? [props.shared.caCertLayer] : []),
+        ],
         handler: "index.handler",
         description: "Sends LLM Responses to Appsync",
         runtime: Runtime.NODEJS_18_X,
