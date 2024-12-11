@@ -39,6 +39,7 @@ interface ChatConfigDialogData {
   maxTokens: number;
   temperature: number;
   topP: number;
+  seed: number;
 }
 
 export default function ConfigDialog(props: ConfigDialogProps) {
@@ -53,6 +54,7 @@ export default function ConfigDialog(props: ConfigDialogProps) {
         maxTokens: props.configuration.maxTokens,
         temperature: props.configuration.temperature,
         topP: props.configuration.topP,
+        seed: props.configuration.seed,
       };
 
       return retValue;
@@ -87,6 +89,7 @@ export default function ConfigDialog(props: ConfigDialogProps) {
       temperature: props.configuration.temperature,
       maxTokens: props.configuration.maxTokens,
       topP: props.configuration.topP,
+      seed: props.configuration.seed,
     });
 
     props.setVisible(false);
@@ -267,6 +270,20 @@ export default function ConfigDialog(props: ConfigDialogProps) {
             />
           )}
         </FormField>
+        <FormField
+            label="Seed"
+            errorText={errors.seed}
+            description="For video and image generation, a seed value can be used to generate the same output multiple times. Using a different seed value guarantees to get different generations."
+          >
+            <Input
+              type="number"
+              step={1}
+              value={data.seed.toString()}
+              onChange={({ detail: { value } }) => {
+                onChange({ seed: parseInt(value) });
+              }}
+            />
+          </FormField>
         </SpaceBetween>
       </Form>
     </Modal>

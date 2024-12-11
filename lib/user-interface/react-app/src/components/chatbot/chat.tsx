@@ -32,6 +32,7 @@ export default function Chat(props: { sessionId?: string }) {
       temperature: 0.1,
       topP: 0.8,
       files: null,
+      seed: 0,
     })
   );
 

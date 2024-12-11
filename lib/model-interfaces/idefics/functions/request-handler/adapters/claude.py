@@ -1,3 +1,5 @@
+from typing import Optional
+
 from aws_lambda_powertools import Logger
 import boto3
 from langchain_aws import ChatBedrockConverse
@@ -79,7 +81,7 @@ def to_base_messages(msg):
         raise Exception("Invalid message type")
 
 
-class Claude3(MultiModalModelBase):
+class Claude3Custom(MultiModalModelBase):
     model_id: str
     client: any
 
@@ -163,6 +165,11 @@ class Claude3(MultiModalModelBase):
                     elif c["type"] == "image":
                         c["source"]["data"] = ""
         return json.dumps(p)
+
+
+class Claude3(MultiModalModelBase):
+    def handle_run(self, input: dict, model_kwargs: dict, files: Optional[list] = None):
+        return self.converse(input, model_kwargs)
 
 
 registry.register(r"^bedrock.anthropic.claude-3.*", Claude3)

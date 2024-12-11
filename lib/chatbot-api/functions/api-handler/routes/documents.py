@@ -146,6 +146,7 @@ allowed_session_extensions = set(
         ".html",
         ".txt",
         ".md",
+        ".mp4",
     ]
 )
 
@@ -158,14 +159,20 @@ def file_upload(input: dict):
 
     if "workspaceId" in input:
         if extension not in allowed_workspace_extensions:
-            raise genai_core.types.CommonError("Invalid file extension")
+            raise genai_core.types.CommonError(
+                f"""Invalid file extension {extension}.
+                Allowed extensions: {allowed_workspace_extensions}."""
+            )
 
         result = genai_core.presign.generate_workspace_presigned_post(
             request.workspaceId, request.fileName
         )
     else:
         if extension not in allowed_session_extensions:
-            raise genai_core.types.CommonError("Invalid file extension")
+            raise genai_core.types.CommonError(
+                f"""Invalid file extension {extension}.
+                Allowed extensions: {allowed_session_extensions}."""
+            )
 
         user_id = genai_core.auth.get_user_id(router)
         result = genai_core.presign.generate_user_presigned_post(
