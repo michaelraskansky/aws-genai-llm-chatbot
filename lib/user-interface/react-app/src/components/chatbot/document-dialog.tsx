@@ -15,7 +15,7 @@ import { v4 as uuidv4 } from "uuid";
 import {
   ChatBotConfiguration,
   FileStorageProvider,
-  VideoFile,
+  ImageFile,
   ChabotInputModality,
 } from "./types";
 import { AppContext } from "../../common/app-context";
@@ -23,7 +23,7 @@ import { ApiClient } from "../../common/api-client/api-client";
 import { FileUploader } from "../../common/file-uploader";
 import { Utils } from "../../common/utils";
 
-export interface VideoDialogProps {
+export interface DocumentDialogProps {
   sessionId: string;
   visible: boolean;
   setVisible: (visible: boolean) => void;
@@ -31,9 +31,14 @@ export interface VideoDialogProps {
   setConfiguration: Dispatch<React.SetStateAction<ChatBotConfiguration>>;
 }
 
-const ALLOWED_MIME_TYPES = ["video/mp4"];
+const ALLOWED_MIME_TYPES = [
+  "application/pdf",
+  "text/csv",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+];
 
-export default function VideoDialog(props: VideoDialogProps) {
+export default function DocumentDialog(props: DocumentDialogProps) {
   const appContext = useContext(AppContext);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
@@ -52,11 +57,11 @@ export default function VideoDialog(props: VideoDialogProps) {
       const errors: Record<string, string | string[]> | null = {};
       console.log(form);
       if (!form.files || form.files.length === 0) {
-        errors.files = "נא לבחור קובץ";
+        errors.files = "Please choose a file";
       }
 
       if (!validateFiles(form.files)) {
-        errors.files = "גודל או סוג הקובץ אינו תקין";
+        errors.files = "File size or type is invalid";
       }
 
       return errors;
@@ -68,10 +73,10 @@ export default function VideoDialog(props: VideoDialogProps) {
     setLoading(true);
     const apiClient = new ApiClient(appContext);
 
-    const files: VideoFile[] = (await uploadFiles(
+    const files: ImageFile[] = (await uploadFiles(
       data.files,
       apiClient
-    )) as VideoFile[];
+    )) as ImageFile[];
 
     props.setConfiguration({
       ...props.configuration,
@@ -91,18 +96,18 @@ export default function VideoDialog(props: VideoDialogProps) {
   const validateFiles = (files: File[]) => {
     const maxFilesSizeMb = 10;
     setError(null);
-    // ensure the first file type MIME is video mp4 and less than 10MB only
+    // ensure the first file type MIME is images png, jpg, jpeg, gif or svg and less than 5MB only
     if (files.length === 0) return false;
 
     const errors: string[] = [];
     files.forEach((file) => {
       if (file.size > maxFilesSizeMb * 1024 * 1024) {
-        errors.push(`גודל הקובץ חייב להיות קטן מ-${maxFilesSizeMb} מגה-בייט`);
+        errors.push(`Files size must be less than ${maxFilesSizeMb}MB`);
       }
 
       if (!ALLOWED_MIME_TYPES.includes(file.type)) {
         errors.push(
-          `סוג הקובץ חייב להיות אחד מהבאים: ${ALLOWED_MIME_TYPES.join(", ")}`
+          `File type must be one of ${ALLOWED_MIME_TYPES.join(", ")}`
         );
       }
     });
@@ -124,12 +129,11 @@ export default function VideoDialog(props: VideoDialogProps) {
         s3Files.push({
           key: `${response}`,
           provider: FileStorageProvider.S3,
-          type: ChabotInputModality.Video,
+          type: ChabotInputModality.Image,
         });
       } catch (error) {
-        console.log(error);
         const errorMessage =
-          "שגיאה בהעלאת הקובץ: " + Utils.getErrorMessage(error);
+          "Error uploading file: " + Utils.getErrorMessage(error);
         console.log(errorMessage, error);
         setError(errorMessage);
       }
@@ -154,7 +158,7 @@ export default function VideoDialog(props: VideoDialogProps) {
       await client.sessions.getFileUploadSignedUrl(`${id}.${extension}`)
     ).data?.getUploadFileURL;
     if (!url) {
-      throw new Error("לא ניתן לקבל כתובת להעלאת הקובץ");
+      throw new Error("Unable to get the upload url.");
     }
     await uploader.upload(file, url, () => {});
     return `${id}.${extension}`;
@@ -168,7 +172,7 @@ export default function VideoDialog(props: VideoDialogProps) {
         <Box float="right">
           <SpaceBetween direction="horizontal" size="xs" alignItems="center">
             <Button variant="link" onClick={cancelChanges}>
-              ביטול
+              בטל
             </Button>
             <Button
               variant="primary"
@@ -180,48 +184,48 @@ export default function VideoDialog(props: VideoDialogProps) {
           </SpaceBetween>
         </Box>
       }
-      header="הוספת סרטון להודעה"
+      header="הוסף מסמכים להודעה"
     >
-      <Form>
-        <SpaceBetween size="m">
-          <FormField
-            label="העלאה מהמכשיר"
-            errorText={errors.files}
-            description="באפשרותך להעלות סרטון אחד לשימוש בשיחה זו"
-          >
-            <FileUpload
-              onChange={({ detail }) => {
-                onChange({ files: detail.value });
-                setFiles(detail.value);
-              }}
-              value={files}
-              i18nStrings={{
-                uploadButtonText: (e) => (e ? "בחר קבצים" : "בחר קובץ"),
-                dropzoneText: (e) => (e ? "גרור קבצים לכאן" : "גרור קובץ לכאן"),
-                removeFileAriaLabel: (e) => `הסר קובץ ${e + 1}`,
-                limitShowFewer: "הצג פחות",
-                limitShowMore: "הצג יותר",
-                errorIconAriaLabel: "שגיאה",
-              }}
-              multiple={false}
-              errorText={error}
-              showFileThumbnail
-              tokenLimit={3}
-              constraintText={`קבצים מסוג ${ALLOWED_MIME_TYPES.join(
-                ", "
-              )}. גודל מקסימלי 10 מגה-בייט`}
-            />
-          </FormField>
-          {loading && (
-            <>
-              <div>
-                <Spinner />
-                <span style={{ marginRight: "5px" }}>מעלה סרטון...</span>
-              </div>
-            </>
-          )}
-        </SpaceBetween>
-      </Form>
+      <div dir="rtl">
+        <Form>
+          <SpaceBetween size="m">
+            <FormField
+              label="העלה מהמכשיר"
+              errorText={errors.files}
+              description="אתה יכול לעלות קובץ לשימוש בשיחה"
+            >
+              <FileUpload
+                onChange={({ detail }) => {
+                  onChange({ files: detail.value });
+                  setFiles(detail.value);
+                }}
+                value={files}
+                i18nStrings={{
+                  uploadButtonText: (e) => (e ? "בחר קבצים" : "בחר קובץ"),
+                  dropzoneText: (e) => (e ? "העלה קבצים כאן" : "תעל קובץ כאל"),
+                  removeFileAriaLabel: (e) => `הסר קובץ ${e + 1}`,
+                  limitShowFewer: "הצג פחות קבצים",
+                  limitShowMore: "הצג יותר קבצים",
+                  errorIconAriaLabel: "שגיאה",
+                }}
+                multiple={true}
+                errorText={error}
+                showFileThumbnail
+                tokenLimit={3}
+                constraintText=".pdf, .csv, .xlsx, .docx גודל מקסימלי 10 מגה-בייט."
+              />
+            </FormField>
+            {loading && (
+              <>
+                <div>
+                  <Spinner />
+                  <span style={{ marginLeft: "5px" }}>מוסיף קובץ...</span>
+                </div>
+              </>
+            )}
+          </SpaceBetween>
+        </Form>
+      </div>
     </Modal>
   );
 }

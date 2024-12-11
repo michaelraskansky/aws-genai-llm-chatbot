@@ -1,10 +1,19 @@
 import { MediaFile, ChabotOutputModality, ChabotInputModality } from "./types";
 import styles from "../../styles/chat.module.scss";
+import { Icon } from "@cloudscape-design/components";
 
 interface ChatMessageMediaDisplayProps {
   files: MediaFile[];
   isAIMessage?: boolean;
 }
+
+const isDocument = (file: MediaFile) =>
+  new URL(file.url).pathname.endsWith(".pdf") ||
+  new URL(file.url).pathname.endsWith(".csv") ||
+  new URL(file.url).pathname.endsWith(".xlsx") ||
+  new URL(file.url).pathname.endsWith(".doc") ||
+  new URL(file.url).pathname.endsWith(".docx") ||
+  new URL(file.url).pathname.endsWith(".xls");
 
 export function ChatMessageMediaDisplay({
   files,
@@ -16,8 +25,10 @@ export function ChatMessageMediaDisplay({
     <div className={styles.filesContainer}>
       {files.map((file: MediaFile) => (
         <div key={file.key}>
-          {(isAIMessage && file.type === ChabotOutputModality.Image) ||
-          (!isAIMessage && file.type === ChabotInputModality.Image) ? (
+          {isDocument(file) ? (
+            <Icon name="file" size="medium" variant="normal" alt="PDF file" />
+          ) : (isAIMessage && file.type === ChabotOutputModality.Image) ||
+            (!isAIMessage && file.type === ChabotInputModality.Image) ? (
             <a
               href={file.url as string}
               target="_blank"

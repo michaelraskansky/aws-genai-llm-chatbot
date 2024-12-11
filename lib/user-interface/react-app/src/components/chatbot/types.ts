@@ -157,6 +157,7 @@ export enum ChabotInputModality {
   Text = "TEXT",
   Image = "IMAGE",
   Video = "VIDEO",
+  Document = "DOCUMENT",
 }
 
 export enum ChabotOutputModality {

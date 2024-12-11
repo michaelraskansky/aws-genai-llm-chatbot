@@ -31,14 +31,7 @@ export interface ImageDialogProps {
   setConfiguration: Dispatch<React.SetStateAction<ChatBotConfiguration>>;
 }
 
-const ALLOWED_MIME_TYPES = [
-  "image/png", 
-  "image/jpg", 
-  "image/jpeg", 
-  "application/pdf",
-  "text/csv",
-  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-];
+const ALLOWED_MIME_TYPES = ["image/png", "image/jpg", "image/jpeg"];
 
 export default function ImageDialog(props: ImageDialogProps) {
   const appContext = useContext(AppContext);
@@ -59,11 +52,11 @@ export default function ImageDialog(props: ImageDialogProps) {
       const errors: Record<string, string | string[]> | null = {};
       console.log(form);
       if (!form.files || form.files.length === 0) {
-        errors.files = "Please choose a file";
+        errors.files = "נא לבחור קובץ";
       }
 
       if (!validateFiles(form.files)) {
-        errors.files = "File size or type is invalid";
+        errors.files = "גודל או סוג הקובץ אינו תקין";
       }
 
       return errors;
@@ -98,18 +91,18 @@ export default function ImageDialog(props: ImageDialogProps) {
   const validateFiles = (files: File[]) => {
     const maxFilesSizeMb = 10;
     setError(null);
-    // ensure the first file type MIME is images png, jpg, jpeg, gif or svg and less than 5MB only
+
     if (files.length === 0) return false;
 
     const errors: string[] = [];
     files.forEach((file) => {
       if (file.size > maxFilesSizeMb * 1024 * 1024) {
-        errors.push(`Files size must be less than ${maxFilesSizeMb}MB`);
+        errors.push(`גודל הקובץ חייב להיות קטן מ-${maxFilesSizeMb} מגה-בייט`);
       }
 
       if (!ALLOWED_MIME_TYPES.includes(file.type)) {
         errors.push(
-          `File type must be one of ${ALLOWED_MIME_TYPES.join(", ")}`
+          `סוג הקובץ חייב להיות אחד מהבאים: ${ALLOWED_MIME_TYPES.join(", ")}`
         );
       }
     });
@@ -135,7 +128,7 @@ export default function ImageDialog(props: ImageDialogProps) {
         });
       } catch (error) {
         const errorMessage =
-          "Error uploading file: " + Utils.getErrorMessage(error);
+          "שגיאה בהעלאת הקובץ: " + Utils.getErrorMessage(error);
         console.log(errorMessage, error);
         setError(errorMessage);
       }
@@ -154,81 +147,77 @@ export default function ImageDialog(props: ImageDialogProps) {
     uploader: FileUploader
   ) => {
     const id = uuidv4();
-    // get the extension of the file and content type
     const extension = file.name.split(".").pop();
     const url = (
       await client.sessions.getFileUploadSignedUrl(`${id}.${extension}`)
     ).data?.getUploadFileURL;
     if (!url) {
-      throw new Error("Unable to get the upload url.");
+      throw new Error("לא ניתן לקבל כתובת להעלאת הקובץ");
     }
     await uploader.upload(file, url, () => {});
     return `${id}.${extension}`;
   };
 
   return (
-      <Modal
-        onDismiss={() => props.setVisible(false)}
-        visible={props.visible}
-        footer={
-          <Box float="right">
-            <SpaceBetween direction="horizontal" size="xs" alignItems="center">
-              <Button variant="link" onClick={cancelChanges}>
-                בטל
-              </Button>
-              <Button
-                variant="primary"
-                disabled={loading || !files.length}
-                onClick={saveConfig}
-              >
-                הוסף
-              </Button>
-            </SpaceBetween>
-          </Box>
-        }
-        header="הוסף תמונות להודעה"
-      >
-      <div dir="rtl">
-        <Form>
-          <SpaceBetween size="m">
-            <FormField
-              label="העלה מהמכשיר"
-              errorText={errors.files}
-              description="אתה יכול לעלות קובץ לשימוש בשיחה"
+    <Modal
+      onDismiss={() => props.setVisible(false)}
+      visible={props.visible}
+      footer={
+        <Box float="right">
+          <SpaceBetween direction="horizontal" size="xs" alignItems="center">
+            <Button variant="link" onClick={cancelChanges}>
+              ביטול
+            </Button>
+            <Button
+              variant="primary"
+              disabled={loading || !files.length}
+              onClick={saveConfig}
             >
-              <FileUpload
-                onChange={({ detail }) => {
-                  onChange({ files: detail.value });
-                  setFiles(detail.value);
-                }}
-                value={files}
-                i18nStrings={{
-                  uploadButtonText: (e) => (e ? "בחר קבצים" : "בחר קובץ"),
-                  dropzoneText: (e) =>
-                    e ? "העלה קבצים כאן" : "תעל קובץ כאל",
-                  removeFileAriaLabel: (e) => `הסר קובץ ${e + 1}`,
-                  limitShowFewer: "הצג פחות קבצים",
-                  limitShowMore: "הצג יותר קבצים",
-                  errorIconAriaLabel: "שגיאה",
-                }}
-                multiple={true}
-                errorText={error}
-                showFileThumbnail
-                tokenLimit={3}
-                constraintText=".png, .jpg, .jpeg, .pdf, .csv, .xlsx. Max 10MB."
-              />
-            </FormField>
-            {loading && (
-              <>
-                <div>
-                  <Spinner />
-                  <span style={{ marginLeft: "5px" }}>מוסיף קובץ...</span>
-                </div>
-              </>
-            )}
+              הוסף
+            </Button>
           </SpaceBetween>
-        </Form>
-        </div>
-      </Modal>
+        </Box>
+      }
+      header="הוספת תמונות להודעה"
+    >
+      <Form>
+        <SpaceBetween size="m">
+          <FormField
+            label="העלאת קבצים"
+            errorText={errors.files}
+            description="באפשרותך להעלות תמונות לשימוש בשיחה זו"
+          >
+            <FileUpload
+              onChange={({ detail }) => {
+                onChange({ files: detail.value });
+                setFiles(detail.value);
+              }}
+              value={files}
+              i18nStrings={{
+                uploadButtonText: (e) => (e ? "בחר קבצים" : "בחר קובץ"),
+                dropzoneText: (e) => (e ? "גרור קבצים לכאן" : "גרור קובץ לכאן"),
+                removeFileAriaLabel: (e) => `הסר קובץ ${e + 1}`,
+                limitShowFewer: "הצג פחות",
+                limitShowMore: "הצג יותר",
+                errorIconAriaLabel: "שגיאה",
+              }}
+              multiple={true}
+              errorText={error}
+              showFileThumbnail
+              tokenLimit={3}
+              constraintText="קבצים מסוג png, jpg, jpeg. גודל מקסימלי 10 מגה-בייט"
+            />
+          </FormField>
+          {loading && (
+            <>
+              <div>
+                <Spinner />
+                <span style={{ marginRight: "5px" }}>מעלה קובץ...</span>
+              </div>
+            </>
+          )}
+        </SpaceBetween>
+      </Form>
+    </Modal>
   );
 }

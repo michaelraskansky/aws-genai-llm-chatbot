@@ -33,6 +33,7 @@ import styles from "../../styles/chat.module.scss";
 import ConfigDialog from "./config-dialog";
 import ImageDialog from "./image-dialog";
 import VideoDialog from "./video-dialog";
+import DocumentDialog from "./document-dialog";
 
 import {
   ChabotInputModality,
@@ -96,6 +97,7 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
   const [configDialogVisible, setConfigDialogVisible] = useState(false);
   const [imageDialogVisible, setImageDialogVisible] = useState(false);
   const [videoDialogVisible, setVideoDialogVisible] = useState(false);
+  const [documentDialogVisible, setDocumentDialogVisible] = useState(false);
   const [files, setFiles] = useState<MediaFile[]>([]);
   const [outputModality, setOutputModality] = useState<ChabotOutputModality>(
     ChabotOutputModality.Text
@@ -105,16 +107,13 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
     ReadyState.UNINSTANTIATED
   );
 
-  /*
-  const isDocument = (file: ImageFile)  => (
-    new URL(file.url).pathname.endsWith(".pdf") || 
+  const isDocument = (file: MediaFile) =>
+    new URL(file.url).pathname.endsWith(".pdf") ||
     new URL(file.url).pathname.endsWith(".csv") ||
     new URL(file.url).pathname.endsWith(".xlsx") ||
     new URL(file.url).pathname.endsWith(".doc") ||
     new URL(file.url).pathname.endsWith(".docx") ||
-    new URL(file.url).pathname.endsWith(".xls")
-  );*/
-
+    new URL(file.url).pathname.endsWith(".xls");
 
   const messageHistoryRef = useRef<ChatBotHistoryItem[]>([]);
 
@@ -283,8 +282,8 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
       const isScrollToTheEnd =
         Math.abs(
           window.innerHeight +
-          window.scrollY -
-          document.documentElement.scrollHeight
+            window.scrollY -
+            document.documentElement.scrollHeight
         ) <= 10;
 
       if (!isScrollToTheEnd) {
@@ -471,8 +470,6 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
     [ReadyState.UNINSTANTIATED]: "Uninstantiated",
   }[readyState];
 
-
-
   return (
     <SpaceBetween direction="vertical" size="l">
       <Container>
@@ -494,6 +491,7 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
             {state.selectedModelMetadata?.inputModalities.includes(
               ChabotInputModality.Image
             ) && (
+              <>
                 <Button
                   variant="icon"
                   onClick={() => setImageDialogVisible(true)}
@@ -512,7 +510,24 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
                     </svg>
                   }
                 ></Button>
-              )}
+                <Button
+                  variant="icon"
+                  onClick={() => setDocumentDialogVisible(true)}
+                  iconSvg={
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      x="0px"
+                      y="0px"
+                      width="100"
+                      height="100"
+                      viewBox="0 0 50 50"
+                    >
+                      <path d="M 7 2 L 7 48 L 43 48 L 43 14.59375 L 42.71875 14.28125 L 30.71875 2.28125 L 30.40625 2 Z M 9 4 L 29 4 L 29 16 L 41 16 L 41 46 L 9 46 Z M 31 5.4375 L 39.5625 14 L 31 14 Z M 15 22 L 15 24 L 35 24 L 35 22 Z M 15 28 L 15 30 L 31 30 L 31 28 Z M 15 34 L 15 36 L 35 36 L 35 34 Z"></path>
+                    </svg>
+                  }
+                ></Button>
+              </>
+            )}
             {state.selectedModelMetadata?.inputModalities.includes(
               ChabotInputModality.Video
             ) && (
@@ -544,6 +559,13 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
             configuration={props.configuration}
             setConfiguration={props.setConfiguration}
           />
+          <DocumentDialog
+            sessionId={props.session.id}
+            visible={documentDialogVisible}
+            setVisible={setDocumentDialogVisible}
+            configuration={props.configuration}
+            setConfiguration={props.setConfiguration}
+          />
           <TextareaAutosize
             data-locator="prompt-input"
             className={styles.input_textarea}
@@ -564,11 +586,11 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
             value={state.value}
             placeholder={
               listening
-                ? "Listening..."
+                ? "מקשיב"
                 : outputModality === ChabotOutputModality.Image
-                ? "Describe the image you want to generate"
+                ? "תתאר את התמונה שאתה רוצה לייצר"
                 : outputModality === ChabotOutputModality.Video
-                ? "Describe the video you want to generate"
+                ? "תתאר את הודיוא שאתה רוצה לייצר"
                 : "כאן כותבים את ההנחיה"
             }
           />
@@ -579,7 +601,28 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
               files.length > 0 &&
               files.map((file, idx) => (
                 <div key={idx} style={{ float: "left" }}>
-                  {file.type === ChabotInputModality.Image ? (
+                  {isDocument(file) ? (
+                    <div
+                      key={idx}
+                      className="pdf-icon"
+                      style={{
+                        width: "30px",
+                        height: "30px",
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        float: "left",
+                        marginRight: "8px",
+                      }}
+                    >
+                      <Icon
+                        name="file"
+                        size="small"
+                        variant="normal"
+                        alt="document"
+                      />
+                    </div>
+                  ) : file.type === ChabotInputModality.Image ? (
                     <img
                       key={idx}
                       onClick={() => setImageDialogVisible(true)}
@@ -750,8 +793,7 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
               ? styles.input_controls_selects_2
               : styles.input_controls_selects_1
           }
-        >
-        </div>
+        ></div>
         <div className={styles.input_controls_right}>
           <SpaceBetween direction="horizontal" size="xxs" alignItems="center">
             <div style={{ paddingTop: "1px" }}>
@@ -778,8 +820,8 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
                   ? "success"
                   : readyState === ReadyState.CONNECTING ||
                     readyState === ReadyState.UNINSTANTIATED
-                    ? "in-progress"
-                    : "error"
+                  ? "in-progress"
+                  : "error"
               }
             >
               {readyState === ReadyState.OPEN ? "מחובר" : connectionStatus}

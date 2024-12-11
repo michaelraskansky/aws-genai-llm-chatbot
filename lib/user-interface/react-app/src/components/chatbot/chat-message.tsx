@@ -18,7 +18,6 @@ import {
   ChatBotMessageType,
   MediaFile,
   ChabotOutputModality,
-  //ImageFile,
 } from "./types";
 import { AppContext } from "../../common/app-context";
 import { ApiClient } from "../../common/api-client/api-client";
@@ -46,17 +45,6 @@ export default function ChatMessage(props: ChatMessageProps) {
     useState<boolean>(false);
   const [asyncFiles, setAsyncFiles] = useState<MediaFile[]>([]);
   const [processedKeys, setProcessedKeys] = useState<Set<string>>(new Set());
-
-  
-  /*
-  const isDocument = (file: ImageFile)  => (
-    new URL(file.url).pathname.endsWith(".pdf") || 
-    new URL(file.url).pathname.endsWith(".csv") ||
-    new URL(file.url).pathname.endsWith(".xlsx") ||
-    new URL(file.url).pathname.endsWith(".doc") ||
-    new URL(file.url).pathname.endsWith(".docx") ||
-    new URL(file.url).pathname.endsWith(".xls")
-  );*/
 
   useEffect(() => {
     setMessage(props.message);
@@ -217,43 +205,43 @@ export default function ChatMessage(props: ChatMessageProps) {
             ((props?.showMetadata && props.message.metadata) ||
               (props.message.metadata &&
                 props.configuration?.showMetadata)) && (
-                  <div dir="ltr">
-              <ChatMessageMetadata
-                metadata={props.message.metadata}
-                showMetadata={true}
-                documentIndex={documentIndex}
-                promptIndex={promptIndex}
-                setDocumentIndex={setDocumentIndex}
-                setPromptIndex={setPromptIndex}
-              />
+              <div dir="ltr">
+                <ChatMessageMetadata
+                  metadata={props.message.metadata}
+                  showMetadata={true}
+                  documentIndex={documentIndex}
+                  promptIndex={promptIndex}
+                  setDocumentIndex={setDocumentIndex}
+                  setPromptIndex={setPromptIndex}
+                />
               </div>
             )
           }
         >
-        {props.message.content.length > 0 && (
-          <div className={styles.btn_chabot_message_copy}>
-            <Popover
-              data-locator="copy-clipboard"
-              size="medium"
-              position="top"
-              triggerType="custom"
-              dismissButton={false}
-              content={
-                <StatusIndicator type="success">
-                  Copied to clipboard
-                </StatusIndicator>
-              }
-            >
-              <Button
-                variant="inline-icon"
-                iconName="copy"
-                onClick={() => {
-                  navigator.clipboard.writeText(props.message.content);
-                }}
-              />
-            </Popover>
-          </div>
-        )}
+          {props.message.content.length > 0 && (
+            <div className={styles.btn_chabot_message_copy}>
+              <Popover
+                data-locator="copy-clipboard"
+                size="medium"
+                position="top"
+                triggerType="custom"
+                dismissButton={false}
+                content={
+                  <StatusIndicator type="success">
+                    Copied to clipboard
+                  </StatusIndicator>
+                }
+              >
+                <Button
+                  variant="inline-icon"
+                  iconName="copy"
+                  onClick={() => {
+                    navigator.clipboard.writeText(props.message.content);
+                  }}
+                />
+              </Popover>
+            </div>
+          )}
           {loading ||
           (content.length === 0 && !processingAsyncFiles && !files.length) ? (
             <Box>
@@ -296,9 +284,7 @@ export default function ChatMessage(props: ChatMessageProps) {
                       const { children, ...rest } = props;
                       return (
                         <td {...rest} className={styles.markdownTableCell}>
-                          <div dir="rtl">
-                            {children}
-                          </div>
+                          <div dir="rtl">{children}</div>
                         </td>
                       );
                     },
