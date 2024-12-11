@@ -62,17 +62,26 @@ export class PublicWebsite extends Construct {
         });
 
     const fileBucketURLs = [
-      `https://${props.chatbotFilesBucket.bucketName}.s3-accelerate.amazonaws.com`,
       `https://${props.chatbotFilesBucket.bucketName}.s3.amazonaws.com`,
       `https://${props.chatbotFilesBucket.bucketName}.s3.${region}.amazonaws.com`,
     ];
     if (props.uploadBucket) {
       // Bucket used to upload documents to workspaces
       fileBucketURLs.push(
-        `https://${props.uploadBucket.bucketName}.s3-accelerate.amazonaws.com`,
         `https://${props.uploadBucket.bucketName}.s3.amazonaws.com`,
         `https://${props.uploadBucket.bucketName}.s3.${region}.amazonaws.com`
       );
+    }
+
+    if (props.config.enableS3TransferAcceleration) {
+      fileBucketURLs.push(
+        `https://${props.chatbotFilesBucket.bucketName}.s3-accelerate.amazonaws.com`
+      );
+      if (props.uploadBucket) {
+        fileBucketURLs.push(
+          `https://${props.uploadBucket.bucketName}.s3-accelerate.amazonaws.com`
+        );
+      }
     }
 
     const websocketURL = (
@@ -142,7 +151,6 @@ export class PublicWebsite extends Construct {
       priceClass: cf.PriceClass.PRICE_CLASS_ALL,
       httpVersion: cf.HttpVersion.HTTP2_AND_3,
       minimumProtocolVersion: cf.SecurityPolicyProtocol.TLS_V1_2_2021,
-      //TODO: make this configurable
       enableLogging: true,
       logBucket: distributionLogsBucket,
       logIncludesCookies: false,
