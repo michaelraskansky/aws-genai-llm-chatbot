@@ -55,7 +55,9 @@ class MultiModalModelBase:
         )
         extension = mimetypes.guess_extension(file["key"]) or file["key"].split(".")[-1]
         mime_type = mimetypes.guess_type(file["key"])[0]
-        file_type = mime_type.split("/")[0]
+        file_type = self.map_mime_type_to_file_type(mime_type)
+        file_name = file["key"].split("/")[-1].replace(".", "")
+        logger.info("File name", file_name=file_name)
         logger.info("File type", file_type=file_type)
         logger.info("File extension", extension=extension)
         logger.info("File mime type", mime_type=mime_type)
@@ -73,12 +75,17 @@ class MultiModalModelBase:
         else:
             source["bytes"] = media_bytes
 
-        return {
+        response = {
             file_type: {
                 "format": format,
                 "source": source,
             }
         }
+
+        if file_type == "document":
+            response[file_type]["name"] = file_name
+
+        return response
 
     def format_prompt(self, prompt: str, messages: list, files: list) -> str:
         prompts = []
@@ -130,6 +137,8 @@ class MultiModalModelBase:
                         c["video"]["source"]["bytes"] = ""
                     if "image" in c:
                         c["image"]["source"]["bytes"] = ""
+                    if "document" in c:
+                        c["document"]["source"]["bytes"] = ""
         return json.dumps(input)
 
     @abstractmethod
@@ -192,3 +201,11 @@ class MultiModalModelBase:
         return {
             "content": content,
         }
+
+    def map_mime_type_to_file_type(self, mime_type: str) -> str:
+        if mime_type.startswith("image/"):
+            return "image"
+        elif mime_type.startswith("video/"):
+            return "video"
+        else:
+            return "document"
