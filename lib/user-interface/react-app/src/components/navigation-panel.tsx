@@ -39,7 +39,7 @@ export default function NavigationPanel() {
       if (userContext?.isAdmin) {
         newItems.push({
           type: "section",
-          text: "אפשרויות מתדדמות",
+          text: "אפשרויות מתקדמות",
           items: [
             {
               type: "link",
@@ -56,8 +56,8 @@ export default function NavigationPanel() {
       }
 
       if (appContext?.config.rag_enabled && userContext?.isAdmin) {
-        const crossEncodersItems: SideNavigationProps.Item[] = appContext?.config
-          .cross_encoders_enabled
+        const crossEncodersItems: SideNavigationProps.Item[] = appContext
+          ?.config.cross_encoders_enabled
           ? [
               {
                 type: "link",
@@ -74,7 +74,7 @@ export default function NavigationPanel() {
             {
               type: "link",
               text: "לוח בקרה",
-              href: "/rag"
+              href: "/rag",
             },
             {
               type: "link",
@@ -84,7 +84,7 @@ export default function NavigationPanel() {
             {
               type: "link",
               text: "סביבות עבודה",
-              href: "/rag/workspaces"
+              href: "/rag/workspaces",
             },
             {
               type: "link",
@@ -102,8 +102,7 @@ export default function NavigationPanel() {
         {
           type: "link",
           text: "דוקומנטציה",
-          href:
-            "https://aws-samples.github.io/aws-genai-llm-chatbot/",
+          href: "https://aws-samples.github.io/aws-genai-llm-chatbot/",
           external: true,
         }
       );
