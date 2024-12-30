@@ -54,7 +54,8 @@ class MultiModalModelBase:
             "Fetching file", bucket=os.environ["CHATBOT_FILES_BUCKET_NAME"], key=key
         )
         extension = mimetypes.guess_extension(file["key"]) or file["key"].split(".")[-1]
-        mime_type = mimetypes.guess_type(file["key"])[0]
+        maybe_mime_type = mimetypes.guess_type(file["key"])[0]
+        mime_type = maybe_mime_type if maybe_mime_type is not None else f"document/{extension}"
         file_type = self.map_mime_type_to_file_type(mime_type)
         file_name = file["key"].split("/")[-1].replace(".", "")
         logger.info("File name", file_name=file_name)

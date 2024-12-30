@@ -1,4 +1,53 @@
-# Deploying a Multi-Model and Multi-RAG Powered Chatbot Using AWS CDK on AWS
+# Chatbot with Hebrew Support Branch
+
+This branch contains targeted modifications to the original project, demonstrating how small changes can significantly customize the chatbot experience.
+
+![sample](docs/about/assets/chatbot-demo-hebrew.gif "AWS GenAI Chatbot")
+
+### Key Changes
+
+1. **RTL Language Support**
+
+   - Added right-to-left (RTL) text direction support
+   - Adjusted UI components for RTL display
+   - Enables compatibility with Hebrew and other RTL languages
+
+2. **Theme Customization**
+
+   - Applied Cloudscape design system theming options
+   - Adjusted color schemes and component styles
+
+3. **Extended Regional Deployment**
+
+   - Included support for additional AWS regions, such as il-central-1
+
+4. **Document Chat Functionality**
+   - Implemented feature to upload documents
+   - Use of Amazon Bedrock Converse API, native document support functionality
+   - Enhances chatbot's utility for document analysis
+
+### Value of Customizations
+
+These modifications showcase the adaptability of the original AWS sample project:
+
+1. **Localization**:
+   RTL support opens up the chatbot to markets using Hebrew and other RTL languages, demonstrating how simple changes can make a product more accessible.
+
+2. **Brand Alignment**:
+   Integrating Cloudscape design elements shows how organizations can easily align the chatbot's look and feel with their brand or preferred design system.
+
+3. **Regional Flexibility**:
+   Adding deployment options for more regions illustrates how organizations can adapt the chatbot to meet local data residency requirements or improve regional performance.
+
+4. **Customization Potential**:
+   These changes serve as practical examples for organizations looking to tailor the chatbot to their specific needs, showing that impactful customization doesn't always require extensive code changes.
+
+5. **Learning Opportunity**:
+   The modification process provides practical insights into adapting Cloudscape components and CDK constructs. This is valuable for developers and organizations looking to customize AWS-based applications and infrastructure.
+
+While these modifications don't fundamentally alter the core functionality, they demonstrate how targeted changes can significantly enhance the chatbot expirience
+
+# Deploying a Multi-Model and Multi-RAG Powered Chatbot Using AWS CDK on AWS with Hebrew Support
 
 [![Release Notes](https://img.shields.io/github/v/release/aws-samples/aws-genai-llm-chatbot)](https://github.com/aws-samples/aws-genai-llm-chatbot/releases)
 [![GitHub star chart](https://img.shields.io/github/stars/aws-samples/aws-genai-llm-chatbot?style=social)](https://star-history.com/#aws-samples/aws-genai-llm-chatbot)
@@ -7,8 +56,6 @@
 [![Deploy with GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://aws-samples.github.io/aws-genai-llm-chatbot/guide/deploy.html#deploy-with-github-codespaces)
 
 [![Full Documentation](https://img.shields.io/badge/Full%20Documentation-blue?style=for-the-badge&logo=Vite&logoColor=white)](https://aws-samples.github.io/aws-genai-llm-chatbot/)
-
-![sample](docs/about/assets/chabot-sample.gif "AWS GenAI Chatbot")
 
 ## 🚀 NEW! Support for new Amazon Nova Models 🚀
 
@@ -81,11 +128,3 @@ These projects' licensing includes the LGPL v3 and BlueOak-1.0.0 licenses.
 # Legal Disclaimer
 
 You should consider doing your own independent assessment before using the content in this sample for production purposes. This may include (amongst other things) testing, securing, and optimizing the content provided in this sample, based on your specific quality control practices and standards.
-
-# TODO
-
-- Allow to choose what networks to deploy lambdas in, as of today. the lambdas connect to all.
-- Appsync behind a ALB. You reach appsync from a AWS Endpoint. Cannot resolve from on prem
-- Default Model set by admin
-
-- **allow to config defaut and approved models**
