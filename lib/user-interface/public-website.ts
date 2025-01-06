@@ -62,14 +62,14 @@ export class PublicWebsite extends Construct {
         });
 
     const fileBucketURLs = [
-      `https://${props.chatbotFilesBucket.bucketName}.s3.amazonaws.com`,
       `https://${props.chatbotFilesBucket.bucketName}.s3.${region}.amazonaws.com`,
+      `https://s3.${region}.amazonaws.com/${props.chatbotFilesBucket.bucketName}/`,
     ];
     if (props.uploadBucket) {
       // Bucket used to upload documents to workspaces
       fileBucketURLs.push(
-        `https://${props.uploadBucket.bucketName}.s3.amazonaws.com`,
-        `https://${props.uploadBucket.bucketName}.s3.${region}.amazonaws.com`
+        `https://${props.uploadBucket.bucketName}.s3.${region}.amazonaws.com`,
+        `https://s3.${region}.amazonaws.com/${props.uploadBucket.bucketName}/`
       );
     }
 
