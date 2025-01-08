@@ -19,6 +19,7 @@ import { tz } from "moment-timezone";
 import { getData } from "country-list";
 import { randomBytes } from "crypto";
 import { StringUtils } from "turbocommons-ts";
+import { resolveConfigFile } from "./utils";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -148,9 +149,10 @@ const embeddingModels: ModelConfig[] = [
   program.option("-p, --prefix <prefix>", "The prefix for the stack");
 
   program.action(async (options) => {
-    if (fs.existsSync("./bin/config.json")) {
+    const configFile = resolveConfigFile();
+    if (fs.existsSync(configFile)) {
       const config: SystemConfig = JSON.parse(
-        fs.readFileSync("./bin/config.json").toString("utf8")
+        fs.readFileSync(configFile).toString("utf8")
       );
       options.prefix = config.prefix;
       options.enableWaf = config.enableWaf;
@@ -265,8 +267,8 @@ const embeddingModels: ModelConfig[] = [
 })();
 
 function createConfig(config: any): void {
-  fs.writeFileSync("./bin/config.json", JSON.stringify(config, undefined, 2));
-  console.log("Configuration written to ./bin/config.json");
+  fs.writeFileSync(resolveConfigFile(), JSON.stringify(config, undefined, 2));
+  console.log(`Configuration written to ${resolveConfigFile()}`);
 }
 
 /**
