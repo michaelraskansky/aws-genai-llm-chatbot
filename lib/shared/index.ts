@@ -23,6 +23,7 @@ export interface SharedProps {
 
 export class Shared extends Construct {
   readonly vpc: ec2.Vpc;
+  readonly vpcSubnets: ec2.SubnetSelection;
   readonly kmsKey: kms.Key;
   readonly kmsKeyAlias: string;
   readonly queueKmsKey: kms.Key;
@@ -127,6 +128,17 @@ export class Shared extends Construct {
       vpc = ec2.Vpc.fromLookup(this, "VPC", {
         vpcId: props.config.vpc.vpcId,
       }) as ec2.Vpc;
+    }
+
+    if (props.config.vpc?.subnetIds) {
+      this.vpcSubnets = this.selectVpcSubnetsById(
+        vpc,
+        props.config.vpc?.subnetIds
+      );
+    } else {
+      this.vpcSubnets = vpc.selectSubnets({
+        subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
+      });
     }
 
     if (
@@ -377,5 +389,13 @@ export class Shared extends Construct {
       },
     };
     return [ruleLimitRequests];
+  }
+  private selectVpcSubnetsById(
+    vpc: ec2.Vpc,
+    subnetIds: string[]
+  ): ec2.SubnetSelection {
+    return vpc.selectSubnets({
+      subnetFilters: [ec2.SubnetFilter.byIds(subnetIds)],
+    });
   }
 }

@@ -89,6 +89,7 @@ export interface SystemConfig {
     vpcId?: string;
     createVpcEndpoints?: boolean;
     vpcDefaultSecurityGroup?: string;
+    subnetIds?: string[];
   };
   advancedMonitoring?: boolean;
   logRetention?: number;
