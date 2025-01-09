@@ -20,5 +20,3 @@ requests==2.32.0
 attrs==23.1.0
 feedparser==6.0.11
 defusedxml==0.7.1
-duckduckgo-search==6.3.3
-wikipedia==1.4.0
