@@ -156,6 +156,7 @@ const embeddingModels: ModelConfig[] = [
       );
       options.prefix = config.prefix;
       options.enableWaf = config.enableWaf;
+      options.directSend = config.directSend;
       options.caCerts = config.caCerts;
       options.enableS3TransferAcceleration =
         config.enableS3TransferAcceleration;
@@ -303,6 +304,12 @@ async function processCreateOptions(options: any): Promise<void> {
       name: "enableS3TransferAcceleration",
       message: "Do you want to enable S3 transfer acceleration",
       initial: options.enableS3TransferAcceleration ?? true,
+    },
+    {
+      type: "confirm",
+      name: "directSend",
+      message: "Do you want to lambda handlers to send directly to client",
+      initial: options.directSend ?? false,
     },
     {
       type: "input",
@@ -1268,6 +1275,7 @@ async function processCreateOptions(options: any): Promise<void> {
     prefix: answers.prefix,
     enableS3TransferAcceleration: answers.enableS3TransferAcceleration,
     enableWaf: answers.enableWaf,
+    directSend: answers.directSend,
     cloudfrontLogBucketArn: answers.cloudfrontLogBucketArn,
     createCMKs: answers.createCMKs,
     retainOnDelete: answers.retainOnDelete,

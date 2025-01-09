@@ -7,6 +7,7 @@ import * as logs from "aws-cdk-lib/aws-logs";
 import { CfnEndpoint } from "aws-cdk-lib/aws-sagemaker";
 import * as sns from "aws-cdk-lib/aws-sns";
 import * as sqs from "aws-cdk-lib/aws-sqs";
+import * as appsync from "aws-cdk-lib/aws-appsync";
 import { Construct } from "constructs";
 import * as path from "path";
 import { RagEngines } from "../../rag-engines";
@@ -21,6 +22,7 @@ interface LangChainInterfaceProps {
   readonly messagesTopic: sns.Topic;
   readonly sessionsTable: dynamodb.Table;
   readonly byUserIdIndex: string;
+  readonly graphqlApi: appsync.GraphqlApi;
 }
 
 export class LangChainInterface extends Construct {
@@ -58,6 +60,8 @@ export class LangChainInterface extends Construct {
         SESSIONS_BY_USER_ID_INDEX_NAME: props.byUserIdIndex,
         API_KEYS_SECRETS_ARN: props.shared.apiKeysSecret.secretArn,
         MESSAGES_TOPIC_ARN: props.messagesTopic.topicArn,
+        APPSYNC_ENDPOINT: props.graphqlApi.graphqlUrl,
+        DIRECT_SEND: props.config.directSend ? "true" : "false",
         WORKSPACES_TABLE_NAME:
           props.ragEngines?.workspacesTable.tableName ?? "",
         WORKSPACES_BY_OBJECT_TYPE_INDEX_NAME:
@@ -221,7 +225,8 @@ export class LangChainInterface extends Construct {
         }
       }
     }
-
+    props.graphqlApi.grantMutation(requestHandler);
+    props.graphqlApi.grantQuery(requestHandler);
     props.sessionsTable.grantReadWriteData(requestHandler);
     props.messagesTopic.grantPublish(requestHandler);
     if (props.shared.kmsKey && requestHandler.role) {

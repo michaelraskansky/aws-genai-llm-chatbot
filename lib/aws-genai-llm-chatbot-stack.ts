@@ -79,6 +79,7 @@ export class AwsGenAILLMChatbotStack extends cdk.Stack {
         messagesTopic: chatBotApi.messagesTopic,
         sessionsTable: chatBotApi.sessionsTable,
         byUserIdIndex: chatBotApi.byUserIdIndex,
+        graphqlApi: chatBotApi.graphqlApi,
       });
 
       // Route all incoming messages targeted to langchain to the langchain model interface queue
@@ -124,6 +125,7 @@ export class AwsGenAILLMChatbotStack extends cdk.Stack {
       byUserIdIndex: chatBotApi.byUserIdIndex,
       chatbotFilesBucket: chatBotApi.filesBucket,
       createPrivateGateway: ideficsModels.length > 0,
+      graphqlApi: chatBotApi.graphqlApi,
     });
 
     // Route all incoming messages targeted to idefics to the idefics model interface queue
