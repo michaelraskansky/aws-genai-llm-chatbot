@@ -1,6 +1,7 @@
 import { Button } from "@cloudscape-design/components";
 import Chat from "./chat";
 import { useState } from "react";
+import styles from "../../styles/chat.module.scss";
 
 export default function ChatWithReload(props: { sessionId?: string }) {
   const [key, setKey] = useState(0);
@@ -12,7 +13,12 @@ export default function ChatWithReload(props: { sessionId?: string }) {
   return (
     <>
       <Chat key={key} sessionId={props.sessionId} />
-      <Button onClick={reloadChat}>שיחה חדשה</Button>
+      <div className={styles.input_container}>
+        <Button variant="primary" onClick={reloadChat} iconName="refresh">
+          שיחה חדשה
+        </Button>
+        {/* Other ChatInputPanel content */}
+      </div>
     </>
   );
 }
