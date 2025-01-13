@@ -19,7 +19,9 @@ def query(user_id, session_id, data_object):
     # Create the data object and convert it to a JSON string
 
     # Convert to JSON string and escape quotes
-    data_json = json.dumps(data_object).replace('"', '\\"')
+    data_json = json.dumps(
+        data_object, ensure_ascii=True, separators=(",", ":")
+    ).replace('"', '\\"')
 
     return f"""mutation Mutation {{
         publishResponse(

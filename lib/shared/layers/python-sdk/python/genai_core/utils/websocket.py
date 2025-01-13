@@ -4,7 +4,7 @@ import os
 import boto3
 
 from genai_core.utils.appsync import direct_send_to_client
-from index import ChatbotAction
+from genai_core.types import ChatbotAction
 from ..types import Direction
 
 sns = boto3.client("sns")

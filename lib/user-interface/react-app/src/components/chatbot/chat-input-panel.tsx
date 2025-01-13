@@ -138,16 +138,22 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
         next: ({ value }) => {
           const data = value.data!.receiveMessages?.data;
           if (data !== undefined && data !== null) {
-            const response: ChatBotMessageResponse = JSON.parse(data);
+            const response: ChatBotMessageResponse = JSON.parse(
+              Utils.sanitizeJSONString(data)
+            );
             console.log("message data", response.data);
             if (response.action === ChatBotAction.Heartbeat) {
               console.log("Heartbeat pong!");
               return;
             }
 
+            // Create new history array from the current ref
+            const updatedHistory = [...messageHistoryRef.current];
+
+            // Update the history with new tokens
             updateMessageHistoryRef(
               props.session.id,
-              messageHistoryRef.current,
+              updatedHistory,
               response,
               messageTokens
             );
@@ -159,7 +165,7 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
               console.log("Final message received");
               props.setRunning(false);
             }
-            props.setMessageHistory([...messageHistoryRef.current]);
+            props.setMessageHistory(updatedHistory);
           }
         },
         error: (error) => console.warn(error),
