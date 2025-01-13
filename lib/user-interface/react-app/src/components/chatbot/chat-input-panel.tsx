@@ -141,7 +141,6 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
             const response: ChatBotMessageResponse = JSON.parse(
               Utils.sanitizeJSONString(data)
             );
-            console.log("message data", response.data);
             if (response.action === ChatBotAction.Heartbeat) {
               console.log("Heartbeat pong!");
               return;

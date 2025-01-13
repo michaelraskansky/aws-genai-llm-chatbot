@@ -10,6 +10,7 @@ import datetime
 
 logger = Logger()
 tracer = Tracer()
+session = boto3.Session()
 
 AWS_REGION = os.environ["AWS_REGION"]
 APPSYNC_ENDPOINT = os.environ["APPSYNC_ENDPOINT"]
@@ -38,7 +39,7 @@ def query(user_id, session_id, data_object):
 
 @tracer.capture_method
 def direct_send_to_client(data):
-    logger.info("Received message to send to client", data=data)
+    logger.debug("Received message to send to client", data=data)
     query_string = query(
         user_id=data["userId"],
         session_id=data["data"]["sessionId"],
@@ -49,7 +50,6 @@ def direct_send_to_client(data):
     url = APPSYNC_ENDPOINT
     region = AWS_REGION
     host = urlparse(APPSYNC_ENDPOINT).netloc
-    session = boto3.Session()
 
     # Create the request with the current timestamp
     request = AWSRequest(
@@ -77,15 +77,18 @@ def direct_send_to_client(data):
             data=payload,
             timeout=5,
         )
-        logger.info("Request URL", url=url)
-        logger.info("Request Payload", payload=payload)
-        logger.info("Response Status", status=response.status_code)
-        logger.info("Response Body", body=json.loads(response.content.decode("utf-8")))
+        logger.debug("Request URL", url=url)
+        logger.debug("Request Payload", payload=payload)
+        logger.debug("Response Status", status=response.status_code)
+        logger.debug("Response Body", body=json.loads(response.content.decode("utf-8")))
 
         if response.status_code != 200:
             logger.error("Error Response Headers", headers=response.headers)
-            for header, value in response.headers.items():
-                logger.error(f"{header}: {value}")
+            logger.error(
+                "Error Response Body",
+                query_string=query_string,
+                response=json.loads(response.content.decode("utf-8")),
+            )
 
         return response
     except Exception as e:

@@ -156,6 +156,7 @@ const embeddingModels: ModelConfig[] = [
       );
       options.prefix = config.prefix;
       options.enableWaf = config.enableWaf;
+      options.provisionedConcurrency = config.provisionedConcurrency;
       options.directSend = config.directSend;
       options.caCerts = config.caCerts;
       options.enableS3TransferAcceleration =
@@ -310,6 +311,16 @@ async function processCreateOptions(options: any): Promise<void> {
       name: "directSend",
       message: "Do you want to lambda handlers to send directly to client",
       initial: options.directSend ?? false,
+    },
+    {
+      type: "input",
+      name: "provisionedConcurrency",
+      message: "Do you want to enable provisioned concurrency?",
+      hint: "Enter the number of provisioned concurrency 0 to disable",
+      initial: options.provisionedConcurrency ?? 0,
+      validate(value: string) {
+        return value.match(/^\d+$/) ? true : "Enter a valid number";
+      },
     },
     {
       type: "input",
@@ -1276,6 +1287,7 @@ async function processCreateOptions(options: any): Promise<void> {
     enableS3TransferAcceleration: answers.enableS3TransferAcceleration,
     enableWaf: answers.enableWaf,
     directSend: answers.directSend,
+    provisionedConcurrency: parseInt(answers.provisionedConcurrency, 0),
     cloudfrontLogBucketArn: answers.cloudfrontLogBucketArn,
     createCMKs: answers.createCMKs,
     retainOnDelete: answers.retainOnDelete,

@@ -91,6 +91,16 @@ export class LangChainInterface extends Construct {
       },
     });
 
+    if (props.config.provisionedConcurrency) {
+      const aliasOptions: lambda.AliasProps = {
+        aliasName: "live",
+        version: requestHandler.currentVersion,
+        provisionedConcurrentExecutions: props.config.provisionedConcurrency,
+        description: `alias with ${props.config.provisionedConcurrency} provisioned concurrent executions`,
+      };
+      new lambda.Alias(this, "RequestHandlerAlias", aliasOptions);
+    }
+
     if (props.config.bedrock?.enabled) {
       requestHandler.addToRolePolicy(
         new iam.PolicyStatement({

@@ -20,6 +20,7 @@ interface RealtimeGraphqlApiBackendProps {
   readonly api: appsync.GraphqlApi;
   readonly logRetention?: number;
   readonly advancedMonitoring?: boolean;
+  readonly provisionedConcurrency?: number;
 }
 
 export class RealtimeGraphqlApiBackend extends Construct {
@@ -116,6 +117,7 @@ export class RealtimeGraphqlApiBackend extends Construct {
       api: props.api,
       logRetention: props.logRetention,
       advancedMonitoring: props.advancedMonitoring,
+      provisionedConcurrency: props.provisionedConcurrency,
     });
 
     // Route all outgoing messages to the websocket interface queue

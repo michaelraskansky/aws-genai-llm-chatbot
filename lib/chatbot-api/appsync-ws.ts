@@ -7,6 +7,8 @@ import {
   LoggingFormat,
   Tracing,
   Runtime,
+  AliasProps,
+  Alias,
 } from "aws-cdk-lib/aws-lambda";
 import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources";
 import { Construct } from "constructs";
@@ -21,6 +23,7 @@ import { IKey } from "aws-cdk-lib/aws-kms";
 interface RealtimeResolversProps {
   readonly queue: IQueue;
   readonly topic: ITopic;
+  readonly provisionedConcurrency?: number;
   readonly topicKey: IKey;
   readonly userPool: UserPool;
   readonly shared: Shared;
@@ -94,6 +97,16 @@ export class RealtimeResolvers extends Construct {
         vpc: props.shared.vpc,
       }
     );
+
+    if (props.provisionedConcurrency) {
+      const aliasOptions: AliasProps = {
+        aliasName: "live",
+        version: outgoingMessageHandler.currentVersion,
+        provisionedConcurrentExecutions: props.provisionedConcurrency,
+        description: `alias with ${props.provisionedConcurrency} provisioned concurrent executions`,
+      };
+      new Alias(this, "OutgoingMessageHandler", aliasOptions);
+    }
 
     outgoingMessageHandler.addEventSource(new SqsEventSource(props.queue));
 
