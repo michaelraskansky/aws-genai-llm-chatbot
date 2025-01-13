@@ -65,6 +65,7 @@ export interface ChatInputPanelProps {
   configuration: ChatBotConfiguration;
   setConfiguration: Dispatch<React.SetStateAction<ChatBotConfiguration>>;
   setInitErrorMessage?: (error?: string) => void;
+  reloadChat: () => void;
 }
 
 export abstract class ChatScrollState {
@@ -802,6 +803,12 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
         <div className={styles.input_controls_right}>
           <SpaceBetween direction="horizontal" size="xxs" alignItems="center">
             <div style={{ paddingTop: "1px" }}>
+              <Button
+                variant="icon"
+                onClick={props.reloadChat}
+                iconName="refresh"
+              ></Button>
+
               <ConfigDialog
                 sessionId={props.session.id}
                 visible={configDialogVisible}

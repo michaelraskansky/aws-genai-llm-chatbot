@@ -40,6 +40,13 @@ export default function Chat(props: { sessionId?: string }) {
     []
   );
 
+  const reloadChat = () => {
+    setMessageHistory([]); // Clear message history
+    setSession({ id: uuidv4(), loading: false }); // Create new session with new UUID
+    setRunning(false);
+    setInitError(undefined);
+  };
+
   useEffect(() => {
     if (!appContext) return;
     setMessageHistory([]);
@@ -161,6 +168,7 @@ export default function Chat(props: { sessionId?: string }) {
             setInitErrorMessage={(error) => setInitError(error)}
             configuration={configuration}
             setConfiguration={setConfiguration}
+            reloadChat={reloadChat}
           />
         )}
       </div>

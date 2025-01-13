@@ -2,7 +2,7 @@ import BaseAppLayout from "../../../components/base-app-layout";
 
 import { Link, useParams } from "react-router-dom";
 import { Header, HelpPanel } from "@cloudscape-design/components";
-import ChatWithReload from "../../../components/chatbot/chat-with-reload";
+import Chat from "../../../components/chatbot/chat";
 
 export default function Playground() {
   const { sessionId } = useParams();
@@ -38,7 +38,7 @@ export default function Playground() {
         </HelpPanel>
       }
       toolsWidth={300}
-      content={<ChatWithReload sessionId={sessionId} />}
+      content={<Chat sessionId={sessionId} />}
     />
   );
 }
