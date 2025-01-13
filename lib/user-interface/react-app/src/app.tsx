@@ -36,23 +36,28 @@ function App() {
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
 
   useEffect(() => {
-    const groups = user.getSignInUserSession()?.getAccessToken().payload['cognito:groups'];
+    const groups = user.getSignInUserSession()?.getAccessToken().payload[
+      "cognito:groups"
+    ];
     setUserInfo({
       cognitoUser: user,
       cognitoGroups: groups,
       isAdmin: groups && groups.includes("rag_admins"),
-    })
-  }, [user])
+    });
+  }, [user]);
 
   return (
     <div dir="rtl" style={{ height: "100%" }}>
       <UserContext.Provider value={userInfo}>
         <Router>
           <GlobalHeader />
-          <div style={{ height: "56px", backgroundColor: "#000716" }}>&nbsp;</div>
+          <div style={{ height: "56px", backgroundColor: "#000716" }}>
+            &nbsp;
+          </div>
           <div>
             <Routes>
-              <Route index path="/" element={<Welcome />} />
+              <Route index path="/" element={<Playground />} />
+              <Route path="about" element={<Welcome />} />
               <Route path="/chatbot" element={<Outlet />}>
                 <Route path="playground" element={<Playground />} />
                 <Route path="playground/:sessionId" element={<Playground />} />

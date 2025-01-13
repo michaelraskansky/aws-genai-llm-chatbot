@@ -1,8 +1,8 @@
 import BaseAppLayout from "../../../components/base-app-layout";
-import Chat from "../../../components/chatbot/chat";
 
 import { Link, useParams } from "react-router-dom";
 import { Header, HelpPanel } from "@cloudscape-design/components";
+import ChatWithReload from "../../../components/chatbot/chat-with-reload";
 
 export default function Playground() {
   const { sessionId } = useParams();
@@ -12,20 +12,23 @@ export default function Playground() {
       info={
         <HelpPanel header={<Header variant="h3">שימוש בצ'אט</Header>}>
           <p>
-            מגרש המשחקים של הצ'אט מאפשר למשתמשים לתקשר עם מודל שפה נבחר (LLM) ועם 
-            רכיב אחזור מידע (RAG) אופציונלי. ניתן ליצור מרחבי עבודה חדשים ל-RAG דרך{" "}
-            <Link to="/rag/workspaces">מרחבי עבודה</Link> בקונסולה.
+            מגרש המשחקים של הצ'אט מאפשר למשתמשים לתקשר עם מודל שפה נבחר (LLM)
+            ועם רכיב אחזור מידע (RAG) אופציונלי. ניתן ליצור מרחבי עבודה חדשים
+            ל-RAG דרך <Link to="/rag/workspaces">מרחבי עבודה</Link> בקונסולה.
           </p>
           <h3>הגדרות</h3>
           <p>
-            ניתן להגדיר הגדרות נוספות עבור מודל השפה דרך פעולת ההגדרות בפינה הימנית-תחתונה.
-            ניתן לשנות את ערכי ה-Temperature וה-Top P שישמשו ליצירת התשובות. 
-            כמו כן, ניתן להפעיל ולכבות את מצב הזרמה עבור מודלים שתומכים בכך (ההגדרה מתעלמת אם המודל אינו תומך בהזרמה).
-            הפעלת מטא-דאטה מציגה מידע נוסף על התשובה, כגון הפקודות המשמשות לתקשורת עם המודל והקטעים מהמסמכים שנשלפו ממאגר ה-RAG.
+            ניתן להגדיר הגדרות נוספות עבור מודל השפה דרך פעולת ההגדרות בפינה
+            הימנית-תחתונה. ניתן לשנות את ערכי ה-Temperature וה-Top P שישמשו
+            ליצירת התשובות. כמו כן, ניתן להפעיל ולכבות את מצב הזרמה עבור מודלים
+            שתומכים בכך (ההגדרה מתעלמת אם המודל אינו תומך בהזרמה). הפעלת
+            מטא-דאטה מציגה מידע נוסף על התשובה, כגון הפקודות המשמשות לתקשורת עם
+            המודל והקטעים מהמסמכים שנשלפו ממאגר ה-RAG.
           </p>
           <h3>צ'אט מולטימודלי</h3>
           <p>
-            אם תבחרו מודל מולטימודלי (כמו Anthropic Claude 3), תוכלו להעלות תמונות לשימוש בשיחה.
+            אם תבחרו מודל מולטימודלי (כמו Anthropic Claude 3), תוכלו להעלות
+            תמונות לשימוש בשיחה.
           </p>
           <h3>היסטוריית שיחות</h3>
           <p>
@@ -35,7 +38,7 @@ export default function Playground() {
         </HelpPanel>
       }
       toolsWidth={300}
-      content={<Chat sessionId={sessionId} />}
+      content={<ChatWithReload sessionId={sessionId} />}
     />
   );
 }

@@ -23,16 +23,16 @@ export default function NavigationPanel() {
   useEffect(() => {
     const generateItems = () => {
       const newItems: SideNavigationProps.Item[] = [
-        {
-          type: "link",
-          text: "בית",
-          href: "/",
-        },
         { type: "link", text: "צ׳אטבוט", href: "/chatbot/playground" },
         {
           type: "link",
           text: "היסטוריה",
           href: "/chatbot/sessions",
+        },
+        {
+          type: "link",
+          text: "אודות",
+          href: "/about",
         },
       ];
 

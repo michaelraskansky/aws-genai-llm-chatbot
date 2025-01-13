@@ -96,7 +96,7 @@ export default function VideoDialog(props: VideoDialogProps) {
 
     const errors: string[] = [];
     files.forEach((file) => {
-      if (file.size > maxFilesSizeMb * 1024 * 1024) {
+      if (file.size > maxFilesSizeMb * 1000 * 1000) {
         errors.push(`גודל הקובץ חייב להיות קטן מ-${maxFilesSizeMb} מגה-בייט`);
       }
 

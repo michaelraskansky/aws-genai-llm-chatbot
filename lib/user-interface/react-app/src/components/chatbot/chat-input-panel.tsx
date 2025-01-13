@@ -680,9 +680,9 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
                   viewBox="0 0 16 16"
                   fill="none"
                   stroke="currentColor"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 >
                   <rect x="2" y="2" width="12" height="12" rx="1" />
                   <path d="M5 5H11" />

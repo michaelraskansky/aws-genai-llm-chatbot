@@ -46,7 +46,7 @@ export default function Welcome() {
                 </RouterButton>
               }
             >
-              דף הבית של הצ'אטבוט
+              אודות הצ'אטבוט
             </Header>
           }
         >
@@ -146,9 +146,8 @@ export default function Welcome() {
                 <Link external href="https://aws.amazon.com/cognito/">
                   הזדהות דרך Cognito
                 </Link>{" "}
-                על מנת לאפשר לך לתקשר ולהתנסות עם{" "}
-                <strong>מודלים מרובים</strong>,{" "}
-                <strong>מקורות RAG מרובים</strong>,{" "}
+                על מנת לאפשר לך לתקשר ולהתנסות עם <strong>מודלים מרובים</strong>
+                , <strong>מקורות RAG מרובים</strong>,{" "}
                 <strong>תמיכה בהיסטוריית שיחות</strong> ו-{" "}
                 <strong>העלאת מסמכים</strong>.
               </p>
@@ -180,18 +179,16 @@ export default function Welcome() {
               <Header variant="h1">יכולות</Header>
               <Header variant="h3">שיחה רב-מודלית</Header>
               <p>
-                אתה יכול{" "}
-                <Link href="/chatbot/playground">לשוחח</Link> עם טקסט או להעלות
-                תמונות ולהשתמש בשיחות רב-מודליות. כעת אנו תומכים ביכולות
-                רב-מודליות עם Anthropic Claude 3 דרך Amazon Bedrock ו-Idefics
-                המופעלים דרך SageMaker.
+                אתה יכול <Link href="/chatbot/playground">לשוחח</Link> עם טקסט
+                או להעלות תמונות ולהשתמש בשיחות רב-מודליות. כעת אנו תומכים
+                ביכולות רב-מודליות עם Anthropic Claude 3 דרך Amazon Bedrock
+                ו-Idefics המופעלים דרך SageMaker.
               </p>
               <h3>השוואת מודלים ומקורות RAG מרובים</h3>
               <p>
                 ב-{" "}
                 <Link href="/chatbot/playground">מגרש המשחקים הרב-שיחתי</Link>{" "}
-                ניתן להשתמש במודלים ובמקורות RAG מרובים בו זמנית ולהשוות
-                ביניהם.
+                ניתן להשתמש במודלים ובמקורות RAG מרובים בו זמנית ולהשוות ביניהם.
               </p>
               <h3>בדיקת מקורות RAG, embeddings ו-cross-encoders</h3>
               <p>
