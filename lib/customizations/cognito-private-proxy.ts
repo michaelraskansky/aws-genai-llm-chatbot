@@ -14,6 +14,8 @@ export interface CognitoPrivateProxyProps {
 }
 
 export class CognitoPrivateProxy extends Construct {
+  cognitoProxyApi: apigateway.RestApi;
+
   constructor(scope: Construct, id: string, props: CognitoPrivateProxyProps) {
     super(scope, id);
 
@@ -36,7 +38,7 @@ export class CognitoPrivateProxy extends Construct {
       }
     );
 
-    const api = new apigateway.RestApi(this, "CognitoProxyApi", {
+    this.cognitoProxyApi = new apigateway.RestApi(this, "CognitoProxyApi", {
       restApiName: "Chatbot Cognito Proxy API",
       defaultCorsPreflightOptions: {
         allowOrigins: ["https://" + props.config.domain],
@@ -77,7 +79,7 @@ export class CognitoPrivateProxy extends Construct {
     });
 
     // Add methods to the root resource
-    api.root.addMethod(
+    this.cognitoProxyApi.root.addMethod(
       "POST",
       new apigateway.HttpIntegration(cognitoEndpoint, {
         proxy: true,
@@ -125,85 +127,9 @@ export class CognitoPrivateProxy extends Construct {
       }
     );
 
-    /*
-    const proxyResource = api.root.addResource("{proxy+}");
-    // Add the ANY method with corrected integration
-    proxyResource.addMethod(
-      "ANY",
-      new apigateway.HttpIntegration(cognitoEndpoint, {
-        options: {
-          requestParameters: {
-            "integration.request.header.Authorization":
-              "method.request.header.Authorization",
-            "integration.request.header.Content-Type":
-              "method.request.header.Content-Type",
-          },
-          passthroughBehavior: apigateway.PassthroughBehavior.WHEN_NO_MATCH,
-          integrationResponses: [
-            {
-              statusCode: "200",
-              responseParameters: {
-                "method.response.header.Access-Control-Allow-Origin":
-                  "https://" + `'${props.config.domain}'`,
-                "method.response.header.Access-Control-Allow-Credentials":
-                  "'true'",
-                "method.response.header.Access-Control-Allow-Headers":
-                  "'Content-Type,Authorization,Cache-Control,X-Amz-Target,X-Amz-User-Agent'",
-                "method.response.header.Access-Control-Allow-Methods":
-                  "'GET,POST,OPTIONS,DELETE,PUT'",
-              },
-            },
-            {
-              statusCode: "400",
-              selectionPattern: "4\\d{2}", // Match any 4xx errors
-              responseTemplates: {
-                "application/json": JSON.stringify({
-                  message: "$input.path('$.errorMessage')",
-                }),
-              },
-            },
-            {
-              statusCode: "500",
-              selectionPattern: "5\\d{2}", // Match any 5xx errors
-              responseTemplates: {
-                "application/json": JSON.stringify({
-                  message: "$input.path('$.errorMessage')",
-                }),
-              },
-            },
-          ],
-        },
-      }),
-      {
-        requestParameters: {
-          "method.request.path.proxy": true,
-          "method.request.header.Authorization": false,
-          "method.request.header.Content-Type": false,
-        },
-        methodResponses: [
-          {
-            statusCode: "200",
-            responseParameters: {
-              "method.response.header.Access-Control-Allow-Origin": true,
-              "method.response.header.Access-Control-Allow-Credentials": true,
-              "method.response.header.Access-Control-Allow-Headers": true,
-              "method.response.header.Access-Control-Allow-Methods": true,
-            },
-          },
-          { statusCode: "400" },
-          { statusCode: "500" },
-        ],
-        requestValidatorOptions: {
-          validateRequestBody: true,
-          validateRequestParameters: true,
-        },
-      }
-    );
-    */
-
     // Outputs
     new cdk.CfnOutput(this, "ApiEndpoint", {
-      value: api.url,
+      value: this.cognitoProxyApi.url,
     });
 
     new cdk.CfnOutput(this, "VpcEndpointId", {
