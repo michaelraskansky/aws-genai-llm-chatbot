@@ -17,30 +17,29 @@ APPSYNC_ENDPOINT = os.environ["APPSYNC_ENDPOINT"]
 
 
 def query(user_id, session_id, data_object):
-    # Create the data object and convert it to a JSON string
+    # Convert to JSON string
+    data_json = json.dumps(data_object, ensure_ascii=True, separators=(",", ":"))
 
-    # Convert to JSON string and escape quotes
-    data_json = json.dumps(
-        data_object, ensure_ascii=True, separators=(",", ":")
-    ).replace('"', '\\"')
-
-    return f"""mutation Mutation {{
-        publishResponse(
-          data: "{data_json}",
-          sessionId: "{session_id}",
-          userId: "{user_id}"
-        ) {{
-          data
-          sessionId
-          userId
-        }}
-    }}"""
+    return (
+        {"sessionId": session_id, "userId": user_id, "data": data_json},
+        """mutation PublishResponse($sessionId: String, $userId: String, $data: String) {
+            publishResponse(
+                sessionId: $sessionId,
+                userId: $userId,
+                data: $data
+            ) {
+                data
+                sessionId
+                userId
+            }
+        }""",
+    )
 
 
 @tracer.capture_method
 def direct_send_to_client(data):
     logger.debug("Received message to send to client", data=data)
-    query_string = query(
+    (query_vaiables, query_string) = query(
         user_id=data["userId"],
         session_id=data["data"]["sessionId"],
         data_object=data,
@@ -63,7 +62,7 @@ def direct_send_to_client(data):
     signer = SigV4Auth(session.get_credentials(), service, region)
 
     # Add logging before signing
-    payload = json.dumps({"query": query_string.strip(), "variables": {}})
+    payload = json.dumps({"query": query_string.strip(), "variables": query_vaiables})
     request.data = payload.encode("utf-8")
 
     # Add auth headers
@@ -94,3 +93,18 @@ def direct_send_to_client(data):
     except Exception as e:
         logger.error(f"Error: {e}")
         raise
+
+
+# if __name__ == "__main__":
+#    response = query(
+#        user_id="XXXXXX",
+#        session_id="XXXXXXXXX",
+#        data_object={
+#            "userId": "XXXXXX",
+#            "data": {
+#                "sessionId": "XXXXXXXXX",
+#                "data": '"',
+#            },
+#        },
+#    )
+#    print(response)
