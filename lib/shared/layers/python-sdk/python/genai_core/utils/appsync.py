@@ -93,18 +93,3 @@ def direct_send_to_client(data):
     except Exception as e:
         logger.error(f"Error: {e}")
         raise
-
-
-# if __name__ == "__main__":
-#    response = query(
-#        user_id="XXXXXX",
-#        session_id="XXXXXXXXX",
-#        data_object={
-#            "userId": "XXXXXX",
-#            "data": {
-#                "sessionId": "XXXXXXXXX",
-#                "data": '"',
-#            },
-#        },
-#    )
-#    print(response)
