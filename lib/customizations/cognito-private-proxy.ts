@@ -139,12 +139,13 @@ export class CognitoPrivateProxy extends Construct {
     NagSuppressions.addResourceSuppressionsByPath(
       stack,
       [
-        `/${stackName}/Customizations/${id}/CognitoProxyApi/Resource`,
-        `/${stackName}/Customizations/${id}/CognitoProxyApi/DeploymentStage.auth/Resource`,
-        //`/${stackName}/Customizations/${id}/CognitoProxyApi/Default/{proxy+}/ANY/Resource`,
-        //`/${stackName}/Customizations/${id}/CognitoProxyApi/Default/{proxy+}/OPTIONS/Resource`,
-        `/${stackName}/Customizations/${id}/CognitoProxyApi/Default/OPTIONS/Resource`,
-        `/${stackName}/Customizations/${id}/CognitoProxyApi/Default/POST/Resource`,
+        `/${stackName}/UserInterface/${id}/CognitoProxyApi/Resource`,
+        //`/${stackName}/UserInterface/${id}/CognitoProxyApi/DeploymentStage.auth/Resource`,
+        //`/${stackName}/UserInterface/${id}/CognitoProxyApi/Default/{proxy+}/ANY/Resource`,
+        //`/${stackName}/UserInterface/${id}/CognitoProxyApi/Default/{proxy+}/OPTIONS/Resource`,
+        `/${stackName}/UserInterface/${id}/CognitoProxyApi/DeploymentStage.auth/Resource`,
+        `/${stackName}/UserInterface/${id}/CognitoProxyApi/Default/OPTIONS/Resource`,
+        `/${stackName}/UserInterface/${id}/CognitoProxyApi/Default/POST/Resource`,
       ],
       [
         { id: "AwsSolutions-APIG4", reason: "proxy request to cognito" },

@@ -11,11 +11,5 @@ export interface CustomizationsProps {
 export class Customizations extends Construct {
   constructor(scope: Construct, id: string, props: CustomizationsProps) {
     super(scope, id);
-
-    // Create the Cognito Private Proxy construct
-    new CognitoPrivateProxy(this, "CognitoPrivateProxy", {
-      shared: props.shared,
-      config: props.config,
-    });
   }
 }
