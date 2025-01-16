@@ -348,15 +348,6 @@ export class ApiResolvers extends Construct {
 
     addPermissions(appSyncLambdaResolver);
 
-    if (props.config.provisionedConcurrency) {
-      const aliasOptions: lambda.AliasProps = {
-        aliasName: "live",
-        version: appSyncLambdaResolver.currentVersion,
-        provisionedConcurrentExecutions: props.config.provisionedConcurrency,
-        description: `alias with ${props.config.provisionedConcurrency} provisioned concurrent executions`,
-      };
-      new lambda.Alias(this, "GraphQLApiHandlerAlias", aliasOptions);
-    }
 
     props.ragEngines?.openSearchVector?.addToAccessPolicy(
       "graphql-api",
@@ -364,10 +355,31 @@ export class ApiResolvers extends Construct {
       ["aoss:DescribeIndex", "aoss:ReadDocument", "aoss:WriteDocument"]
     );
 
-    const functionDataSource = props.api.addLambdaDataSource(
-      "proxyResolverFunction",
-      appSyncLambdaResolver
-    );
+    let functionDataSource: appsync.LambdaDataSource;
+    if (props.config.provisionedConcurrency) {
+      const aliasOptions: lambda.AliasProps = {
+        aliasName: "live",
+        version: appSyncLambdaResolver.currentVersion,
+        provisionedConcurrentExecutions: props.config.provisionedConcurrency,
+        description: `alias with ${props.config.provisionedConcurrency} provisioned concurrent executions`,
+      };
+
+      const alias = new lambda.Alias(
+        this,
+        "GraphQLApiHandlerAlias",
+        aliasOptions
+      );
+
+      functionDataSource = props.api.addLambdaDataSource(
+        "proxyResolverFunction",
+        alias
+      );
+    } else {
+      functionDataSource = props.api.addLambdaDataSource(
+        "proxyResolverFunction",
+        appSyncLambdaResolver
+      );
+    }
 
     const schema = parse(
       readFileSync("lib/chatbot-api/schema/schema.graphql", "utf8")

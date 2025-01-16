@@ -91,16 +91,6 @@ export class LangChainInterface extends Construct {
       },
     });
 
-    if (props.config.provisionedConcurrency) {
-      const aliasOptions: lambda.AliasProps = {
-        aliasName: "live",
-        version: requestHandler.currentVersion,
-        provisionedConcurrentExecutions: props.config.provisionedConcurrency,
-        description: `alias with ${props.config.provisionedConcurrency} provisioned concurrent executions`,
-      };
-      new lambda.Alias(this, "RequestHandlerAlias", aliasOptions);
-    }
-
     if (props.config.bedrock?.enabled) {
       requestHandler.addToRolePolicy(
         new iam.PolicyStatement({
@@ -295,7 +285,20 @@ export class LangChainInterface extends Construct {
       })
     );
 
-    requestHandler.addEventSource(new lambdaEventSources.SqsEventSource(queue));
+    if (props.config.provisionedConcurrency) {
+      const aliasOptions: lambda.AliasProps = {
+        aliasName: "live",
+        version: requestHandler.currentVersion,
+        provisionedConcurrentExecutions: props.config.provisionedConcurrency,
+        description: `alias with ${props.config.provisionedConcurrency} provisioned concurrent executions`,
+      };
+      const alias = new lambda.Alias(this, "RequestHandlerAlias", aliasOptions);
+      alias.addEventSource(new lambdaEventSources.SqsEventSource(queue));
+    } else {
+      requestHandler.addEventSource(
+        new lambdaEventSources.SqsEventSource(queue)
+      );
+    }
 
     this.ingestionQueue = queue;
     this.requestHandler = requestHandler;

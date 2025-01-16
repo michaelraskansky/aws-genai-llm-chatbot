@@ -105,10 +105,11 @@ export class RealtimeResolvers extends Construct {
         provisionedConcurrentExecutions: props.provisionedConcurrency,
         description: `alias with ${props.provisionedConcurrency} provisioned concurrent executions`,
       };
-      new Alias(this, "OutgoingMessageHandler", aliasOptions);
+      const alias = new Alias(this, "OutgoingMessageHandler", aliasOptions);
+      alias.addEventSource(new SqsEventSource(props.queue));
+    } else {
+      outgoingMessageHandler.addEventSource(new SqsEventSource(props.queue));
     }
-
-    outgoingMessageHandler.addEventSource(new SqsEventSource(props.queue));
 
     props.topic.grantPublish(resolverFunction);
     if (props.topicKey && resolverFunction.role) {
@@ -119,10 +120,26 @@ export class RealtimeResolvers extends Construct {
       );
     }
 
-    const functionDataSource = props.api.addLambdaDataSource(
-      "realtimeResolverFunction",
-      resolverFunction
-    );
+    let functionDataSource;
+    if (props.provisionedConcurrency) {
+      const aliasOptions: AliasProps = {
+        aliasName: "live",
+        version: resolverFunction.currentVersion,
+        provisionedConcurrentExecutions: props.provisionedConcurrency,
+        description: `alias with ${props.provisionedConcurrency} provisioned concurrent executions`,
+      };
+      const alias = new Alias(this, "LambdaResolberAlias", aliasOptions);
+      functionDataSource = props.api.addLambdaDataSource(
+        "realtimeResolverFunction",
+        alias
+      );
+    } else {
+      functionDataSource = props.api.addLambdaDataSource(
+        "realtimeResolverFunction",
+        resolverFunction
+      );
+    }
+
     const noneDataSource = props.api.addNoneDataSource("none", {
       name: "relay-source",
     });
