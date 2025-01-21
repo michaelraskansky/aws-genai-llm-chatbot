@@ -107,4 +107,4 @@ export abstract class Labels {
   }
 }
 
-export const CHATBOT_NAME = "צ׳אטבוט ממשלתי";
+export const CHATBOT_NAME = "צ׳אטבוט עברי";
