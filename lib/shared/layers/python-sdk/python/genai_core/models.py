@@ -84,9 +84,9 @@ def list_azure_openai_models():
     ]
 
 
+# Based on the table (Need to support both document and sytem prompt)
+# https://docs.aws.amazon.com/bedrock/latest/userguide/conversation-inference-supported-models-features.html
 def does_model_support_documents(model_name):
-    # Based on the table (Need to support both document and sytem prompt)
-    # https://docs.aws.amazon.com/bedrock/latest/userguide/conversation-inference-supported-models-features.html
     return (
         not re.match(r"^ai21.jamba*", model_name)
         and not re.match(r"^ai21.j2*", model_name)
@@ -99,6 +99,23 @@ def does_model_support_documents(model_name):
         and not re.match(r"^amazon.nova-canvas*", model_name)
         and not re.match(r"^amazon.nova-micro*", model_name)
     )
+
+
+def create_bedrock_model_profile(bedrock_model: dict, model_name: str) -> dict:
+    model = {
+        "provider": Provider.BEDROCK.value,
+        "name": model_name,
+        "streaming": bedrock_model.get("responseStreamingSupported", False),
+        "inputModalities": bedrock_model["inputModalities"],
+        "outputModalities": bedrock_model["outputModalities"],
+        "interface": ModelInterface.LANGCHAIN.value,
+        "ragSupported": True,
+        "bedrockGuardrails": True,
+    }
+
+    if does_model_support_documents(model["name"]):
+        model["inputModalities"].append("DOCUMENT")
+    return model
 
 
 def list_cross_region_inference_profiles():
@@ -119,32 +136,18 @@ def list_cross_region_inference_profiles():
 
 def list_bedrock_cris_models():
     try:
-        cross_region_inference_profiles = list_cross_region_inference_profiles()
-        bedrock = genai_core.clients.get_bedrock_client(service_name="bedrock")
-        all_models = bedrock.list_foundation_models()["modelSummaries"]
+        cross_region_profiles = list_cross_region_inference_profiles()
+        bedrock_client = genai_core.clients.get_bedrock_client(service_name="bedrock")
+        all_models = bedrock_client.list_foundation_models()["modelSummaries"]
 
-        profiles = []
-        for bedrock_model in all_models:
-            if (
-                genai_core.types.InferenceType.INFERENCE_PROFILE.value
-                in bedrock_model["inferenceTypesSupported"]
-            ):
-                model = {
-                    "provider": Provider.BEDROCK.value,
-                    "name": cross_region_inference_profiles[bedrock_model["modelId"]],
-                    "streaming": bedrock_model.get("responseStreamingSupported", False),
-                    "inputModalities": bedrock_model["inputModalities"],
-                    "outputModalities": bedrock_model["outputModalities"],
-                    "interface": ModelInterface.LANGCHAIN.value,
-                    "ragSupported": True,
-                    "bedrockGuardrails": True,
-                }
-                if does_model_support_documents(model["name"]):
-                    model["inputModalities"].append("DOCUMENT")
-                profiles.append(model)
-        return profiles
+        return [
+            create_bedrock_model_profile(model, cross_region_profiles[model["modelId"]])
+            for model in all_models
+            if genai_core.types.InferenceType.INFERENCE_PROFILE.value
+            in model["inferenceTypesSupported"]
+        ]
     except Exception as e:
-        logger.error(f"Error listing cross resion inference profiles models: {e}")
+        logger.error(f"Error listing cross region inference profiles models: {e}")
         return None
 
 
@@ -176,22 +179,9 @@ def list_bedrock_models():
                 )
             ):
                 continue
-            model = {
-                "provider": Provider.BEDROCK.value,
-                "name": bedrock_model["modelId"],
-                "streaming": bedrock_model.get("responseStreamingSupported", False),
-                "inputModalities": bedrock_model["inputModalities"],
-                "outputModalities": bedrock_model["outputModalities"],
-                "interface": ModelInterface.LANGCHAIN.value,
-                "ragSupported": True,
-                "bedrockGuardrails": True,
-            }
-            # Based on the table (Need to support both document and sytem prompt)
-            # https://docs.aws.amazon.com/bedrock/latest/userguide/conversation-inference-supported-models-features.html
-            if does_model_support_documents(model["name"]):
-                model["inputModalities"].append("DOCUMENT")
-
-            models.append(model)
+            models.append(
+                create_bedrock_model_profile(bedrock_model, bedrock_model["modelId"])
+            )
 
         return models
     except Exception as e:
