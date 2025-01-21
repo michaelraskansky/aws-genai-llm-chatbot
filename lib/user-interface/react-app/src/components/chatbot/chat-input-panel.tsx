@@ -116,6 +116,26 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
     new URL(file.url).pathname.endsWith(".docx") ||
     new URL(file.url).pathname.endsWith(".xls");
 
+  const getAvailableModels = (
+    defaultLLM: string | undefined,
+    modelResults: { data?: { listModels: Model[] } }
+  ): Model[] => {
+    // Early return if no data is available
+    if (!modelResults.data?.listModels) {
+      return [];
+    }
+
+    // If defaultLLM is specified, filter for that specific model
+    if (defaultLLM) {
+      return modelResults.data.listModels.filter(
+        (model) => model.name === defaultLLM
+      );
+    }
+
+    // Return all available models if no default is specified
+    return modelResults.data.listModels;
+  };
+
   const messageHistoryRef = useRef<ChatBotHistoryItem[]>([]);
 
   useEffect(() => {
@@ -244,7 +264,10 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
           modelsResult = await apiClient.models.getModels();
         }
 
-        const models = modelsResult.data ? modelsResult.data.listModels : [];
+        const models = getAvailableModels(
+          appContext.config.default_llm,
+          modelsResult
+        );
 
         const selectedModelOption = getSelectedModelOption(models);
         const selectedModelMetadata = getSelectedModelMetadata(

@@ -161,6 +161,7 @@ const embeddingModels: ModelConfig[] = [
       options.caCerts = config.caCerts;
       options.enableS3TransferAcceleration =
         config.enableS3TransferAcceleration;
+      options.defaultLlm = config.defaultLlm;
       options.cloudfrontLogBucketArn = config.cloudfrontLogBucketArn;
       options.createCMKs = config.createCMKs;
       options.retainOnDelete = config.retainOnDelete;
@@ -342,6 +343,13 @@ async function processCreateOptions(options: any): Promise<void> {
           ? true
           : "Enter a valid S3 Bucket ARN in the format arn:aws:s3::bucket";
       },
+    },
+    {
+      type: "input",
+      name: "defaultLlm",
+      message: "set default LLM used by the client",
+      hint: "if this is set the client will default to a specifc LLM",
+      initial: options.defaultLlm ?? "",
     },
     {
       type: "confirm",
@@ -1289,6 +1297,7 @@ async function processCreateOptions(options: any): Promise<void> {
     directSend: answers.directSend,
     provisionedConcurrency: parseInt(answers.provisionedConcurrency, 0),
     cloudfrontLogBucketArn: answers.cloudfrontLogBucketArn,
+    defaultLlm: answers.defaultLlm,
     createCMKs: answers.createCMKs,
     retainOnDelete: answers.retainOnDelete,
     vpc: answers.existingVpc

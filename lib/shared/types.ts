@@ -85,6 +85,7 @@ export interface SystemConfig {
   provisionedConcurrency?: number;
   directSend?: boolean;
   cloudfrontLogBucketArn?: string;
+  defaultLlm?: string;
   createCMKs?: boolean;
   retainOnDelete?: boolean;
   vpc?: {

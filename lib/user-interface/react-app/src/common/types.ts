@@ -20,6 +20,7 @@ export interface AppConfig {
       Scopes: [];
       responseType: string;
     };
+    default_llm?: string;
     rag_enabled: boolean;
     cross_encoders_enabled: boolean;
     sagemaker_embeddings_enabled: boolean;
