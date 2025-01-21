@@ -328,6 +328,7 @@ export class ApiResolvers extends Construct {
             actions: [
               "bedrock:ListFoundationModels",
               "bedrock:ListCustomModels",
+              "bedrock:ListInferenceProfiles",
               "bedrock:InvokeModel",
               "bedrock:InvokeModelWithResponseStream",
             ],
@@ -347,7 +348,6 @@ export class ApiResolvers extends Construct {
     }
 
     addPermissions(appSyncLambdaResolver);
-
 
     props.ragEngines?.openSearchVector?.addToAccessPolicy(
       "graphql-api",

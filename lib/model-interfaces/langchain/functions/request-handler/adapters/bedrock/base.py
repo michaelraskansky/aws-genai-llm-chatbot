@@ -257,6 +257,16 @@ registry.register(r"^bedrock.mistral.mistral-7b-*", BedrockChatNoSystemPromptAda
 registry.register(r"^bedrock.mistral.mixtral-*", BedrockChatNoSystemPromptAdapter)
 registry.register(r"^bedrock.amazon.titan-t*", BedrockChatNoSystemPromptAdapter)
 registry.register(r"^bedrock.amazon.nova*", BedrockChatAdapter)
+registry.register(r"^bedrock.*.ai21.jamba*", BedrockChatAdapter)
+registry.register(r"^bedrock.*.ai21.j2*", BedrockChatNoStreamingNoSystemPromptAdapter)
+registry.register(r"^bedrock.*.anthropic.claude*", BedrockChatAdapter)
+registry.register(r"^bedrock.*.meta.llama*", BedrockChatAdapter)
+registry.register(r"^bedrock.*.mistral.mistral-large*", BedrockChatAdapter)
+registry.register(r"^bedrock.*.mistral.mistral-small*", BedrockChatAdapter)
+registry.register(r"^bedrock.*.mistral.mistral-7b-*", BedrockChatNoSystemPromptAdapter)
+registry.register(r"^bedrock.*.mistral.mixtral-*", BedrockChatNoSystemPromptAdapter)
+registry.register(r"^bedrock.*.amazon.titan-t*", BedrockChatNoSystemPromptAdapter)
+registry.register(r"^bedrock.*.amazon.nova*", BedrockChatAdapter)
 
 
 class PromptTemplateWithHistory(PromptTemplate):

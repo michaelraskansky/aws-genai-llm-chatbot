@@ -199,3 +199,4 @@ class Nova(MultiModalModelBase):
 
 
 registry.register(r"^bedrock.amazon.nova*", Nova)
+registry.register(r"^bedrock.*.amazon.nova*", Nova)
