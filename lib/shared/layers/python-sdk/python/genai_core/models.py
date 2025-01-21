@@ -86,9 +86,20 @@ def list_bedrock_models():
         if not bedrock:
             return None
 
-        response = bedrock.list_foundation_models(
-            byInferenceType=genai_core.types.InferenceType.ON_DEMAND.value,
-        )
+        # Get inference profiles first
+        inference_profiles_response = bedrock.list_inference_profiles()
+        cross_region_inference_profiles = {
+            profile["models"][0]["modelArn"].split("/")[1]: profile[
+                "inferenceProfileId"
+            ]
+            for profile in inference_profiles_response.get(
+                "inferenceProfileSummaries", []
+            )
+            if profile.get("status") == "ACTIVE"
+            and profile.get("type") == "SYSTEM_DEFINED"
+        }
+
+        response = bedrock.list_foundation_models()
         bedrock_models = [
             m
             for m in response.get("modelSummaries", [])
@@ -110,7 +121,15 @@ def list_bedrock_models():
                 continue
             model = {
                 "provider": Provider.BEDROCK.value,
-                "name": bedrock_model["modelId"],
+                "name": (
+                    cross_region_inference_profiles.get(bedrock_model["modelId"])
+                    if (
+                        genai_core.types.InferenceType.INFERENCE_PROFILE.value
+                        in bedrock_model.get("inferenceTypesSupported", [])
+                        and bedrock_model["modelId"] in cross_region_inference_profiles
+                    )
+                    else bedrock_model["modelId"]
+                ),
                 "streaming": bedrock_model.get("responseStreamingSupported", False),
                 "inputModalities": bedrock_model["inputModalities"],
                 "outputModalities": bedrock_model["outputModalities"],
