@@ -19,6 +19,7 @@ export interface PublicWebsiteProps {
   readonly websiteBucket: s3.Bucket;
   readonly chatbotFilesBucket: s3.Bucket;
   readonly uploadBucket?: s3.Bucket;
+  readonly cloudfrontLogBucketArn?: string;
 }
 
 export class PublicWebsite extends Construct {
@@ -35,39 +36,52 @@ export class PublicWebsite extends Construct {
     props.websiteBucket.grantRead(originAccessIdentity);
     const cfGeoRestrictEnable = props.config.cfGeoRestrictEnable;
     const cfGeoRestrictList = props.config.cfGeoRestrictList;
+    //get the current region
+    const region = cdk.Stack.of(this).region;
 
-    const distributionLogsBucket = new s3.Bucket(
-      this,
-      "DistributionLogsBucket",
-      {
-        objectOwnership: s3.ObjectOwnership.OBJECT_WRITER,
-        blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
-        removalPolicy:
-          props.config.retainOnDelete === true
-            ? cdk.RemovalPolicy.RETAIN_ON_UPDATE_OR_DELETE
-            : cdk.RemovalPolicy.DESTROY,
-        autoDeleteObjects: props.config.retainOnDelete !== true,
-        enforceSSL: true,
-        encryption: props.shared.kmsKey
-          ? s3.BucketEncryption.KMS
-          : s3.BucketEncryption.S3_MANAGED,
-        encryptionKey: props.shared.kmsKey,
-        versioned: true,
-      }
-    );
+    const distributionLogsBucket = props.cloudfrontLogBucketArn
+      ? s3.Bucket.fromBucketArn(
+          this,
+          "DistributionLogsBucket",
+          props.cloudfrontLogBucketArn!
+        )
+      : new s3.Bucket(this, "DistributionLogsBucket", {
+          objectOwnership: s3.ObjectOwnership.OBJECT_WRITER,
+          blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+          removalPolicy:
+            props.config.retainOnDelete === true
+              ? cdk.RemovalPolicy.RETAIN_ON_UPDATE_OR_DELETE
+              : cdk.RemovalPolicy.DESTROY,
+          autoDeleteObjects: props.config.retainOnDelete !== true,
+          enforceSSL: true,
+          encryption: props.shared.kmsKey
+            ? s3.BucketEncryption.KMS
+            : s3.BucketEncryption.S3_MANAGED,
+          encryptionKey: props.shared.kmsKey,
+          versioned: true,
+        });
 
     const fileBucketURLs = [
-      `https://${props.chatbotFilesBucket.bucketName}.s3-accelerate.amazonaws.com`,
-      `https://${props.chatbotFilesBucket.bucketName}.s3.amazonaws.com`,
+      `https://${props.chatbotFilesBucket.bucketName}.s3.${region}.amazonaws.com`,
+      `https://s3.${region}.amazonaws.com/${props.chatbotFilesBucket.bucketName}/`,
     ];
     if (props.uploadBucket) {
       // Bucket used to upload documents to workspaces
       fileBucketURLs.push(
-        `https://${props.uploadBucket.bucketName}.s3-accelerate.amazonaws.com`
+        `https://${props.uploadBucket.bucketName}.s3.${region}.amazonaws.com`,
+        `https://s3.${region}.amazonaws.com/${props.uploadBucket.bucketName}/`
       );
+    }
+
+    if (props.config.enableS3TransferAcceleration) {
       fileBucketURLs.push(
-        `https://${props.uploadBucket.bucketName}.s3.amazonaws.com`
+        `https://${props.chatbotFilesBucket.bucketName}.s3-accelerate.amazonaws.com`
       );
+      if (props.uploadBucket) {
+        fileBucketURLs.push(
+          `https://${props.uploadBucket.bucketName}.s3-accelerate.amazonaws.com`
+        );
+      }
     }
 
     const websocketURL = (

@@ -7,6 +7,8 @@ import {
   LoggingFormat,
   Tracing,
   Runtime,
+  AliasProps,
+  Alias,
 } from "aws-cdk-lib/aws-lambda";
 import { SqsEventSource } from "aws-cdk-lib/aws-lambda-event-sources";
 import { Construct } from "constructs";
@@ -22,6 +24,7 @@ import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 interface RealtimeResolversProps {
   readonly queue: IQueue;
   readonly topic: ITopic;
+  readonly provisionedConcurrency?: number;
   readonly topicKey: IKey;
   readonly userPool: UserPool;
   readonly shared: Shared;
@@ -61,7 +64,11 @@ export class RealtimeResolvers extends Construct {
       },
       logRetention: props.logRetention,
       loggingFormat: LoggingFormat.JSON,
-      layers: [props.shared.powerToolsLayer],
+      layers: [
+        props.shared.powerToolsLayer,
+        props.shared.commonLayer,
+        ...(props.shared.caCertLayer ? [props.shared.caCertLayer] : []),
+      ],
       vpc: props.shared.vpc,
     });
 
@@ -76,7 +83,10 @@ export class RealtimeResolvers extends Construct {
         bundling: {
           externalModules: ["aws-xray-sdk-core", "@aws-sdk"],
         },
-        layers: [powertoolsLayerJS],
+        layers: [
+          powertoolsLayerJS,
+          ...(props.shared.caCertLayer ? [props.shared.caCertLayer] : []),
+        ],
         handler: "index.handler",
         description: "Sends LLM Responses to Appsync",
         runtime: Runtime.NODEJS_18_X,
@@ -92,7 +102,18 @@ export class RealtimeResolvers extends Construct {
       }
     );
 
-    outgoingMessageHandler.addEventSource(new SqsEventSource(props.queue));
+    if (props.provisionedConcurrency) {
+      const aliasOptions: AliasProps = {
+        aliasName: "live",
+        version: outgoingMessageHandler.currentVersion,
+        provisionedConcurrentExecutions: props.provisionedConcurrency,
+        description: `alias with ${props.provisionedConcurrency} provisioned concurrent executions`,
+      };
+      const alias = new Alias(this, "OutgoingMessageHandler", aliasOptions);
+      alias.addEventSource(new SqsEventSource(props.queue));
+    } else {
+      outgoingMessageHandler.addEventSource(new SqsEventSource(props.queue));
+    }
 
     props.topic.grantPublish(resolverFunction);
     if (props.topicKey && resolverFunction.role) {
@@ -105,10 +126,25 @@ export class RealtimeResolvers extends Construct {
 
     props.applicationTable.grantReadData(resolverFunction);
 
-    const functionDataSource = props.api.addLambdaDataSource(
-      "realtimeResolverFunction",
-      resolverFunction
-    );
+    let functionDataSource;
+    if (props.provisionedConcurrency) {
+      const aliasOptions: AliasProps = {
+        aliasName: "live",
+        version: resolverFunction.currentVersion,
+        provisionedConcurrentExecutions: props.provisionedConcurrency,
+        description: `alias with ${props.provisionedConcurrency} provisioned concurrent executions`,
+      };
+      const alias = new Alias(this, "LambdaResolberAlias", aliasOptions);
+      functionDataSource = props.api.addLambdaDataSource(
+        "realtimeResolverFunction",
+        alias
+      );
+    } else {
+      functionDataSource = props.api.addLambdaDataSource(
+        "realtimeResolverFunction",
+        resolverFunction
+      );
+    }
     const noneDataSource = props.api.addNoneDataSource("none", {
       name: "relay-source",
     });

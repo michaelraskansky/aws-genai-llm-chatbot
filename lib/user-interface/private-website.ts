@@ -150,9 +150,7 @@ export class PrivateWebsite extends Construct {
       vpc: props.shared.vpc,
       internetFacing: false,
       securityGroup: albSecurityGroup,
-      vpcSubnets: props.shared.vpc.selectSubnets({
-        subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
-      }),
+      vpcSubnets: props.shared.vpcSubnets,
     });
 
     const albLogBucket = new s3.Bucket(this, "ALBLoggingBucket", {

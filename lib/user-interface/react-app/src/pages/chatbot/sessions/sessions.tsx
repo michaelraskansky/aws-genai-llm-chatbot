@@ -23,7 +23,7 @@ export default function SessionPage() {
               href: "/",
             },
             {
-              text: "Sessions",
+              text: "הסטוריה",
               href: "/chatbot/sessions",
             },
           ]}

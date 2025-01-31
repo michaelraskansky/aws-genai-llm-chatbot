@@ -8,7 +8,7 @@ import * as logs from "aws-cdk-lib/aws-logs";
 import * as wafv2 from "aws-cdk-lib/aws-wafv2";
 import { Construct } from "constructs";
 import * as path from "path";
-import { Layer } from "../layer";
+import { CaCertLayer, Layer } from "../layer";
 import { SystemConfig, SupportedBedrockRegion } from "./types";
 import { SharedAssetBundler } from "./shared-asset-bundler";
 import { NagSuppressions } from "cdk-nag";
@@ -23,6 +23,7 @@ export interface SharedProps {
 
 export class Shared extends Construct {
   readonly vpc: ec2.Vpc;
+  readonly vpcSubnets: ec2.SubnetSelection;
   readonly kmsKey: kms.Key;
   readonly kmsKeyAlias: string;
   readonly queueKmsKey: kms.Key;
@@ -35,6 +36,7 @@ export class Shared extends Construct {
   readonly apiKeysSecret: secretsmanager.Secret;
   readonly commonLayer: lambda.ILayerVersion;
   readonly powerToolsLayer: lambda.ILayerVersion;
+  readonly caCertLayer?: lambda.ILayerVersion;
   readonly sharedCode: SharedAssetBundler;
   readonly s3vpcEndpoint: ec2.InterfaceVpcEndpoint;
   readonly webACLRules: wafv2.CfnWebACL.RuleProperty[] = [];
@@ -57,6 +59,16 @@ export class Shared extends Construct {
       POWERTOOLS_TRACE_DISABLED: props.config.advancedMonitoring
         ? "false"
         : "true",
+    };
+
+    this.defaultEnvironmentVariables = {
+      ...this.defaultEnvironmentVariables,
+      ...(props.config.caCerts != undefined && props.config.caCerts != ""
+        ? {
+            AWS_CA_BUNDLE: "/opt/cacert.pem",
+            NODE_EXTRA_CA_CERTS: "/opt/cacert.pem",
+          }
+        : {}),
     };
 
     if (props.config.createCMKs) {
@@ -118,6 +130,17 @@ export class Shared extends Construct {
       }) as ec2.Vpc;
     }
 
+    if (props.config.vpc?.subnetIds) {
+      this.vpcSubnets = this.selectVpcSubnetsById(
+        vpc,
+        props.config.vpc?.subnetIds
+      );
+    } else {
+      this.vpcSubnets = vpc.selectSubnets({
+        subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
+      });
+    }
+
     if (
       typeof props.config.vpc?.createVpcEndpoints === "undefined" ||
       props.config.vpc?.createVpcEndpoints === true
@@ -148,11 +171,13 @@ export class Shared extends Construct {
         open: true,
       });
 
-      // Create VPC Endpoint for SageMaker Runtime
-      vpc.addInterfaceEndpoint("SageMakerRuntimeEndpoint", {
-        service: ec2.InterfaceVpcEndpointAwsService.SAGEMAKER_RUNTIME,
-        open: true,
-      });
+      if (props.config.llms.sagemaker.length > 0) {
+        // Create VPC Endpoint for SageMaker Runtime
+        vpc.addInterfaceEndpoint("SageMakerRuntimeEndpoint", {
+          service: ec2.InterfaceVpcEndpointAwsService.SAGEMAKER_RUNTIME,
+          open: true,
+        });
+      }
 
       if (props.config.privateWebsite) {
         // Create VPC Endpoint for AppSync
@@ -277,6 +302,21 @@ export class Shared extends Construct {
       path: path.join(__dirname, "./layers/common"),
     });
 
+    if (props.config.caCerts != undefined && props.config.caCerts.length > 0) {
+      const caCertLayer = new CaCertLayer(this, "CaCertLayer", {
+        runtimes: [
+          pythonRuntime,
+          lambda.Runtime.NODEJS_18_X,
+          lambda.Runtime.NODEJS_20_X,
+          lambda.Runtime.NODEJS_LATEST,
+        ],
+        architecture: lambdaArchitecture,
+        path: path.join(__dirname, "./layers/common"),
+        caCerts: props.config.caCerts,
+      });
+      this.caCertLayer = caCertLayer.layer;
+    }
+
     this.sharedCode = new SharedAssetBundler(this, "genai-core", [
       path.join(__dirname, "layers", "python-sdk", "python", "genai_core"),
     ]);
@@ -349,5 +389,13 @@ export class Shared extends Construct {
       },
     };
     return [ruleLimitRequests];
+  }
+  private selectVpcSubnetsById(
+    vpc: ec2.Vpc,
+    subnetIds: string[]
+  ): ec2.SubnetSelection {
+    return vpc.selectSubnets({
+      subnetFilters: [ec2.SubnetFilter.byIds(subnetIds)],
+    });
   }
 }

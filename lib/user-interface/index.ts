@@ -16,6 +16,7 @@ import { ChatBotApi } from "../chatbot-api";
 import { PrivateWebsite } from "./private-website";
 import { PublicWebsite } from "./public-website";
 import { NagSuppressions } from "cdk-nag";
+import { CognitoPrivateProxy } from "../customizations/cognito-private-proxy";
 
 export interface UserInterfaceProps {
   readonly config: SystemConfig;
@@ -26,6 +27,9 @@ export interface UserInterfaceProps {
   readonly api: ChatBotApi;
   readonly chatbotFilesBucket: s3.Bucket;
   readonly uploadBucket?: s3.Bucket;
+  readonly cloudfrontLogBucketArn?: string;
+  readonly crossEncodersEnabled: boolean;
+  readonly sagemakerEmbeddingsEnabled: boolean;
 }
 
 export class UserInterface extends Construct {
@@ -37,7 +41,7 @@ export class UserInterface extends Construct {
 
     const appPath = path.join(__dirname, "react-app");
     const buildPath = path.join(appPath, "dist");
-
+    const region = cdk.Stack.of(this).region;
     const uploadLogsBucket = new s3.Bucket(this, "WebsiteLogsBucket", {
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       removalPolicy:
@@ -71,26 +75,38 @@ export class UserInterface extends Construct {
 
     // Deploy either Private (only accessible within VPC) or Public facing website
     let redirectSignIn: string;
+    let cognitoEndpoint: string;
 
     if (props.config.privateWebsite) {
+      const privateProxy = new CognitoPrivateProxy(
+        this,
+        "CognitoPrivateProxy",
+        {
+          shared: props.shared,
+          config: props.config,
+        }
+      );
       new PrivateWebsite(this, "PrivateWebsite", {
         ...props,
         websiteBucket: websiteBucket,
       });
       this.publishedDomain = props.config.domain ? props.config.domain : "";
       redirectSignIn = `https://${this.publishedDomain}/index.html`;
+      cognitoEndpoint = privateProxy.cognitoProxyApi.url;
     } else {
       const publicWebsite = new PublicWebsite(this, "PublicWebsite", {
         ...props,
         websiteBucket: websiteBucket,
         chatbotFilesBucket: props.chatbotFilesBucket,
         uploadBucket: props.uploadBucket,
+        cloudfrontLogBucketArn: props.cloudfrontLogBucketArn,
       });
       this.cloudFrontDistribution = publicWebsite.distribution;
       this.publishedDomain = props.config.domain
         ? props.config.domain
         : publicWebsite.distribution.distributionDomainName;
       redirectSignIn = `https://${this.publishedDomain}`;
+      cognitoEndpoint = `https://cognito-idp.${region}.amazonaws.com/`;
     }
 
     const sagemakerEmbedingModels = props.config.rag.embeddingsModels.filter(
@@ -105,6 +121,7 @@ export class UserInterface extends Construct {
         region: cdk.Aws.REGION,
         userPoolId: props.userPoolId,
         userPoolWebClientId: props.userPoolClientId,
+        endpoint: cognitoEndpoint,
       },
       oauth: props.config.cognitoFederation?.enabled
         ? {
@@ -127,6 +144,7 @@ export class UserInterface extends Construct {
             }
           : undefined,
         rag_enabled: props.config.rag.enabled,
+        default_llm: props.config.defaultLlm,
         cross_encoders_enabled: props.config.rag.crossEncoderModels.length > 0,
         sagemaker_embeddings_enabled: sagemakerEmbedingModels.length > 0,
         default_embeddings_model:

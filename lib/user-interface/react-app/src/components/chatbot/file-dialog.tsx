@@ -55,11 +55,11 @@ export default function FileDialog(props: FileDialogProps) {
     validate: (form) => {
       const errors: Record<string, string | string[]> | null = {};
       if (!form.files || form.files.length === 0) {
-        errors.files = "Please choose a file";
+        errors.files = "נא לבחור קובץ";
       }
 
       if (!validateFiles(form.files)) {
-        errors.files = "File size or type is invalid";
+        errors.files = "גודל או סוג הקובץ אינו תקין";
       }
 
       return errors;
@@ -121,11 +121,13 @@ export default function FileDialog(props: FileDialogProps) {
     const errors: string[] = [];
     files.forEach((file) => {
       if (file.size > maxFilesSizeMb * 1024 * 1024) {
-        errors.push(`Files size must be less than ${maxFilesSizeMb}MB`);
+        errors.push(`גודל הקובץ חייב להיות קטן מ-${maxFilesSizeMb} מגה-בייט`);
       }
 
       if (!props.allowedTypes.includes(file.type)) {
-        errors.push(`File format is not supported.`);
+        errors.push(
+          `סוג הקובץ חייב להיות אחד מהבאים: ${props.allowedTypes.join(", ")}`
+        );
       }
     });
 
@@ -150,7 +152,7 @@ export default function FileDialog(props: FileDialogProps) {
         });
       } catch (error) {
         const errorMessage =
-          "Error uploading file: " + Utils.getErrorMessage(error);
+          "שגיאה בהעלאת הקובץ: " + Utils.getErrorMessage(error);
         console.log(errorMessage, error);
         setError(errorMessage);
       }
@@ -175,7 +177,7 @@ export default function FileDialog(props: FileDialogProps) {
       await client.sessions.getFileUploadSignedUrl(`${id}.${extension}`)
     ).data?.getUploadFileURL;
     if (!url) {
-      throw new Error("Unable to get the upload url.");
+      throw new Error("לא ניתן לקבל כתובת להעלאת הקובץ");
     }
     await uploader.upload(file, url, () => {});
     return `${id}.${extension}`;
@@ -189,14 +191,14 @@ export default function FileDialog(props: FileDialogProps) {
         <Box float="right">
           <SpaceBetween direction="horizontal" size="xs" alignItems="center">
             <Button variant="link" onClick={cancelChanges}>
-              Cancel
+              ביטול
             </Button>
             <Button
               variant="primary"
               disabled={loading || !files.length}
               onClick={saveConfig}
             >
-              Add
+              הוסף
             </Button>
           </SpaceBetween>
         </Box>
@@ -206,9 +208,9 @@ export default function FileDialog(props: FileDialogProps) {
       <Form>
         <SpaceBetween size="m">
           <FormField
-            label="Upload from device"
+            label="העלאת קבצים"
             errorText={errors.files}
-            description="You can upload a file to be used for this conversation."
+            description="באפשרותך להעלות תמונות לשימוש בשיחה זו"
           >
             <FileUpload
               onChange={({ detail }) => {
@@ -217,13 +219,12 @@ export default function FileDialog(props: FileDialogProps) {
               }}
               value={files}
               i18nStrings={{
-                uploadButtonText: (e) => (e ? "Choose files" : "Choose file"),
-                dropzoneText: (e) =>
-                  e ? "Drop files to upload" : "Drop file to upload",
-                removeFileAriaLabel: (e) => `Remove file ${e + 1}`,
-                limitShowFewer: "Show fewer files",
-                limitShowMore: "Show more files",
-                errorIconAriaLabel: "Error",
+                uploadButtonText: (e) => (e ? "בחר קבצים" : "בחר קובץ"),
+                dropzoneText: (e) => (e ? "גרור קבצים לכאן" : "גרור קובץ לכאן"),
+                removeFileAriaLabel: (e) => `הסר קובץ ${e + 1}`,
+                limitShowFewer: "הצג פחות",
+                limitShowMore: "הצג יותר",
+                errorIconAriaLabel: "שגיאה",
               }}
               multiple={true}
               errorText={error}
@@ -236,7 +237,7 @@ export default function FileDialog(props: FileDialogProps) {
             <>
               <div>
                 <Spinner />
-                <span style={{ marginLeft: "5px" }}>Adding file...</span>
+                <span style={{ marginRight: "5px" }}>מעלה קובץ...</span>
               </div>
             </>
           )}

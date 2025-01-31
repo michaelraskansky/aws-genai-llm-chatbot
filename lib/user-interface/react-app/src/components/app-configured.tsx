@@ -19,6 +19,12 @@ import { Mode } from "@cloudscape-design/global-styles";
 import "@aws-amplify/ui-react/styles.css";
 import { CHATBOT_NAME } from "../common/constants";
 import { UserContext, userContextDefault } from "../common/user-context";
+import {
+  I18nProvider,
+  I18nProviderProps,
+} from "@cloudscape-design/components/i18n";
+import messages from "@cloudscape-design/components/i18n/messages/all.en";
+import { applyTheme } from "@cloudscape-design/components/theming";
 
 export default function AppConfigured() {
   const { tokens } = useTheme();
@@ -59,6 +65,8 @@ export default function AppConfigured() {
     },
     [userRoles, userEmail]
   );
+  const [customMessages, setCustomMessages] =
+    useState<I18nProviderProps.Messages | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -66,6 +74,13 @@ export default function AppConfigured() {
         const result = await fetch("/aws-exports.json");
         const awsExports = await result.json();
         const currentConfig = Amplify.configure(awsExports) as AppConfig | null;
+        const customMesagesReulst = await fetch("/custom_messages.json");
+        const customMessages = {
+          "@cloudscape-design/components": await customMesagesReulst.json(),
+        };
+        const customThemeResult = await fetch("/theme.json");
+        const customTheme = await customThemeResult.json();
+        applyTheme(customTheme);
 
         // Extract the query string from the current URL
         const queryString = window.location.search;
@@ -101,6 +116,7 @@ export default function AppConfigured() {
           }
         }
 
+        setCustomMessages(customMessages);
         setConfig(currentConfig);
       } catch (e) {
         console.error(e);
@@ -239,7 +255,14 @@ export default function AppConfigured() {
               },
             }}
           >
-            <App />
+            <I18nProvider
+              locale={config.config.locale}
+              messages={
+                customMessages ? [messages, customMessages] : [messages]
+              }
+            >
+              <App />
+            </I18nProvider>
           </Authenticator>
         </ThemeProvider>
       </UserContext.Provider>

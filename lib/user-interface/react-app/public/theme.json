@@ -1,0 +1,12 @@
+{
+  "theme": {
+    "tokens": {},
+    "contexts": {
+      "top-navigation": {
+        "tokens": {
+          "colorBackgroundContainerContent": "#0a3d7b"
+        }
+      }
+    }
+  }
+}

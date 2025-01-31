@@ -28,6 +28,7 @@ export interface AppConfig {
     default_embeddings_model: string;
     default_cross_encoder_model: string;
     privateWebsite: boolean;
+    locale?: string;
   };
 }
 

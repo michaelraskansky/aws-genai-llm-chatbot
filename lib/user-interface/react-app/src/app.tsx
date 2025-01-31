@@ -2,6 +2,7 @@ import { useContext } from "react";
 import {
   BrowserRouter,
   HashRouter,
+  Navigate,
   Outlet,
   Route,
   Routes,
@@ -37,7 +38,7 @@ function App() {
   const Router = appContext?.config.privateWebsite ? HashRouter : BrowserRouter;
 
   return (
-    <div style={{ height: "100%" }}>
+    <div dir="rtl" style={{ height: "100%" }}>
       <Router>
         <div>
           <Routes>
@@ -57,8 +58,12 @@ function App() {
                 )) && (
                 <>
                   <Route
-                    index
                     path="/"
+                    element={<Navigate to="/chatbot/playground" replace />}
+                  />
+                  <Route
+                    index
+                    path="/about"
                     element={
                       <Layout showHeader={true}>
                         <Welcome />
@@ -110,7 +115,7 @@ function App() {
                   <Route
                     path="/rag"
                     element={
-                      <Layout showHeader={true}>
+                      <Layout showHeader={false}>
                         <Outlet />
                       </Layout>
                     }
@@ -213,7 +218,7 @@ function App() {
                     <Route
                       path="applications"
                       element={
-                        <Layout showHeader={true}>
+                        <Layout showHeader={false}>
                           <Applications />
                         </Layout>
                       }

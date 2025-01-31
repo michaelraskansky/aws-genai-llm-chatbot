@@ -124,7 +124,8 @@ export class Monitoring extends Construct {
       title
     );
 
-    if (props.cloudFrontDistribution) {
+    // this is only possible if the deployment region is us-east-1
+    if (props.cloudFrontDistribution && Stack.of(scope).region == "us-east-1") {
       monitoring.addLargeHeader("Front End").monitorCloudFrontDistribution({
         distribution: props.cloudFrontDistribution,
         alarmFriendlyName: "CloudFront",

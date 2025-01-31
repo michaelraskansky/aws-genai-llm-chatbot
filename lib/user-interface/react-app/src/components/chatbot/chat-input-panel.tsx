@@ -74,6 +74,7 @@ export interface ChatInputPanelProps {
   setInitErrorMessage?: (error?: string) => void;
   applicationId?: string;
   setApplication: Dispatch<React.SetStateAction<Application>>;
+  reloadChat: () => void;
 }
 
 export abstract class ChatScrollState {
@@ -799,8 +800,8 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
                 listening
                   ? "Listening..."
                   : props.running
-                  ? "Generating a response"
-                  : "Send a message"
+                  ? "מחזיר תשובה"
+                  : "כאן כתובים את ההנחיה"
               }
               actionButtonAriaLabel="Send"
               maxRows={6}
@@ -987,6 +988,11 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
                 alignItems="center"
               >
                 <div style={{ paddingTop: "1px" }}>
+                  <Button
+                    variant="icon"
+                    onClick={props.reloadChat}
+                    iconName="refresh"
+                  ></Button>
                   <ConfigDialog
                     sessionId={props.session.id}
                     visible={configDialogVisible}
@@ -1011,9 +1017,7 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
                       : "error"
                   }
                 >
-                  {readyState === ReadyState.OPEN
-                    ? "Connected"
-                    : connectionStatus}
+                  {readyState === ReadyState.OPEN ? "מחובר" : connectionStatus}
                 </StatusIndicator>
               </SpaceBetween>
             </div>

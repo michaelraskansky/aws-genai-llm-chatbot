@@ -37,6 +37,7 @@ export interface DataImportProps {
   readonly documentsTable: dynamodb.Table;
   readonly workspacesByObjectTypeIndexName: string;
   readonly documentsByCompoundKeyIndexName: string;
+  readonly s3TransferAcceleration: boolean;
 }
 
 export class DataImport extends Construct {
@@ -95,7 +96,7 @@ export class DataImport extends Construct {
           ? cdk.RemovalPolicy.RETAIN_ON_UPDATE_OR_DELETE
           : cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: props.config.retainOnDelete !== true,
-      transferAcceleration: true,
+      transferAcceleration: props.s3TransferAcceleration,
       enforceSSL: true,
       serverAccessLogsBucket: uploadLogsBucket,
       encryption: props.shared.kmsKey
@@ -232,7 +233,11 @@ export class DataImport extends Construct {
         : lambda.Tracing.DISABLED,
       logRetention: props.config.logRetention ?? logs.RetentionDays.ONE_WEEK,
       loggingFormat: lambda.LoggingFormat.JSON,
-      layers: [props.shared.powerToolsLayer, props.shared.commonLayer],
+      layers: [
+        props.shared.powerToolsLayer,
+        props.shared.commonLayer,
+        ...(props.shared.caCertLayer ? [props.shared.caCertLayer] : []),
+      ],
       vpc: props.shared.vpc,
       vpcSubnets: props.shared.vpc.privateSubnets as ec2.SubnetSelection,
       environment: {

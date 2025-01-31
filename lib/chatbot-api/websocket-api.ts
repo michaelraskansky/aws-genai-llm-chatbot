@@ -22,6 +22,7 @@ interface RealtimeGraphqlApiBackendProps {
   readonly logRetention?: number;
   readonly advancedMonitoring?: boolean;
   readonly applicationTable: dynamodb.Table;
+  readonly provisionedConcurrency?: number;
 }
 
 export class RealtimeGraphqlApiBackend extends Construct {
@@ -119,6 +120,7 @@ export class RealtimeGraphqlApiBackend extends Construct {
       logRetention: props.logRetention,
       advancedMonitoring: props.advancedMonitoring,
       applicationTable: props.applicationTable,
+      provisionedConcurrency: props.provisionedConcurrency,
     });
 
     // Route all outgoing messages to the websocket interface queue

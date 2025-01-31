@@ -107,4 +107,4 @@ export abstract class Labels {
   }
 }
 
-export const CHATBOT_NAME = "GenAI Chatbot on AWS";
+export const CHATBOT_NAME = "צ׳אטבוט עברי";

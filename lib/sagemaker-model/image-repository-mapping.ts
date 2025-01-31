@@ -54,6 +54,7 @@ export class ImageRepositoryMapping extends Construct {
         "us-isob-east-1": { account: "094389454867" },
         "us-west-1": { account: "763104351884" },
         "us-west-2": { account: "763104351884" },
+        "il-central-1": { account: "780543022126" },
       },
     });
 
