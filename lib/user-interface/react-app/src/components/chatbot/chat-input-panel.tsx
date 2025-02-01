@@ -892,6 +892,14 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
               }
             />
             <span className={styles.icon}>{outputModalityIcon}</span>
+            <span className={styles.refresh_button}>
+              <Button
+                ariaLabel="Reload Chat"
+                variant="inline-icon"
+                onClick={props.reloadChat}
+                iconName="refresh"
+              ></Button>
+            </span>
           </Box>
         </div>
       </Box>
@@ -988,11 +996,6 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
                 alignItems="center"
               >
                 <div style={{ paddingTop: "1px" }}>
-                  <Button
-                    variant="icon"
-                    onClick={props.reloadChat}
-                    iconName="refresh"
-                  ></Button>
                   <ConfigDialog
                     sessionId={props.session.id}
                     visible={configDialogVisible}

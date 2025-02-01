@@ -46,11 +46,15 @@
 
 .prompt_input_wrapper {
   position: relative;
-
+  .refresh_button {
+    position: absolute;
+    left: 30px;
+    bottom: 7.5px;
+  }
   .icon {
     position: absolute;
-    left: 40px;
-    bottom: 5px;
+    left: 58px;
+    bottom: 5.5px;
     color: blue;
   }
 }
