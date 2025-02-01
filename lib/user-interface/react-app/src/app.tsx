@@ -31,11 +31,54 @@ import ApplicationChat from "./pages/application/application";
 import Layout from "./layout";
 import { UserContext } from "./common/user-context";
 import { UserRole } from "./common/types";
+import { ChatLayout } from "./components/chatbot/types";
 
 function App() {
   const appContext = useContext(AppContext);
   const userContext = useContext(UserContext);
   const Router = appContext?.config.privateWebsite ? HashRouter : BrowserRouter;
+
+  const applicationRoutes = () => {
+    return (
+      <>
+        <Route
+          path="/"
+          element={
+            <Navigate
+              to={`/chat/application/${userContext.userProfile.defaultApplicationId}`}
+              replace
+            />
+          }
+        />
+        <Route path="/chat/application/:applicationId" element={<Outlet />}>
+          <Route
+            path=""
+            element={
+              <Layout showHeader={true}>
+                <ApplicationChat chatLayout={ChatLayout.Chatbot} />
+              </Layout>
+            }
+          />
+          <Route
+            path="sessions/:sessionId"
+            element={
+              <Layout showHeader={true}>
+                <ApplicationChat chatLayout={ChatLayout.Chatbot} />
+              </Layout>
+            }
+          />
+          <Route
+            path="sessions"
+            element={
+              <Layout showHeader={true}>
+                <SessionPage />
+              </Layout>
+            }
+          />
+        </Route>
+      </>
+    );
+  };
 
   return (
     <div dir="rtl" style={{ height: "100%" }}>
@@ -203,7 +246,6 @@ function App() {
                   </Route>
                 </>
               )}
-
             {userContext?.userRoles !== undefined &&
               userContext?.userRoles.includes(UserRole.ADMIN) && (
                 <>
@@ -242,7 +284,7 @@ function App() {
                   </Route>
                 </>
               )}
-
+              
             <Route
               path="*"
               element={
@@ -251,6 +293,7 @@ function App() {
                 </Layout>
               }
             />
+            {applicationRoutes()}
           </Routes>
         </div>
       </Router>

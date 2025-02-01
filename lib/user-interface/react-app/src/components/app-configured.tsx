@@ -18,7 +18,11 @@ import { StorageHelper } from "../common/helpers/storage-helper";
 import { Mode } from "@cloudscape-design/global-styles";
 import "@aws-amplify/ui-react/styles.css";
 import { CHATBOT_NAME } from "../common/constants";
-import { UserContext, userContextDefault } from "../common/user-context";
+import {
+  UserContext,
+  userContextDefault,
+  UserProfile,
+} from "../common/user-context";
 import {
   I18nProvider,
   I18nProviderProps,
@@ -33,6 +37,9 @@ export default function AppConfigured() {
   const [theme, setTheme] = useState(StorageHelper.getTheme());
   const [userRoles, setUserRoles] = useState(userContextDefault.userRoles);
   const [userEmail, setUserEmail] = useState(userContextDefault.userEmail);
+  const [userProfile, setUserProfile] = useState(
+    userContextDefault.userProfile
+  );
 
   const updateUserContext = useCallback(
     (event: string) => {
@@ -40,7 +47,8 @@ export default function AppConfigured() {
         if (
           userRoles == undefined ||
           userRoles.length == 0 ||
-          userEmail === null
+          userEmail === null ||
+          userProfile == undefined
         ) {
           Auth.currentAuthenticatedUser()
             .then((user) => {
@@ -49,6 +57,14 @@ export default function AppConfigured() {
               ] as string[] | undefined;
               if (userGroups !== undefined) {
                 setUserRoles(userGroups);
+              }
+              if (
+                user.attributes !== undefined &&
+                user.attributes.profile !== undefined
+              ) {
+                setUserProfile(
+                  JSON.parse(user.attributes.profile) as UserProfile
+                );
               }
               if (user.attributes.email !== undefined) {
                 setUserEmail(user.attributes.email);
@@ -61,9 +77,10 @@ export default function AppConfigured() {
       } else if (event === "signOut") {
         setUserRoles([]);
         setUserEmail("");
+        setUserProfile({ defaultApplicationId: "" });
       }
     },
-    [userRoles, userEmail]
+    [userRoles, userEmail, userProfile]
   );
   const [customMessages, setCustomMessages] =
     useState<I18nProviderProps.Messages | null>(null);
@@ -202,7 +219,14 @@ export default function AppConfigured() {
   return (
     <AppContext.Provider value={config}>
       <UserContext.Provider
-        value={{ setUserRoles, userRoles, setUserEmail, userEmail }}
+        value={{
+          setUserRoles,
+          userRoles,
+          setUserEmail,
+          userEmail,
+          setUserProfile,
+          userProfile,
+        }}
       >
         <ThemeProvider
           theme={{

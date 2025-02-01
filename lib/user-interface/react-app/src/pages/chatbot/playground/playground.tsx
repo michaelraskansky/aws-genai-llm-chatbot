@@ -3,9 +3,10 @@ import BaseAppLayout from "../../../components/base-app-layout";
 import { Link, useParams } from "react-router-dom";
 import { Container, Header, HelpPanel } from "@cloudscape-design/components";
 import Chat from "../../../components/chatbot/chat";
+import { ChatLayout } from "../../../components/chatbot/types";
 
-export default function Playground() {
-  const { sessionId } = useParams();
+export default function Playground(props: { chatLayout?: ChatLayout }) {
+  const { sessionId, applicationId } = useParams();
 
   return (
     <BaseAppLayout
@@ -40,7 +41,11 @@ export default function Playground() {
       toolsWidth={300}
       content={
         <Container data-locator="chatbot-ai-container">
-          <Chat sessionId={sessionId} />
+          <Chat
+            chatLayout={props.chatLayout}
+            applicationId={applicationId}
+            sessionId={sessionId}
+          />
         </Container>
       }
     />

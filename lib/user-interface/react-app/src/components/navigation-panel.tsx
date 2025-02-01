@@ -9,15 +9,38 @@ import { useContext, useState } from "react";
 import { CHATBOT_NAME } from "../common/constants";
 import { UserContext } from "../common/user-context";
 import { UserRole } from "../common/types";
+import { useParams } from "react-router-dom";
 
 export default function NavigationPanel() {
   const appContext = useContext(AppContext);
   const userContext = useContext(UserContext);
   const onFollow = useOnFollow();
+  const { applicationId } = useParams();
   const [navigationPanelState, setNavigationPanelState] =
     useNavigationPanelState();
   const [items] = useState<SideNavigationProps.Item[]>(() => {
     const items: SideNavigationProps.Item[] = [];
+
+    if (
+      applicationId &&
+      userContext.userRoles.includes(UserRole.USER) &&
+      userContext.userRoles.length == 1
+    ) {
+      const constBasicUserRoutes: SideNavigationProps.Item[] = [
+        {
+          type: "link",
+          text: "צ׳אטבוט",
+          href: `/chat/application/${applicationId}`,
+        },
+        {
+          type: "link",
+          text: "הסטוריה",
+          href: `/chat/application/${applicationId}/sessions`,
+        },
+      ];
+      items.push(...constBasicUserRoutes);
+    }
+
     if (
       userContext.userRoles.includes(UserRole.ADMIN) ||
       userContext.userRoles.includes(UserRole.WORKSPACE_MANAGER)

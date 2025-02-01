@@ -12,7 +12,7 @@ import {
 } from "@cloudscape-design/components";
 import { DateTime } from "luxon";
 import { useState, useEffect, useContext, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 import { useCollection } from "@cloudscape-design/collection-hooks";
 import { ApiClient } from "../../common/api-client/api-client";
@@ -34,6 +34,11 @@ export default function Sessions(props: SessionsProps) {
   const [showModalDelete, setShowModalDelete] = useState(false);
   const [deleteAllSessions, setDeleteAllSessions] = useState(false);
   const [globalError, setGlobalError] = useState<string | undefined>(undefined);
+  const { applicationId } = useParams();
+  const basedUri =
+    applicationId != undefined
+      ? `/chat/application/${applicationId}/sessions/`
+      : "/chatbot/playground/";
 
   const { items, collectionProps, paginationProps } = useCollection(sessions, {
     filtering: {
@@ -226,7 +231,7 @@ export default function Sessions(props: SessionsProps) {
               <SpaceBetween direction="horizontal" size="m" alignItems="center">
                 <RouterButton
                   iconName="add-plus"
-                  href={`/chatbot/playground/${uuidv4()}`}
+                  href={`${basedUri}${uuidv4()}`}
                   variant="inline-link"
                 >
                   הפעלה חדשה
@@ -273,9 +278,7 @@ export default function Sessions(props: SessionsProps) {
               sortingField: "title",
               width: 800,
               minWidth: 200,
-              cell: (e) => (
-                <Link to={`/chatbot/playground/${e.id}`}>{e.title}</Link>
-              ),
+              cell: (e) => <Link to={`${basedUri}${e.id}`}>{e.title}</Link>,
               isRowHeader: true,
             },
             {

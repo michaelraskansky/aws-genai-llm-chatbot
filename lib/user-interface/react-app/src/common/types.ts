@@ -65,6 +65,7 @@ export enum DocumentSubscriptionStatus {
 export enum UserRole {
   ADMIN = "admin",
   WORKSPACE_MANAGER = "workspace_manager",
+  USER = "user",
 }
 
 export interface AuroraWorkspaceCreateInput {
