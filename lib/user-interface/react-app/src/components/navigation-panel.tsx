@@ -24,7 +24,8 @@ export default function NavigationPanel() {
     if (
       applicationId &&
       userContext.userRoles.includes(UserRole.USER) &&
-      userContext.userRoles.length == 1
+      !userContext.userRoles.includes(UserRole.ADMIN) &&
+      !userContext.userRoles.includes(UserRole.WORKSPACE_MANAGER)
     ) {
       const constBasicUserRoutes: SideNavigationProps.Item[] = [
         {
