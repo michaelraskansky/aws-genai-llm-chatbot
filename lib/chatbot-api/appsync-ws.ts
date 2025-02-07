@@ -54,7 +54,7 @@ export class RealtimeResolvers extends Construct {
         "./lib/chatbot-api/functions/resolvers/send-query-lambda-resolver"
       ),
       handler: "index.handler",
-      description: "Appsync resolver handling LLM Queries",
+      description: `Appsync resolver handling LLM Queries updated on ${Date.now()}`,
       runtime: Runtime.PYTHON_3_11,
       tracing: props.advancedMonitoring ? Tracing.ACTIVE : Tracing.DISABLED,
       environment: {
@@ -88,7 +88,7 @@ export class RealtimeResolvers extends Construct {
           ...(props.shared.caCertLayer ? [props.shared.caCertLayer] : []),
         ],
         handler: "index.handler",
-        description: "Sends LLM Responses to Appsync",
+        description: `Sends LLM Responses to Appsync ${Date.now()}`,
         runtime: Runtime.NODEJS_18_X,
         loggingFormat: LoggingFormat.JSON,
         tracing: props.advancedMonitoring ? Tracing.ACTIVE : Tracing.DISABLED,
