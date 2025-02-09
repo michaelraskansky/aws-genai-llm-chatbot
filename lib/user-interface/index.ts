@@ -144,7 +144,6 @@ export class UserInterface extends Construct {
             }
           : undefined,
         rag_enabled: props.config.rag.enabled,
-        default_llm: props.config.defaultLlm,
         cross_encoders_enabled: props.config.rag.crossEncoderModels.length > 0,
         sagemaker_embeddings_enabled: sagemakerEmbedingModels.length > 0,
         default_embeddings_model:
