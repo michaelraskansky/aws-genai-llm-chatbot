@@ -52,3 +52,12 @@ def get_bedrock_client(service_name="bedrock-runtime"):
         bedrock_config_data["aws_session_token"] = credentials["SessionToken"]
 
     return boto3.client(**bedrock_config_data)
+
+
+def get_comprehend_client():
+    config = genai_core.parameters.get_config()
+    bedrock_config = config.get("bedrock", {})
+    region_name = bedrock_config.get("region")
+    if region_name:
+        client = boto3.client("comprehend", region_name=region_name)
+    return client
