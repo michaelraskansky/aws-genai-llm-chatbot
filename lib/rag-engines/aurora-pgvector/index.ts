@@ -47,7 +47,11 @@ export class AuroraPgVector extends Construct {
           : cdk.RemovalPolicy.DESTROY,
       writer: rds.ClusterInstance.serverlessV2("ServerlessInstance"),
       vpc: props.shared.vpc,
-      vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
+      vpcSubnets: props.config.vpc?.subnetIds
+        ? props.shared.vpcSubnets
+        : {
+            subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
+          },
       iamAuthentication: true,
       backup: {
         // 35 days is the max value

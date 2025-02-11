@@ -46,6 +46,7 @@ export class CreateAuroraWorkspace extends Construct {
         loggingFormat: lambda.LoggingFormat.JSON,
         environment: {
           ...props.shared.defaultEnvironmentVariables,
+          CONFIG_PARAMETER_NAME: props.shared.configParameter.parameterName,
           AURORA_DB_USER: AURORA_DB_USERS.ADMIN,
           AURORA_DB_HOST: props.dbCluster?.clusterEndpoint?.hostname ?? "",
           AURORA_DB_PORT: props.dbCluster?.clusterEndpoint?.port + "",
@@ -56,6 +57,7 @@ export class CreateAuroraWorkspace extends Construct {
         },
       }
     );
+    props.shared.configParameter.grantRead(createFunction);
 
     // Process will create a new table and requires Admin permission on the SQL Schema
     props.dbCluster.grantConnect(createFunction, AURORA_DB_USERS.ADMIN);

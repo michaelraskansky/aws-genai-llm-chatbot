@@ -264,9 +264,9 @@ export class Shared extends Construct {
             service: ec2.InterfaceVpcEndpointAwsService.ECS,
           });
 
-          // Create VPC Endpoint for Batch
-          vpc.addInterfaceEndpoint("BatchEndpoint", {
-            service: ec2.InterfaceVpcEndpointAwsService.BATCH,
+          // Create VPC Endpoint for Cloudwatch Logs
+          vpc.addInterfaceEndpoint("LogsEndpoint", {
+            service: ec2.InterfaceVpcEndpointAwsService.CLOUDWATCH_LOGS,
           });
 
           // Create VPC Endpoint for EC2
