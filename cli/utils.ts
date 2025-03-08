@@ -6,5 +6,6 @@ export function resolveConfigFile(): string {
     return process.env["CHATBOT_CONFIG"];
   }
   // Use path.resolve to get absolute path
-  return path.resolve(__dirname, "../bin/config.json");
+  const projectRoot = path.resolve(__dirname, "../../");
+  return path.resolve(projectRoot, "bin/config.json");
 }
