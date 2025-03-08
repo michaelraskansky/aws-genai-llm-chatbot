@@ -31,11 +31,11 @@ class CreateWorkspaceAuroraRequest(BaseModel):
     name: str = Field(min_length=1, max_length=100, pattern=name_regex)
     embeddingsModelProvider: str = SAFE_SHORT_STR_VALIDATION
     embeddingsModelName: str = Field(
-        min_length=0, max_length=500, pattern=r"^[A-Za-z0-9-_. /]*$", default=None
+        min_length=0, max_length=500, pattern=r"^[A-Za-z0-9-_. /:]*$", default=None
     )
     crossEncoderModelProvider: Optional[str] = SAFE_SHORT_STR_VALIDATION_OPTIONAL
     crossEncoderModelName: Optional[str] = Field(
-        min_length=0, max_length=500, pattern=r"^[A-Za-z0-9-_. /]*$", default=None
+        min_length=0, max_length=500, pattern=r"^[A-Za-z0-9-_. /:]*$", default=None
     )
     languages: List[Annotated[str, SAFE_SHORT_STR_VALIDATION]]
     metric: str = SAFE_SHORT_STR_VALIDATION
@@ -51,11 +51,11 @@ class CreateWorkspaceOpenSearchRequest(BaseModel):
     name: str = Field(min_length=1, max_length=100, pattern=name_regex)
     embeddingsModelProvider: str = SAFE_SHORT_STR_VALIDATION
     embeddingsModelName: str = Field(
-        min_length=0, max_length=500, pattern=r"^[A-Za-z0-9-_. /]*$", default=None
+        min_length=0, max_length=500, pattern=r"^[A-Za-z0-9-_. /:]*$", default=None
     )
     crossEncoderModelProvider: Optional[str] = SAFE_SHORT_STR_VALIDATION_OPTIONAL
     crossEncoderModelName: Optional[str] = Field(
-        min_length=0, max_length=500, pattern=r"^[A-Za-z0-9-_. /]*$", default=None
+        min_length=0, max_length=500, pattern=r"^[A-Za-z0-9-_. /:]*$", default=None
     )
     languages: List[Annotated[str, SAFE_SHORT_STR_VALIDATION]]
     hybridSearch: bool
