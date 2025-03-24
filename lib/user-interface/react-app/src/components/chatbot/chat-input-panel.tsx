@@ -1015,9 +1015,9 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
                     readyState === ReadyState.OPEN
                       ? "success"
                       : readyState === ReadyState.CONNECTING ||
-                        readyState === ReadyState.UNINSTANTIATED
-                      ? "in-progress"
-                      : "error"
+                          readyState === ReadyState.UNINSTANTIATED
+                        ? "in-progress"
+                        : "error"
                   }
                 >
                   {readyState === ReadyState.OPEN ? "מחובר" : connectionStatus}
