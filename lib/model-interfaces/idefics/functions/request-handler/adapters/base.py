@@ -81,6 +81,7 @@ class MultiModalModelBase:
             }
         }
 
+    # Michael history
     def format_prompt(self, prompt: str, messages: list, files: list) -> str:
         prompts = []
 
