@@ -87,6 +87,7 @@ export interface SystemConfig {
   cloudfrontLogBucketArn?: string;
   createCMKs?: boolean;
   retainOnDelete?: boolean;
+  ddbDeletionProtection?: boolean;
   vpc?: {
     vpcId?: string;
     createVpcEndpoints?: boolean;

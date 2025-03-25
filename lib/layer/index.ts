@@ -2,6 +2,7 @@ import * as cdk from "aws-cdk-lib";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as s3assets from "aws-cdk-lib/aws-s3-assets";
 import { Construct } from "constructs";
+import * as fs from "fs";
 
 interface LayerProps {
   runtime: lambda.Runtime;
@@ -77,6 +78,9 @@ export class CaCertLayer extends Construct {
       args.push("--upgrade");
     }
 
+    // Read the cert file contents synchronously
+    const certText = fs.readFileSync(caCerts, "utf-8");
+
     const layerAsset = new s3assets.Asset(this, "CaCertLayerAssest", {
       path,
       bundling: {
@@ -88,7 +92,7 @@ export class CaCertLayer extends Construct {
           [
             // create custom bundled CA certs
             `pip install certifi ${args.join(" ")}`,
-            `echo "${caCerts}" >> /asset-output/python/certifi/cacert.pem`,
+            `echo "${certText}" >> /asset-output/python/certifi/cacert.pem`,
             `mv /asset-output/python/certifi/cacert.pem /asset-output/cacert.pem`,
             `rm -rf /asset-output/python`,
           ].join(" && "),
