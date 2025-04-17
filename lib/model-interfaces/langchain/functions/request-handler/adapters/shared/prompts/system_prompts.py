@@ -13,6 +13,7 @@ from enum import Enum
 class Language(Enum):
     ENGLISH = "en"  # English language code
     FRENCH_CA = "fr-ca"  # Canadian French language code
+    HEBREW = "he"
     # Add other languages here if needed
 
 
@@ -87,4 +88,31 @@ prompts = {
         "helpful_answer_word": "Réponse utile",
     },
     # Add other languages here if needed
+    "he": {
+        # Prompt for answering questions using provided context
+        "qa_prompt": (
+            "השתמש בחלקי ההקשר הבאים כדי לענות על השאלה בסוף. "
+            "אם אינך יודע את התשובה, פשוט אמור שאינך יודע, אל תנסה "
+            "להמציא תשובה."
+        ),
+        # Prompt for conversational interaction between a human and AI
+        "conversation_prompt": (
+            "להלן שיחה ידידותית בין אדם לבין בינה מלאכותית. "
+            "אם הבינה המלאכותית אינה יודעת את התשובה לשאלה, היא אומרת בכנות "
+            "שהיא אינה יודעת."
+            "להקפיד לענות בעברית אם המשתמש שואל בעברית ובאופן כללי "
+        ),
+        # Prompt for rephrasing a follow-up question to be a standalone question
+        "condense_question_prompt": (
+            "בהתבסס על השיחה הבאה ושאלת המשך"
+            " נסח מחדש את שאלת ההמשך כך שתהיה שאלה עצמאית."
+        ),
+        "current_conversation_word": "שיחה נוכחית",
+        "question_word": "שאלה",
+        "assistant_word": "עוזר",
+        "chat_history_word": "היסטוריית צ'אט",
+        "follow_up_input_word": "קלט המשך",
+        "standalone_question_word": "שאלה עצמאית",
+        "helpful_answer_word": "תשובה מועילה",
+    },
 }
