@@ -292,7 +292,7 @@ class ModelAdapter:
 
         conversation = RunnableWithMessageHistory(
             chain,
-            lambda session_id: self.get_trimmed_chat_history(),
+            lambda session_id: self.get_chat_history(),
             history_messages_key="chat_history",
             input_messages_key="input",
             output_messages_key="output",
