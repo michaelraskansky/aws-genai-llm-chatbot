@@ -340,8 +340,8 @@ async function processCreateOptions(options: any): Promise<void> {
         return (this as any).skipped || bucketArn === ""
           ? true
           : s3BucketArnRegExp.test(bucketArn)
-          ? true
-          : "Enter a valid S3 Bucket ARN in the format arn:aws:s3::bucket";
+            ? true
+            : "Enter a valid S3 Bucket ARN in the format arn:aws:s3::bucket";
       },
     },
     {

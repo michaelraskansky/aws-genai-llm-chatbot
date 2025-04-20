@@ -1,14 +1,13 @@
 import { Dispatch, SetStateAction, createContext } from "react";
 
-
 export type UserProfile = {
-  defaultApplicationId: string
-}
+  defaultApplicationId: string;
+};
 
 export type UserContextValue = {
   userRoles: string[];
   userEmail: string;
-  userProfile: UserProfile ;
+  userProfile: UserProfile;
 
   setUserEmail: Dispatch<SetStateAction<string>>;
   setUserRoles: Dispatch<SetStateAction<string[]>>;
@@ -19,7 +18,7 @@ export const userContextDefault: UserContextValue = {
   userRoles: [],
   userEmail: "",
   userProfile: {
-    defaultApplicationId: ""
+    defaultApplicationId: "",
   },
   setUserRoles: () => {},
   setUserEmail: () => {},

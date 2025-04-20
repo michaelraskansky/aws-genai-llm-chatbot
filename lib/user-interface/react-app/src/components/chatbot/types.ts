@@ -35,7 +35,7 @@ export interface ChatInputState {
 
 export enum ChatLayout {
   Application = "chat_app_container",
-  Chatbot =  "chat_container",
+  Chatbot = "chat_container",
 }
 
 export enum ChatBotMessageType {

@@ -144,8 +144,8 @@ export default function Chat(props: {
         props.chatLayout
           ? styles[props.chatLayout]
           : props.applicationId
-          ? styles.chat_app_container
-          : styles.chat_container
+            ? styles.chat_app_container
+            : styles.chat_container
       }
     >
       {initError && (

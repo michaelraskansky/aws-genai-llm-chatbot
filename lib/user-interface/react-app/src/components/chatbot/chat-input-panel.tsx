@@ -800,8 +800,8 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
                 listening
                   ? "Listening..."
                   : props.running
-                  ? "מחזיר תשובה"
-                  : "כאן כתובים את ההנחיה"
+                    ? "מחזיר תשובה"
+                    : "כאן כתובים את ההנחיה"
               }
               actionButtonAriaLabel="Send"
               maxRows={6}
