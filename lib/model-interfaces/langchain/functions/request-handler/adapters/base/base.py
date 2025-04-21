@@ -189,39 +189,6 @@ class ModelAdapter:
             output_key=output_key,
         )
 
-    def get_trimmed_chat_history(self):
-        logger.info("Trimming chat history")
-        trimmed_chat_history = InMemoryChatMessageHistory(
-            messages=trim_messages(
-                self.get_chat_history().messages,
-                # Keep the last <= n_count tokens of the messages.
-                strategy="last",
-                # Remember to adjust based on your model
-                # or else pass a custom token_encoder
-                token_counter=self.llm,
-                # Most chat models expect that chat history starts with either:
-                # (1) a HumanMessage or
-                # (2) a SystemMessage followed by a HumanMessage
-                # Remember to adjust based on the desired conversation
-                # length
-                max_tokens=200000,
-                # Most chat models expect that chat history starts with either:
-                # (1) a HumanMessage or
-                # (2) a SystemMessage followed by a HumanMessage
-                start_on="human",
-                # Most chat models expect that chat history ends with either:
-                # (1) a HumanMessage or
-                # (2) a ToolMessage
-                end_on=("human", "tool"),
-                # Usually, we want to keep the SystemMessage
-                # if it's present in the original history.
-                # The SystemMessage has special instructions for the model.
-                include_system=True,
-                allow_partial=False,
-            )
-        )
-        return trimmed_chat_history
-
     def get_prompt(self, custom_prompt=None):
         template = """The following is a friendly conversation between a human and an AI. If the AI does not know the answer to a question, it truthfully says it does not know.
 
@@ -292,7 +259,7 @@ class ModelAdapter:
 
         conversation = RunnableWithMessageHistory(
             chain,
-            lambda session_id: self.get_chat_history(),
+            lambda session_id: self.chat_history,
             history_messages_key="chat_history",
             input_messages_key="input",
             output_messages_key="output",

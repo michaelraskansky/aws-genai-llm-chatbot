@@ -18,7 +18,7 @@ class Language(Enum):
 
 
 # Set default language (English)
-locale = Language.ENGLISH.value  # Default language is set to English
+locale = Language.HEBREW.value  # Default language is set to English
 
 # Dictionary containing prompts in different languages
 prompts = {
