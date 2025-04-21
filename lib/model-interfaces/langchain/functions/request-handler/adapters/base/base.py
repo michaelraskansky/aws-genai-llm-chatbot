@@ -14,7 +14,7 @@ from langchain.chains.conversational_retrieval.prompts import (
     QA_PROMPT,
     CONDENSE_QUESTION_PROMPT,
 )
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 
 from genai_core.langchain import WorkspaceRetriever, DynamoDBChatMessageHistory
 from genai_core.types import ChatbotMode
@@ -26,7 +26,7 @@ from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_core.outputs import LLMResult, ChatGeneration
 from langchain_core.messages.ai import AIMessage, AIMessageChunk
 from langchain_core.messages.human import HumanMessage
-from langchain_core.messages import trim_messages
+from langchain_core.messages import trim_messages, BaseMessage
 from langchain_aws import ChatBedrockConverse
 
 logger = Logger()
@@ -34,6 +34,10 @@ logger = Logger()
 
 class Mode(Enum):
     CHAIN = "chain"
+
+
+# Default token limit for message history trimming
+DEFAULT_MAX_TOKEN_LIMIT = 150000
 
 
 class LLMStartHandler(BaseCallbackHandler):
@@ -168,6 +172,121 @@ class ModelAdapter:
         else:
             return model_id
 
+    def count_tokens_approximately(self, messages: List[BaseMessage]) -> int:
+        """
+        Count tokens approximately without using a tokenizer that requires file system access.
+        This is a simple approximation based on character count.
+
+        Args:
+            messages: List of messages to count tokens for
+
+        Returns:
+            Approximate token count
+        """
+        # A very rough approximation: 1 token ≈ 4 characters for English text
+        chars = 0
+        for message in messages:
+            if hasattr(message, "content"):
+                if isinstance(message.content, str):
+                    chars += len(message.content)
+                elif isinstance(message.content, list):
+                    # Handle content that might be a list of content blocks
+                    for block in message.content:
+                        if isinstance(block, dict) and "text" in block:
+                            chars += len(block["text"])
+                        elif isinstance(block, str):
+                            chars += len(block)
+
+        # Return approximate token count (4 chars ≈ 1 token)
+        return chars // 4
+
+    def trim_message_history(self, max_token_limit: Optional[int] = None) -> None:
+        """
+        Trim message history to stay under token limit.
+
+        Args:
+            max_token_limit: Maximum number of tokens to keep in history.
+                            If None, uses DEFAULT_MAX_TOKEN_LIMIT.
+        """
+        if max_token_limit is None:
+            max_token_limit = DEFAULT_MAX_TOKEN_LIMIT
+
+        try:
+            # Get current message history
+            messages = self.chat_history.messages
+
+            # Count current messages and tokens
+            current_message_count = len(messages)
+            current_token_count = self.count_tokens_approximately(messages)
+
+            logger.info(
+                "Message history stats",
+                message_count=current_message_count,
+                approximate_token_count=current_token_count,
+            )
+
+            # Only trim if we're over the limit
+            if current_token_count <= max_token_limit:
+                logger.info("No trimming needed, token count under limit")
+                return
+
+            # Trim messages to stay under token limit
+            logger.info(
+                "Trimming message history",
+                max_token_limit=max_token_limit,
+                current_token_count=current_token_count,
+            )
+            trimmed_messages = trim_messages(
+                messages,
+                max_tokens=max_token_limit,
+                strategy="last",  # Keep most recent messages
+                token_counter=self.count_tokens_approximately,  # Use our approximate counter
+                start_on="human",  # Ensure history starts with a human message
+                include_system=True,  # Keep system message if present
+                allow_partial=False,  # Don't split messages
+            )
+
+            # Calculate stats about trimming
+            removed_messages = current_message_count - len(trimmed_messages)
+            removed_percentage = (
+                (removed_messages / current_message_count) * 100
+                if current_message_count > 0
+                else 0
+            )
+
+            new_token_count = self.count_tokens_approximately(trimmed_messages)
+            removed_tokens = current_token_count - new_token_count
+            removed_token_percentage = (
+                (removed_tokens / current_token_count) * 100
+                if current_token_count > 0
+                else 0
+            )
+
+            logger.info(
+                "Message history trimmed",
+                removed_messages=removed_messages,
+                removed_percentage=f"{removed_percentage:.2f}%",
+                removed_tokens=removed_tokens,
+                removed_token_percentage=f"{removed_token_percentage:.2f}%",
+                new_token_count=new_token_count,
+            )
+
+            # Clear the existing DynamoDB chat history and add the trimmed messages
+            # This preserves the original chat history object with all its methods
+            original_chat_history = self.chat_history
+            original_chat_history.clear()
+
+            # Add the trimmed messages back to the original chat history
+            for message in trimmed_messages:
+                if isinstance(message, HumanMessage):
+                    original_chat_history.add_user_message(message.content)
+                elif isinstance(message, AIMessage):
+                    original_chat_history.add_ai_message(message.content)
+                # System messages would need special handling if present
+
+        except Exception as e:
+            logger.exception("Error trimming message history", error=str(e))
+
     def get_llm(self, model_kwargs={}):
         raise ValueError("llm must be implemented")
 
@@ -227,6 +346,9 @@ class ModelAdapter:
     ):
         if not self.llm:
             raise ValueError("llm must be set")
+
+        # Trim message history to stay under token limit
+        self.trim_message_history()
 
         self.callback_handler.prompts = []
         workspace_documents = []
@@ -373,6 +495,9 @@ class ModelAdapter:
     ):
         if not self.llm:
             raise ValueError("llm must be set")
+
+        # Trim message history to stay under token limit
+        self.trim_message_history()
 
         self.callback_handler.prompts = []
 
