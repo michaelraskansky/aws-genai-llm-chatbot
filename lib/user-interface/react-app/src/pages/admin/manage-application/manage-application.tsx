@@ -22,7 +22,7 @@ import { OptionsHelper } from "../../../common/helpers/options-helper";
 import { Application } from "../../../API";
 
 const nameRegex = /^[\w\s+_-]+$/;
-const customPromptRegex = /^[A-Za-z0-9-_., !?]*$/;
+const customPromptRegex = /^[A-Za-z0-9-_., !?\n\r]*$/;
 
 const defaults: ApplicationManageInput = {
   name: "",
@@ -127,16 +127,16 @@ export default function ManageApplication() {
         errors.roles = "Role is required";
       }
 
-      if (form.systemPrompt.length > 256) {
-        errors.systemPrompt = "System prompt must be less than 256 characters";
+      if (form.systemPrompt.length > 1000) {
+        errors.systemPrompt = "System prompt must be less than 1000 characters";
       }
-      if (form.systemPromptRag.length > 256) {
+      if (form.systemPromptRag.length > 1000) {
         errors.systemPromptRag =
-          "System prompt with workspace must be less than 256 characters";
+          "System prompt with workspace must be less than 1000 characters";
       }
-      if (form.condenseSystemPrompt.length > 256) {
+      if (form.condenseSystemPrompt.length > 1000) {
         errors.condenseSystemPrompt =
-          "Condense system prompt must be less than 256 characters";
+          "Condense system prompt must be less than 1000 characters";
       }
       if (!customPromptRegex.test(form.systemPrompt)) {
         errors.systemPrompt = "System prompt cannot have special characters";
