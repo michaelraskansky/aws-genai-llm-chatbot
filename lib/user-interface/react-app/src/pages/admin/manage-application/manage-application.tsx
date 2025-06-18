@@ -22,7 +22,7 @@ import { OptionsHelper } from "../../../common/helpers/options-helper";
 import { Application } from "../../../API";
 
 const nameRegex = /^[\w\s+_-]+$/;
-const customPromptRegex = /^[A-Za-z0-9-_., !?\n\r]*$/;
+const customPromptRegex = /^[A-Za-z0-9-_., !?\n\r[\]();:#]*$/;
 
 const defaults: ApplicationManageInput = {
   name: "",
