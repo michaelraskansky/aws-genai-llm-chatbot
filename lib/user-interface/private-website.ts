@@ -22,6 +22,8 @@ export interface PrivateWebsiteProps {
 }
 
 export class PrivateWebsite extends Construct {
+  public readonly loadBalancer: elbv2.ApplicationLoadBalancer;
+
   constructor(scope: Construct, id: string, props: PrivateWebsiteProps) {
     super(scope, id);
 
@@ -152,6 +154,7 @@ export class PrivateWebsite extends Construct {
       securityGroup: albSecurityGroup,
       vpcSubnets: props.shared.vpcSubnets,
     });
+    this.loadBalancer = loadBalancer;
 
     const albLogBucket = new s3.Bucket(this, "ALBLoggingBucket", {
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
@@ -227,12 +230,16 @@ export class PrivateWebsite extends Construct {
     // ###################################################
     // Outputs
     // ###################################################
-    new cdk.CfnOutput(this, "Domain", {
+    new cdk.CfnOutput(this, `${props.config.prefix}Domain`, {
       value: `https://${props.config.domain}`,
+      description: "URL of the private website",
+      exportName: `${props.config.prefix}Domain`,
     });
 
-    new cdk.CfnOutput(this, "LoadBalancerDNS", {
+    new cdk.CfnOutput(this, `${props.config.prefix}LoadBalancerDNS`, {
       value: loadBalancer.loadBalancerDnsName,
+      description: "DNS of the ALB",
+      exportName: `${props.config.prefix}LoadBalancerDNS`,
     });
 
     NagSuppressions.addResourceSuppressions(albSecurityGroup, [

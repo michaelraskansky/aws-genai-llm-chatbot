@@ -9,6 +9,7 @@ import { Shared } from "../shared";
 import { SystemConfig } from "../shared/types";
 import { ChatBotApi } from "../chatbot-api";
 import { NagSuppressions } from "cdk-nag";
+import { getConstructId } from "../utils";
 
 export interface PublicWebsiteProps {
   readonly config: SystemConfig;
@@ -42,24 +43,28 @@ export class PublicWebsite extends Construct {
     const distributionLogsBucket = props.cloudfrontLogBucketArn
       ? s3.Bucket.fromBucketArn(
           this,
-          "DistributionLogsBucket",
-          props.cloudfrontLogBucketArn!
+          getConstructId("DistributionLogsBucket", props.config),
+          props.cloudfrontLogBucketArn
         )
-      : new s3.Bucket(this, "DistributionLogsBucket", {
-          objectOwnership: s3.ObjectOwnership.OBJECT_WRITER,
-          blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
-          removalPolicy:
-            props.config.retainOnDelete === true
-              ? cdk.RemovalPolicy.RETAIN_ON_UPDATE_OR_DELETE
-              : cdk.RemovalPolicy.DESTROY,
-          autoDeleteObjects: props.config.retainOnDelete !== true,
-          enforceSSL: true,
-          encryption: props.shared.kmsKey
-            ? s3.BucketEncryption.KMS
-            : s3.BucketEncryption.S3_MANAGED,
-          encryptionKey: props.shared.kmsKey,
-          versioned: true,
-        });
+      : new s3.Bucket(
+          this,
+          getConstructId("DistributionLogsBucket", props.config),
+          {
+            objectOwnership: s3.ObjectOwnership.OBJECT_WRITER,
+            blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+            removalPolicy:
+              props.config.retainOnDelete === true
+                ? cdk.RemovalPolicy.RETAIN_ON_UPDATE_OR_DELETE
+                : cdk.RemovalPolicy.DESTROY,
+            autoDeleteObjects: props.config.retainOnDelete !== true,
+            enforceSSL: true,
+            encryption: props.shared.kmsKey
+              ? s3.BucketEncryption.KMS
+              : s3.BucketEncryption.S3_MANAGED,
+            encryptionKey: props.shared.kmsKey,
+            versioned: true,
+          }
+        );
 
     const fileBucketURLs = [
       `https://${props.chatbotFilesBucket.bucketName}.s3.${region}.amazonaws.com`,
@@ -196,8 +201,10 @@ export class PublicWebsite extends Construct {
     // ###################################################
     // Outputs
     // ###################################################
-    new cdk.CfnOutput(this, "UserInterfaceDomainName", {
+    new cdk.CfnOutput(this, `${props.config.prefix}UserInterfaceDomainName`, {
       value: `https://${distribution.distributionDomainName}`,
+      description: "User Interface Domain Name",
+      exportName: `${props.config.prefix}ChatbotWebsiteUrl`,
     });
 
     NagSuppressions.addResourceSuppressions(distributionLogsBucket, [

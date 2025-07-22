@@ -444,7 +444,6 @@ class ModelAdapter:
             "userId": self.user_id,
             "documents": workspace_documents,
             "prompts": clean_prompts,
-            "usage": self.callback_handler.usage,
         }
 
         if is_admin_role(user_groups):

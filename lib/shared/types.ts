@@ -1,6 +1,6 @@
 import * as sagemaker from "aws-cdk-lib/aws-sagemaker";
 
-export type ModelProvider = "sagemaker" | "bedrock" | "openai";
+export type ModelProvider = "sagemaker" | "bedrock" | "openai" | "nexus";
 
 export enum SupportedSageMakerModels {
   FalconLite = "FalconLite [ml.g5.12xlarge]",
@@ -116,7 +116,7 @@ export interface SystemConfig {
     cognitoDomain?: string;
   };
   cfGeoRestrictEnable: boolean;
-  cfGeoRestrictList: [];
+  cfGeoRestrictList: string[];
   bedrock?: {
     enabled?: boolean;
     region?: SupportedRegion;
@@ -127,6 +127,13 @@ export interface SystemConfig {
       identifier: string;
       version: string;
     };
+  };
+  nexus?: {
+    enabled?: boolean;
+    gatewayUrl?: string;
+    tokenUrl?: string;
+    clientId?: string;
+    clientSecret?: string;
   };
   llms: {
     rateLimitPerIP?: number;

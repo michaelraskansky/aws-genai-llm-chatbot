@@ -8,6 +8,7 @@ import * as iam from "aws-cdk-lib/aws-iam";
 import * as cr from "aws-cdk-lib/custom-resources";
 import * as logs from "aws-cdk-lib/aws-logs";
 import { Shared } from "../shared";
+import { getConstructId } from "../utils";
 
 export class Authentication extends Construct {
   public readonly userPool: cognito.UserPool;
@@ -32,7 +33,9 @@ export class Authentication extends Construct {
           : cdk.RemovalPolicy.DESTROY,
       selfSignUpEnabled: false,
       mfa: cognito.Mfa.OPTIONAL,
-      advancedSecurityMode: cognito.AdvancedSecurityMode.ENFORCED,
+      featurePlan: cognito.FeaturePlan.PLUS,
+      standardThreatProtectionMode:
+        cognito.StandardThreatProtectionMode.FULL_FUNCTION,
       autoVerify: { email: true, phone: true },
       signInAliases: {
         email: true,
@@ -45,15 +48,19 @@ export class Authentication extends Construct {
       description: "Administrators group",
     });
 
-    new cognito.CfnUserPoolGroup(this, "WorkspaceManagerGroup", {
-      userPoolId: userPool.userPoolId,
-      groupName: "workspace_manager",
-      description: "Workspace managers group",
-    });
+    new cognito.CfnUserPoolGroup(
+      this,
+      getConstructId("WorkspaceManagerGroup", config),
+      {
+        userPoolId: userPool.userPoolId,
+        groupName: getConstructId("workspace_manager", config),
+        description: "Workspace managers group",
+      }
+    );
 
     new cognito.CfnUserPoolGroup(this, "UserGroup", {
       userPoolId: userPool.userPoolId,
-      groupName: "user",
+      groupName: getConstructId("user", config),
       description: "User group",
     });
 
@@ -343,20 +350,26 @@ export class Authentication extends Construct {
     this.userPool = userPool;
     this.userPoolClient = userPoolClient;
 
-    new cdk.CfnOutput(this, "UserPoolId", {
+    new cdk.CfnOutput(this, getConstructId("UserPoolId", config), {
       value: userPool.userPoolId,
+      description: "User pool id for the chatbot application.",
+      exportName: getConstructId("ChatbotUserPoolId", config),
     });
 
-    new cdk.CfnOutput(this, "UserPoolWebClientId", {
+    new cdk.CfnOutput(this, getConstructId("UserPoolWebClientId", config), {
       value: userPoolClient.userPoolClientId,
+      description: "App client id for the chatbot application.",
+      exportName: getConstructId("ChatbotUserPoolClientId", config),
     });
 
-    new cdk.CfnOutput(this, "UserPoolLink", {
+    new cdk.CfnOutput(this, getConstructId("UserPoolLink", config), {
       value: `https://${
         cdk.Stack.of(this).region
       }.console.aws.amazon.com/cognito/v2/idp/user-pools/${
         userPool.userPoolId
       }/users?region=${cdk.Stack.of(this).region}`,
+      description: "Link to user pool of the chatbot application.",
+      exportName: getConstructId("ChatbotUserPoolLink", config),
     });
 
     /**

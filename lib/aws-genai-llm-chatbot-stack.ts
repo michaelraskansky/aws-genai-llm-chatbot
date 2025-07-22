@@ -1,6 +1,6 @@
 import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
-import { SystemConfig, ModelInterface, Direction } from "./shared/types";
+import { Direction, ModelInterface, SystemConfig } from "./shared/types";
 import { Authentication } from "./authentication";
 import { Monitoring } from "./monitoring";
 import { UserInterface } from "./user-interface";
@@ -242,17 +242,28 @@ export class AwsGenAILLMChatbotStack extends cdk.Stack {
         );
       }),
       llmRequestHandlersLogGroups: [
-        ideficsInterface?.requestHandler,
-        langchainInterface?.requestHandler,
-      ]
-        .filter((i) => i)
-        .map((r) => {
-          return LogGroup.fromLogGroupName(
-            monitoringStack,
-            "Log" + (r as lambda.Function).node.id,
-            "/aws/lambda/" + (r as lambda.Function).functionName
-          );
-        }),
+        ...(props.config.nexus?.enabled
+          ? [
+              LogGroup.fromLogGroupName(
+                this,
+                `LogNexusGatewayIntegration${props.config.prefix}`,
+                `/aws/lambda/${props.config.prefix}-nexus-gateway-integration`
+              ),
+            ]
+          : []),
+        ...[
+          ideficsInterface?.requestHandler,
+          langchainInterface?.requestHandler,
+        ]
+          .filter((i) => i)
+          .map((r) => {
+            return LogGroup.fromLogGroupName(
+              monitoringStack,
+              "Log" + (r as lambda.Function).node.id,
+              "/aws/lambda/" + (r as lambda.Function).functionName
+            );
+          }),
+      ],
       cloudFrontDistribution: userInterface.cloudFrontDistribution,
       cognito: {
         userPoolId: authentication.userPool.userPoolId,
@@ -299,10 +310,15 @@ export class AwsGenAILLMChatbotStack extends cdk.Stack {
     });
 
     if (monitoringConstruct.compositeAlarmTopic) {
-      new cdk.CfnOutput(this, "CompositeAlarmTopicOutput", {
-        key: "CompositeAlarmTopicOutput",
-        value: monitoringConstruct.compositeAlarmTopic.topicName,
-      });
+      new cdk.CfnOutput(
+        this,
+        `${props.config.prefix}CompositeAlarmTopicOutput`,
+        {
+          key: "CompositeAlarmTopicOutput",
+          value: monitoringConstruct.compositeAlarmTopic.topicName,
+          exportName: `${props.config.prefix}ChatbotCompositeAlarmTopic`,
+        }
+      );
     }
 
     /**
@@ -618,5 +634,28 @@ export class AwsGenAILLMChatbotStack extends cdk.Stack {
         ]
       );
     }
+
+    new cdk.CfnOutput(this, "metadata", {
+      value: JSON.stringify({
+        ChatbotUserInterfaceDomainName: userInterface.cloudFrontDistribution
+          ?.distributionDomainName
+          ? `https://${userInterface.cloudFrontDistribution?.distributionDomainName}`
+          : "",
+        ChatbotUserPoolId: authentication.userPool.userPoolId,
+        ChatbotUserPoolClientId: authentication.userPoolClient.userPoolClientId,
+        ChatbotUserPoolLink: `https://${cdk.Stack.of(this).region}.console.aws.amazon.com/cognito/v2/idp/user-pools/${authentication.userPool.userPoolId}/users?region=${cdk.Stack.of(this).region}`,
+        ChatbotGraphqlApiUrl: chatBotApi.graphqlApi.graphqlUrl,
+        ChatbotGraphQLApiId: chatBotApi.graphqlApi.apiId,
+        ChatbotApiKeysSecretName: shared.apiKeysSecret.secretName,
+        ChatbotLoadBalancerDNS: userInterface.privateWebsite
+          ? userInterface.privateWebsite?.loadBalancer.loadBalancerDnsName
+          : "",
+        ChatbotDomain: userInterface.publishedDomain,
+        ChatbotCompositeAlarmTopicOutput:
+          monitoringConstruct.compositeAlarmTopic
+            ? monitoringConstruct.compositeAlarmTopic.topicName
+            : "",
+      }),
+    });
   }
 }

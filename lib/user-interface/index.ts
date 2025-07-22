@@ -5,8 +5,8 @@ import * as cognito from "aws-cdk-lib/aws-cognito";
 import * as s3deploy from "aws-cdk-lib/aws-s3-deployment";
 import { Construct } from "constructs";
 import {
-  ExecSyncOptionsWithBufferEncoding,
   execSync,
+  ExecSyncOptionsWithBufferEncoding,
 } from "node:child_process";
 import * as path from "node:path";
 import { Shared } from "../shared";
@@ -35,6 +35,7 @@ export interface UserInterfaceProps {
 export class UserInterface extends Construct {
   public readonly publishedDomain: string;
   public readonly cloudFrontDistribution?: cf.IDistribution;
+  public readonly privateWebsite?: PrivateWebsite;
 
   constructor(scope: Construct, id: string, props: UserInterfaceProps) {
     super(scope, id);
@@ -86,7 +87,7 @@ export class UserInterface extends Construct {
           config: props.config,
         }
       );
-      new PrivateWebsite(this, "PrivateWebsite", {
+      this.privateWebsite = new PrivateWebsite(this, "PrivateWebsite", {
         ...props,
         websiteBucket: websiteBucket,
       });

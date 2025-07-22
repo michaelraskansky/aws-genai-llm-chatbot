@@ -22,6 +22,7 @@ import * as lambda from "aws-cdk-lib/aws-lambda";
 import { RetentionDays } from "aws-cdk-lib/aws-logs";
 import { NagSuppressions } from "cdk-nag";
 import { ApplicationDynamoDBTables } from "./application-dynamodb-tables";
+import { getConstructId } from "../utils";
 
 export interface ChatBotApiProps {
   readonly shared: Shared;
@@ -121,7 +122,7 @@ export class ChatBotApi extends Construct {
             sampledRequestsEnabled: true,
           },
           description: "WAFv2 ACL for APPSync",
-          name: "WafAppsync",
+          name: getConstructId("WafAppsync", props.config),
           rules: [
             ...props.shared.webACLRules,
             ...this.createWafRules(
@@ -166,13 +167,16 @@ export class ChatBotApi extends Construct {
     api.grantMutation(realtimeBackend.resolvers.outgoingMessageHandler);
 
     // Prints out URL
-    new cdk.CfnOutput(this, "GraphqlAPIURL", {
+    new cdk.CfnOutput(this, getConstructId("GraphQLApiUrl", props.config), {
       value: api.graphqlUrl,
+      description: "Graphql API URL",
+      exportName: getConstructId("GraphQLApiUrl", props.config),
     });
 
     // Prints out the AppSync GraphQL API key to the terminal
-    new cdk.CfnOutput(this, "Graphql-apiId", {
+    new cdk.CfnOutput(this, getConstructId("GraphQLApiId", props.config), {
       value: api.apiId || "",
+      exportName: getConstructId("GraphQLApiId", props.config),
     });
 
     this.messagesTopic = realtimeBackend.messagesTopic;

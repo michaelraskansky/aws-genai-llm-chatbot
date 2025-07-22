@@ -1,7 +1,7 @@
+import boto3
 from typing import Optional, List
-from genai_core.clients import get_comprehend_client
 
-comprehend = get_comprehend_client()
+comprehend = boto3.client("comprehend")
 
 aws_to_pg = {
     # Afrikaans closely related to Dutch. Might not be accurate. Better than nothing.
