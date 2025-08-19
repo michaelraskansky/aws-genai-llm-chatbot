@@ -347,6 +347,16 @@ function getTypedEnvVar<T>(
             false,
             options.envPrefix
           ),
+          enableWaf: getTypedEnvVar<boolean>(
+            "ENABLE_WAF",
+            false,
+            options.envPrefix
+          ),
+          enableS3TransferAcceleration: getTypedEnvVar<boolean>(
+            "ENABLE_S3_TRANSFER_ACCELERATION",
+            false,
+            options.envPrefix
+          ),
 
           // VPC Configuration
           vpc: getTypedEnvVar<string>("VPC_ID", "", options.envPrefix)
