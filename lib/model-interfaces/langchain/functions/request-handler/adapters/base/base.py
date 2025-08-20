@@ -1,5 +1,6 @@
 import os
 import re
+from abc import ABC, abstractmethod
 from enum import Enum
 from aws_lambda_powertools import Logger
 from langchain.callbacks.base import BaseCallbackHandler
@@ -25,7 +26,11 @@ from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_core.outputs import LLMResult, ChatGeneration
 from langchain_core.messages.ai import AIMessage, AIMessageChunk
 from langchain_core.messages.human import HumanMessage
+from langchain_core.messages import trim_messages, BaseMessage
 from langchain_aws import ChatBedrockConverse
+
+# Import preprocessing components
+from preprocessors import PreprocessorRegistry
 
 logger = Logger()
 
@@ -72,7 +77,7 @@ class LLMStartHandler(BaseCallbackHandler):
             }
 
 
-class ModelAdapter:
+class ModelAdapter(ABC):
     def __init__(
         self,
         session_id,
@@ -96,6 +101,9 @@ class ModelAdapter:
 
         self.chat_history = self.get_chat_history()
         self.llm = self.get_llm(model_kwargs)
+        
+        # Initialize preprocessing system
+        self._init_preprocessing()
 
     def __bind_callbacks(self):
         callback_methods = [method for method in dir(self) if method.startswith("on_")]
@@ -602,6 +610,49 @@ class ModelAdapter:
             )
 
         raise ValueError(f"unknown mode {self._mode}")
+
+    def _init_preprocessing(self):
+        """Initialize document preprocessing system with auto-discovery."""
+        try:
+            self.preprocessor_registry = PreprocessorRegistry()
+            logger.info("Preprocessing system initialized with auto-discovery")
+        except Exception as e:
+            logger.error(f"Failed to initialize preprocessing: {str(e)}")
+            self.preprocessor_registry = None
+
+    def _should_preprocess(self, file_extension: str) -> bool:
+        """Check if file should be preprocessed."""
+        if not hasattr(self, 'preprocessor_registry') or not self.preprocessor_registry:
+            return False
+        
+        return self.preprocessor_registry.get_preprocessor(file_extension) is not None
+
+    def _preprocess_document(self, content: bytes, file_extension: str) -> dict:
+        """Preprocess document content."""
+        if not self.preprocessor_registry:
+            return {"content_blocks": None}
+            
+        preprocessor = self.preprocessor_registry.get_preprocessor(file_extension)
+        if not preprocessor:
+            return {"content_blocks": None}
+        
+        try:
+            processed = preprocessor.process(content, file_extension)
+            
+            # Log preprocessing results
+            logger.info("Document preprocessing completed", 
+                       file_extension=file_extension,
+                       processor=processed.metadata.get("processor"),
+                       content_blocks_count=len(processed.content_blocks),
+                       **processed.metadata)
+            
+            return {
+                "content_blocks": processed.content_blocks,
+                "metadata": processed.metadata
+            }
+        except Exception as e:
+            logger.error(f"Preprocessing failed, using original content: {str(e)}")
+            return {"content_blocks": None}
 
 
 def is_admin_role(user_groups):

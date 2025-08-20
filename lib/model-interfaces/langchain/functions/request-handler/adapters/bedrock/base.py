@@ -86,25 +86,20 @@ class BedrockChatAdapter(ModelAdapter):
             if file_extension not in supported:
                 # https://docs.aws.amazon.com/bedrock/latest/APIReference/API_runtime_DocumentBlock.html
                 raise Exception("Unsupported format " + file_extension)
-            self.chat_history.add_temporary_message(
-                HumanMessage(
-                    content=[
-                        {
-                            "type": "document",
-                            "document": {
-                                "format": file_extension,
-                                "name": "input-document-"
-                                + str(i),  # Generic name as suggested by the doc above
-                                "source": {
-                                    "bytes": self.get_file_from_s3(document)["source"][
-                                        "bytes"
-                                    ]
-                                },
-                            },
-                        }
-                    ]
-                )
-            )
+
+            # Get file with potential preprocessing
+            file_data, was_preprocessed = self.get_file_with_preprocessing(document)
+
+            # Check if file was preprocessed
+            if was_preprocessed:
+                # Use content blocks directly from preprocessor
+                content_blocks = file_data["preprocessed"]["content_blocks"]
+                metadata = file_data["preprocessed"].get("metadata", {})
+
+                self.add_preprocessed_content(content_blocks, metadata, document["key"])
+            else:
+                # Use original document format
+                self.add_original_content(file_data, document)
 
         # Add videos to message history - applied to models with video input modality
         for video in videos:
@@ -274,6 +269,75 @@ class BedrockChatAdapter(ModelAdapter):
             callbacks=[self.callback_handler],
             **params,
             **extra,
+        )
+
+    def _apply_preprocessing(self, file, file_data):
+        """Apply preprocessing to file data."""
+        file_extension = file["key"].split(".")[-1].lower() if "." in file["key"] else ""
+        
+        logger.info("Preprocessing document", file_extension=file_extension)
+        media_bytes = file_data["source"]["bytes"]
+        processed_content = self._preprocess_document(media_bytes, file_extension)
+        
+        if processed_content and processed_content.get("content_blocks"):
+            file_data["preprocessed"] = processed_content
+            return True
+        return False
+
+    def get_file_with_preprocessing(self, file, preprocess=None, use_s3_path=False):
+        """Get file from S3 and apply preprocessing if needed."""
+        file_data = self.get_file_from_s3(file, use_s3_path=use_s3_path)
+        
+        file_extension = file["key"].split(".")[-1].lower() if "." in file["key"] else ""
+        should_preprocess = preprocess if preprocess is not None else self._should_preprocess(file_extension)
+        
+        if should_preprocess:
+            was_preprocessed = self._apply_preprocessing(file, file_data)
+            return file_data, was_preprocessed
+            
+        return file_data, False
+
+    def add_preprocessed_content(self, content_blocks, metadata, filename):
+        """Handle preprocessed content blocks"""
+        logger.info(
+            "Using preprocessed content blocks",
+            file_name=filename,
+            content_blocks_count=len(content_blocks),
+            **metadata,
+        )
+
+        self.chat_history.add_temporary_message(HumanMessage(content=content_blocks))
+
+    def add_original_content(self, file_data, file):
+        """Handle original document format"""
+        document = file
+        file_extension = (
+            document["key"].split(".")[-1].lower() if "." in document["key"] else ""
+        )
+
+        # Sanitize filename for Bedrock requirements
+        sanitized_name = re.sub(r'[^a-zA-Z0-9\s\-\(\)\[\]]', '', document["key"])
+        sanitized_name = re.sub(r'\s+', ' ', sanitized_name).strip()
+
+        logger.info(
+            "Using original document format",
+            file_name=document["key"],
+            reason="preprocessing_not_available_or_failed",
+        )
+
+        self.chat_history.add_temporary_message(
+            HumanMessage(
+                content=[
+                    {
+                        "type": "document",
+                        "document": {
+                            "format": file_extension,
+                            "name": sanitized_name,
+                            "source": {"bytes": file_data["source"]["bytes"]},
+                        },
+                    }
+                ]
+            )
         )
 
 
