@@ -455,6 +455,13 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
       if (state.selectedAgent) {
         // Agent request
         const value = state.value.trim();
+        let modelName, provider;
+        if (state.selectedModel) {
+          ({ name: modelName, provider } = OptionsHelper.parseValue(
+            state.selectedModel.value
+          ));
+        }
+        
         const request: ChatBotRunRequest = {
           action: ChatBotAction.Run,
           modelInterface: "agent",
@@ -466,6 +473,14 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
             documents: [],
             images: [],
             videos: [],
+            modelName,
+            provider,
+            modelKwargs: {
+              streaming: props.configuration.streaming,
+              maxTokens: props.configuration.maxTokens,
+              temperature: props.configuration.temperature,
+              topP: props.configuration.topP,
+            },
           },
         };
 

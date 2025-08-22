@@ -41,7 +41,6 @@ def handle_run(record, context):
     user_groups = record["userGroups"]
     data = record["data"]
     agent_id = data["agentId"]
-    prompt = data["text"]
     session_id = data.get("sessionId")
 
     if not session_id:
@@ -51,16 +50,16 @@ def handle_run(record, context):
         # Convert agent ID to full ARN format
         if not agent_id.startswith("arn:"):
             region = os.environ.get("AWS_REGION")
-            account_id = context.invoked_function_arn.split(':')[4]
+            account_id = context.invoked_function_arn.split(":")[4]
             agent_runtime_arn = (
                 f"arn:aws:bedrock-agentcore:{region}:{account_id}:runtime/{agent_id}"
             )
         else:
             agent_runtime_arn = agent_id
-        
+
         logger.info(f"Using agent runtime ARN: {agent_runtime_arn}")
 
-        payload = json.dumps({"prompt": prompt})
+        payload = json.dumps(record)
 
         response = bedrock_agentcore.invoke_agent_runtime(
             agentRuntimeArn=agent_runtime_arn,
@@ -90,6 +89,20 @@ def handle_run(record, context):
 
         logger.info(f"Extracted content: {content}")
 
+        # Extract metadata from response if available
+        metadata = {
+            "agentId": agent_id,
+            "sessionId": session_id,
+        }
+        
+        # Add any additional metadata from the agent response
+        if 'runtimeSessionId' in response:
+            metadata["runtimeSessionId"] = response["runtimeSessionId"]
+        if 'traceId' in response:
+            metadata["traceId"] = response["traceId"]
+        if 'metrics' in response:
+            metadata["metrics"] = response["metrics"]
+
         send_to_client(
             {
                 "type": "text",
@@ -102,6 +115,7 @@ def handle_run(record, context):
                     "sessionId": session_id,
                     "content": content,
                     "type": "text",
+                    "metadata": metadata,
                 },
             }
         )
@@ -146,7 +160,9 @@ def handler(event, context: LambdaContext):
     batch = event["Records"]
 
     try:
-        with processor(records=batch, handler=lambda record: record_handler(record, context)):
+        with processor(
+            records=batch, handler=lambda record: record_handler(record, context)
+        ):
             processed_messages = processor.process()
     except BatchProcessingError as e:
         logger.error(e)
