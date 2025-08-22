@@ -67,57 +67,126 @@ def handle_run(record, context):
             payload=payload,
         )
 
-        # Read the streaming response body
-        try:
-            if "response" in response:
-                response_body = response["response"].read().decode("utf-8")
-                response_data = json.loads(response_body)
-
-                if "result" in response_data and "content" in response_data["result"]:
-                    content_items = response_data["result"]["content"]
-                    content = ""
-                    for item in content_items:
-                        if "text" in item:
-                            content += item["text"]
-                else:
-                    content = response_body
-            else:
-                content = str(response)
-        except Exception as e:
-            logger.error(f"Error parsing response: {e}")
-            content = str(response)
-
-        logger.info(f"Extracted content: {content}")
-
-        # Extract metadata from response if available
-        metadata = {
-            "agentId": agent_id,
-            "sessionId": session_id,
-        }
-        
-        # Add any additional metadata from the agent response
-        if 'runtimeSessionId' in response:
-            metadata["runtimeSessionId"] = response["runtimeSessionId"]
-        if 'traceId' in response:
-            metadata["traceId"] = response["traceId"]
-        if 'metrics' in response:
-            metadata["metrics"] = response["metrics"]
-
-        send_to_client(
-            {
-                "type": "text",
-                "action": ChatbotAction.FINAL_RESPONSE.value,
-                "timestamp": str(int(round(datetime.now().timestamp()))),
-                "userId": user_id,
-                "userGroups": user_groups,
-                "direction": "OUT",
-                "data": {
-                    "sessionId": session_id,
-                    "content": content,
+        # Handle streaming or standard response
+        if "text/event-stream" in response.get("contentType", ""):
+            # Handle streaming response
+            sequence_number = 0
+            accumulated_content = ""
+            for line in response["response"].iter_lines(chunk_size=10):
+                if line:
+                    line = line.decode("utf-8")
+                    if line.startswith("data: "):
+                        line = line[6:]
+                    
+                    try:
+                        # Parse the outer JSON string
+                        outer_data = json.loads(line)
+                        # Parse the inner data string
+                        if outer_data.startswith("data: "):
+                            inner_data = outer_data[6:].strip()
+                            chunk_data = json.loads(inner_data)
+                            
+                            if "event" in chunk_data:
+                                chunk_content = chunk_data["event"]
+                                
+                                if chunk_content:
+                                    sequence_number += 1
+                                    accumulated_content += chunk_content
+                                    # Send streaming token to client
+                                    send_to_client(
+                                        {
+                                            "type": "text",
+                                            "action": ChatbotAction.LLM_NEW_TOKEN.value,
+                                            "timestamp": str(int(round(datetime.now().timestamp()))),
+                                            "userId": user_id,
+                                            "data": {
+                                                "sessionId": session_id,
+                                                "token": {
+                                                    "runId": session_id,
+                                                    "sequenceNumber": sequence_number,
+                                                    "value": chunk_content,
+                                                },
+                                            },
+                                        }
+                                    )
+                    except json.JSONDecodeError:
+                        continue
+            
+            # Send final response with accumulated content
+            logger.info("Sending final response to end streaming")
+            send_to_client(
+                {
                     "type": "text",
-                    "metadata": metadata,
-                },
+                    "action": ChatbotAction.FINAL_RESPONSE.value,
+                    "timestamp": str(int(round(datetime.now().timestamp()))),
+                    "userId": user_id,
+                    "userGroups": user_groups,
+                    "direction": "OUT",
+                    "data": {
+                        "sessionId": session_id,
+                        "type": "text",
+                        "content": accumulated_content,
+                        "metadata": {
+                            "agentId": agent_id,
+                            "sessionId": session_id,
+                            "runtimeSessionId": response.get("runtimeSessionId"),
+                            "traceId": response.get("traceId"),
+                        },
+                    },
+                }
+            )
+        else:
+            # Handle standard JSON response
+            try:
+                if "response" in response:
+                    response_body = response["response"].read().decode("utf-8")
+                    response_data = json.loads(response_body)
+
+                    if "result" in response_data and "content" in response_data["result"]:
+                        content_items = response_data["result"]["content"]
+                        content = ""
+                        for item in content_items:
+                            if "text" in item:
+                                content += item["text"]
+                    else:
+                        content = response_body
+                else:
+                    content = str(response)
+            except Exception as e:
+                logger.error(f"Error parsing response: {e}")
+                content = str(response)
+
+            logger.info(f"Extracted content: {content}")
+
+            # Extract metadata from response if available
+            metadata = {
+                "agentId": agent_id,
+                "sessionId": session_id,
             }
+            
+            # Add any additional metadata from the agent response
+            if 'runtimeSessionId' in response:
+                metadata["runtimeSessionId"] = response["runtimeSessionId"]
+            if 'traceId' in response:
+                metadata["traceId"] = response["traceId"]
+            if 'metrics' in response:
+                metadata["metrics"] = response["metrics"]
+
+            send_to_client(
+                {
+                    "type": "text",
+                    "action": ChatbotAction.FINAL_RESPONSE.value,
+                    "timestamp": str(int(round(datetime.now().timestamp()))),
+                    "userId": user_id,
+                    "userGroups": user_groups,
+                    "direction": "OUT",
+                    "data": {
+                        "sessionId": session_id,
+                        "content": content,
+                        "type": "text",
+                        "metadata": metadata,
+                    },
+                }
         )
 
     except Exception as e:
