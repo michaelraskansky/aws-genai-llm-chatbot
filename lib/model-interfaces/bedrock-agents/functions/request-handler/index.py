@@ -11,6 +11,7 @@ from aws_lambda_powertools.utilities.typing import LambdaContext
 
 from genai_core.utils.websocket import send_to_client
 from genai_core.types import ChatbotAction
+from genai_core.langchain import DynamoDBChatMessageHistory
 
 processor = BatchProcessor(event_type=EventType.SQS)
 tracer = Tracer()
@@ -41,6 +42,7 @@ def handle_run(record, context):
     user_groups = record["userGroups"]
     data = record["data"]
     agent_id = data["agentId"]
+    prompt = data["text"]
     session_id = data.get("sessionId")
 
     if not session_id:
@@ -135,6 +137,15 @@ def handle_run(record, context):
                     },
                 }
             )
+            
+            # Save session history
+            chat_history = DynamoDBChatMessageHistory(
+                table_name=os.environ["SESSIONS_TABLE_NAME"],
+                session_id=session_id,
+                user_id=user_id,
+            )
+            chat_history.add_user_message(prompt)
+            chat_history.add_ai_message(accumulated_content)
         else:
             # Handle standard JSON response
             try:
@@ -187,7 +198,16 @@ def handle_run(record, context):
                         "metadata": metadata,
                     },
                 }
-        )
+            )
+            
+            # Save session history
+            chat_history = DynamoDBChatMessageHistory(
+                table_name=os.environ["SESSIONS_TABLE_NAME"],
+                session_id=session_id,
+                user_id=user_id,
+            )
+            chat_history.add_user_message(prompt)
+            chat_history.add_ai_message(content)
 
     except Exception as e:
         logger.error(
