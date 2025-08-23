@@ -89,8 +89,8 @@ def validate_agent_id(agent_id: str) -> bool:
         return bool(re.match(agent_id_pattern, agent_id)) and len(agent_id) <= 100
 
 
-def get_conversation_history(session_id, user_id)::
-    """Get conversation history from DynamoDB"""
+def get_conversation_history(session_id, user_id, max_messages=20):
+    """Get conversation history from DynamoDB with message limit"""
     try:
         logger.info(f"Loading conversation history for session {session_id}")
         chat_history = DynamoDBChatMessageHistory(
@@ -106,16 +106,21 @@ def get_conversation_history(session_id, user_id)::
 
         history = []
         if session_data and "History" in session_data:
-            logger.info(f"Found {len(session_data['History'])} messages in history")
+            messages = session_data["History"]
+            # Limit to recent messages for performance
+            recent_messages = messages[-max_messages:] if len(messages) > max_messages else messages
+            
+            logger.info(f"Found {len(messages)} total messages, using {len(recent_messages)} recent messages")
+            
             # Convert DynamoDB history to AgentCore format
-            for i, msg in enumerate(session_data["History"]):
+            for i, msg in enumerate(recent_messages):
                 if isinstance(msg, dict) and "type" in msg and "data" in msg:
                     msg_data = msg["data"]
                     if isinstance(msg_data, dict) and "content" in msg_data:
                         role = "user" if msg["type"] == "human" else "assistant"
                         history.append({"role": role, "content": msg_data["content"]})
                 else:
-                    logger.warning(f"Message {i} has unexpected structure: {list(msg.keys()) if isinstance(msg, dict) else type(msg)}")
+                    logger.warning(f"Message {i} has unexpected structure")
             logger.info(f"Converted {len(history)} messages for AgentCore")
         else:
             logger.info("No conversation history found")
