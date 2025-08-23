@@ -72,6 +72,44 @@ def check_session_expired(session_id, user_id):
         return True, []  # Assume expired on error
 
 
+def get_conversation_history(session_id, user_id):
+    """Get conversation history from DynamoDB"""
+    try:
+        logger.info(f"Loading conversation history for session {session_id}")
+        chat_history = DynamoDBChatMessageHistory(
+            table_name=os.environ["SESSIONS_TABLE_NAME"],
+            session_id=session_id,
+            user_id=user_id,
+        )
+
+        # Get session data from DynamoDB
+        session_data = chat_history.table.get_item(
+            Key={"SessionId": session_id, "UserId": user_id}
+        ).get("Item", {})
+
+        history = []
+        if session_data and "History" in session_data:
+            logger.info(f"Found {len(session_data['History'])} messages in history")
+            # Convert DynamoDB history to AgentCore format
+            for i, msg in enumerate(session_data["History"]):
+                if isinstance(msg, dict) and "type" in msg and "data" in msg:
+                    msg_data = msg["data"]
+                    if isinstance(msg_data, dict) and "content" in msg_data:
+                        role = "user" if msg["type"] == "human" else "assistant"
+                        history.append({"role": role, "content": msg_data["content"]})
+                else:
+                    logger.warning(f"Message {i} has unexpected structure: {list(msg.keys()) if isinstance(msg, dict) else type(msg)}")
+            logger.info(f"Converted {len(history)} messages for AgentCore")
+        else:
+            logger.info("No conversation history found")
+
+        return history
+
+    except Exception as e:
+        logger.error(f"Error loading conversation history: {e}", exc_info=True)
+        return []
+
+
 def update_session_activity(session_id, user_id):
     """Update last activity timestamp for session tracking"""
     try:
@@ -120,10 +158,9 @@ def handle_run(record, context):
         session_id = str(uuid.uuid4())
 
     try:
-        # Check if AgentCore session has expired
-        session_expired, conversation_history = check_session_expired(
-            session_id, user_id
-        )
+        # Load conversation history
+        conversation_history = get_conversation_history(session_id, user_id)
+        logger.info(f"Loaded {len(conversation_history)} messages from history")
 
         # Convert agent ID to full ARN format
         if not agent_id.startswith("arn:"):
@@ -137,20 +174,15 @@ def handle_run(record, context):
 
         logger.info(f"Using agent runtime ARN: {agent_runtime_arn}")
 
-        # Prepare payload with conversation history if session expired
-        if session_expired and conversation_history:
-            logger.info(
-                f"Session expired, sending {len(conversation_history)} previous messages"
-            )
-            # Add conversation history to the data section
-            enhanced_record = record.copy()
-            enhanced_record["data"] = {
-                **data,
-                "conversation_history": conversation_history,
-            }
-            payload = json.dumps(enhanced_record)
-        else:
-            payload = json.dumps(record)
+        # Always include conversation history (populated or empty list)
+        logger.info(f"Sending {len(conversation_history)} messages in conversation_history")
+        # Add conversation history to the data section
+        enhanced_record = record.copy()
+        enhanced_record["data"] = {
+            **data,
+            "conversation_history": conversation_history,
+        }
+        payload = json.dumps(enhanced_record)
 
         response = bedrock_agentcore.invoke_agent_runtime(
             agentRuntimeArn=agent_runtime_arn,
