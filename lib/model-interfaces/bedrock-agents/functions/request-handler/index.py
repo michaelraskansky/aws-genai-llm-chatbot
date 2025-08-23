@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import uuid
 from datetime import datetime
@@ -13,12 +14,11 @@ from aws_lambda_powertools.utilities.typing import LambdaContext
 from genai_core.utils.websocket import send_to_client
 from genai_core.types import ChatbotAction
 from genai_core.langchain import DynamoDBChatMessageHistory
+from genai_core.clients import get_agentcore_client
 
 processor = BatchProcessor(event_type=EventType.SQS)
 tracer = Tracer()
 logger = Logger()
-
-bedrock_agentcore = boto3.client("bedrock-agentcore")
 
 
 def check_session_expired(session_id, user_id):
@@ -73,8 +73,24 @@ def check_session_expired(session_id, user_id):
         return True, []  # Assume expired on error
 
 
-def get_conversation_history(session_id, user_id):
-    """Get conversation history from DynamoDB"""
+def validate_agent_id(agent_id: str) -> bool:
+    """Validate agent ID format to prevent injection attacks"""
+    if not agent_id or not isinstance(agent_id, str):
+        return False
+    
+    # Allow ARN format or simple agent ID format
+    if agent_id.startswith("arn:"):
+        # Validate full ARN format
+        arn_pattern = r"^arn:aws:bedrock-agentcore:[a-z0-9-]+:\d{12}:runtime/[a-zA-Z0-9_-]+$"
+        return bool(re.match(arn_pattern, agent_id))
+    else:
+        # Validate simple agent ID (alphanumeric, hyphens, underscores only)
+        agent_id_pattern = r"^[a-zA-Z0-9_-]+$"
+        return bool(re.match(agent_id_pattern, agent_id)) and len(agent_id) <= 100
+
+
+def get_conversation_history(session_id, user_id, max_messages=20):
+    """Get conversation history from DynamoDB with message limit"""
     try:
         logger.info(f"Loading conversation history for session {session_id}")
         chat_history = DynamoDBChatMessageHistory(
@@ -90,16 +106,21 @@ def get_conversation_history(session_id, user_id):
 
         history = []
         if session_data and "History" in session_data:
-            logger.info(f"Found {len(session_data['History'])} messages in history")
+            messages = session_data["History"]
+            # Limit to recent messages for performance
+            recent_messages = messages[-max_messages:] if len(messages) > max_messages else messages
+            
+            logger.info(f"Found {len(messages)} total messages, using {len(recent_messages)} recent messages")
+            
             # Convert DynamoDB history to AgentCore format
-            for i, msg in enumerate(session_data["History"]):
+            for i, msg in enumerate(recent_messages):
                 if isinstance(msg, dict) and "type" in msg and "data" in msg:
                     msg_data = msg["data"]
                     if isinstance(msg_data, dict) and "content" in msg_data:
                         role = "user" if msg["type"] == "human" else "assistant"
                         history.append({"role": role, "content": msg_data["content"]})
                 else:
-                    logger.warning(f"Message {i} has unexpected structure: {list(msg.keys()) if isinstance(msg, dict) else type(msg)}")
+                    logger.warning(f"Message {i} has unexpected structure")
             logger.info(f"Converted {len(history)} messages for AgentCore")
         else:
             logger.info("No conversation history found")
@@ -111,23 +132,54 @@ def get_conversation_history(session_id, user_id):
         return []
 
 
-def update_session_activity(session_id, user_id):
-    """Update last activity timestamp for session tracking"""
+def save_session_history(session_id, user_id, prompt, response_content):
+    """Save conversation to session history with error recovery"""
+    chat_history = None
+    user_message_added = False
+    
     try:
         chat_history = DynamoDBChatMessageHistory(
             table_name=os.environ["SESSIONS_TABLE_NAME"],
             session_id=session_id,
             user_id=user_id,
         )
-
-        # Update LastActivity timestamp
-        chat_history.table.update_item(
-            Key={"SessionId": session_id, "UserId": user_id},
-            UpdateExpression="SET LastActivity = :timestamp",
-            ExpressionAttributeValues={":timestamp": datetime.now().isoformat()},
-        )
+        
+        # Add user message with metadata
+        user_metadata = {
+            "provider": "bedrock-agents",
+            "sessionId": session_id,
+        }
+        chat_history.add_user_message(prompt)
+        user_message_added = True
+        chat_history.add_metadata(user_metadata)
+        
+        # Add AI message with metadata  
+        ai_metadata = {
+            "provider": "bedrock-agents",
+            "sessionId": session_id,
+        }
+        chat_history.add_ai_message(response_content)
+        chat_history.add_metadata(ai_metadata)
+        
+        logger.info("Session history saved successfully")
+        
     except Exception as e:
-        logger.error(f"Error updating session activity: {e}")
+        logger.error(f"Error saving session history: {e}", exc_info=True)
+        
+        # Attempt recovery if user message was added but AI message failed
+        if user_message_added and chat_history:
+            try:
+                logger.info("Attempting to recover from partial session save failure")
+                # Try to add a placeholder AI message to maintain conversation integrity
+                chat_history.add_ai_message("Error processing response. Please try again.")
+                chat_history.add_metadata({
+                    "provider": "bedrock-agents",
+                    "sessionId": session_id,
+                    "error_recovery": True,
+                })
+                logger.info("Recovery message added to maintain session integrity")
+            except Exception as recovery_error:
+                logger.error(f"Session recovery failed: {recovery_error}", exc_info=True)
 
 
 def handle_heartbeat(record):
@@ -163,6 +215,11 @@ def handle_run(record, context):
         conversation_history = get_conversation_history(session_id, user_id)
         logger.info(f"Loaded {len(conversation_history)} messages from history")
 
+        # Validate agent ID to prevent injection attacks
+        if not validate_agent_id(agent_id):
+            logger.error(f"Invalid agent ID format: {agent_id}")
+            raise ValueError("Invalid agent ID format")
+
         # Convert agent ID to full ARN format
         if not agent_id.startswith("arn:"):
             region = os.environ.get("AWS_REGION")
@@ -185,14 +242,12 @@ def handle_run(record, context):
         }
         payload = json.dumps(enhanced_record)
 
+        bedrock_agentcore = get_agentcore_client()
         response = bedrock_agentcore.invoke_agent_runtime(
             agentRuntimeArn=agent_runtime_arn,
             runtimeSessionId=session_id,
             payload=payload,
         )
-
-        # Update session activity timestamp
-        update_session_activity(session_id, user_id)
 
         # Handle streaming or standard response
         if "text/event-stream" in response.get("contentType", ""):
@@ -265,45 +320,8 @@ def handle_run(record, context):
                 }
             )
 
-            # Save session history and update activity
-            try:
-                logger.info(
-                    f"Creating DynamoDBChatMessageHistory for session {session_id}"
-                )
-                chat_history = DynamoDBChatMessageHistory(
-                    table_name=os.environ["SESSIONS_TABLE_NAME"],
-                    session_id=session_id,
-                    user_id=user_id,
-                )
-                
-                # Add user message with metadata
-                user_metadata = {
-                    "agentId": agent_id,
-                    "sessionId": session_id,
-                    "modelName": data.get("modelName"),
-                    "provider": "bedrock-agents",
-                }
-                logger.info("Adding user message to history")
-                chat_history.add_user_message(prompt)
-                chat_history.add_metadata(user_metadata)
-                
-                # Add AI message with metadata
-                ai_metadata = {
-                    "agentId": agent_id,
-                    "sessionId": session_id,
-                    "runtimeSessionId": response.get("runtimeSessionId"),
-                    "traceId": response.get("traceId"),
-                    "provider": "bedrock-agents",
-                }
-                logger.info("Adding AI message to history")
-                chat_history.add_ai_message(accumulated_content)
-                chat_history.add_metadata(ai_metadata)
-                logger.info("Session history saved successfully")
-
-                # Ensure LastActivity is set
-                update_session_activity(session_id, user_id)
-            except Exception as e:
-                logger.error(f"Error saving session history: {e}", exc_info=True)
+            # Save session history
+            save_session_history(session_id, user_id, prompt, accumulated_content)
         else:
             # Handle standard JSON response
             try:
@@ -361,49 +379,29 @@ def handle_run(record, context):
                 }
             )
 
-            # Save session history and update activity
-            try:
-                logger.info(
-                    f"Creating DynamoDBChatMessageHistory for session {session_id}"
-                )
-                chat_history = DynamoDBChatMessageHistory(
-                    table_name=os.environ["SESSIONS_TABLE_NAME"],
-                    session_id=session_id,
-                    user_id=user_id,
-                )
-                
-                # Add user message with metadata
-                user_metadata = {
-                    "agentId": agent_id,
-                    "sessionId": session_id,
-                    "modelName": data.get("modelName"),
-                    "provider": "bedrock-agents",
-                }
-                logger.info("Adding user message to history")
-                chat_history.add_user_message(prompt)
-                chat_history.add_metadata(user_metadata)
-                
-                # Add AI message with metadata
-                ai_metadata = {
-                    "agentId": agent_id,
-                    "sessionId": session_id,
-                    "runtimeSessionId": response.get("runtimeSessionId"),
-                    "traceId": response.get("traceId"),
-                    "provider": "bedrock-agents",
-                }
-                if 'metrics' in response:
-                    ai_metadata["metrics"] = response["metrics"]
-                    
-                logger.info("Adding AI message to history")
-                chat_history.add_ai_message(content)
-                chat_history.add_metadata(ai_metadata)
-                logger.info("Session history saved successfully")
+            # Save session history
+            save_session_history(session_id, user_id, prompt, content)
 
-                # Ensure LastActivity is set
-                update_session_activity(session_id, user_id)
-            except Exception as e:
-                logger.error(f"Error saving session history: {e}", exc_info=True)
-
+    except ValueError as e:
+        # Input validation errors
+        logger.error(
+            f"Input validation error for agent {agent_id}: {str(e)}",
+            extra={"agent_id": agent_id, "session_id": session_id, "error_type": "validation"},
+        )
+        send_to_client(
+            {
+                "type": "text",
+                "action": "error",
+                "direction": "OUT",
+                "userId": user_id,
+                "timestamp": str(int(round(datetime.now().timestamp()))),
+                "data": {
+                    "sessionId": session_id,
+                    "content": "Invalid request parameters. Please check your input.",
+                    "type": "text",
+                },
+            }
+        )
     except (ClientError, BotoCoreError) as e:
         # AWS service errors - log details but send generic message
         logger.error(
