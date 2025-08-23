@@ -89,7 +89,7 @@ def validate_agent_id(agent_id: str) -> bool:
         return bool(re.match(agent_id_pattern, agent_id)) and len(agent_id) <= 100
 
 
-def get_conversation_history(session_id, user_id):
+def get_conversation_history(session_id, user_id)::
     """Get conversation history from DynamoDB"""
     try:
         logger.info(f"Loading conversation history for session {session_id}")
@@ -127,23 +127,35 @@ def get_conversation_history(session_id, user_id):
         return []
 
 
-def update_session_activity(session_id, user_id):
-    """Update last activity timestamp for session tracking"""
+def save_session_history(session_id, user_id, prompt, response_content):
+    """Save conversation to session history"""
     try:
         chat_history = DynamoDBChatMessageHistory(
             table_name=os.environ["SESSIONS_TABLE_NAME"],
             session_id=session_id,
             user_id=user_id,
         )
-
-        # Update LastActivity timestamp
-        chat_history.table.update_item(
-            Key={"SessionId": session_id, "UserId": user_id},
-            UpdateExpression="SET LastActivity = :timestamp",
-            ExpressionAttributeValues={":timestamp": datetime.now().isoformat()},
-        )
+        
+        # Add user message with metadata
+        user_metadata = {
+            "provider": "bedrock-agents",
+            "sessionId": session_id,
+        }
+        chat_history.add_user_message(prompt)
+        chat_history.add_metadata(user_metadata)
+        
+        # Add AI message with metadata  
+        ai_metadata = {
+            "provider": "bedrock-agents",
+            "sessionId": session_id,
+        }
+        chat_history.add_ai_message(response_content)
+        chat_history.add_metadata(ai_metadata)
+        
+        logger.info("Session history saved successfully")
+        
     except Exception as e:
-        logger.error(f"Error updating session activity: {e}")
+        logger.error(f"Error saving session history: {e}", exc_info=True)
 
 
 def handle_heartbeat(record):
@@ -286,45 +298,8 @@ def handle_run(record, context):
                 }
             )
 
-            # Save session history and update activity
-            try:
-                logger.info(
-                    f"Creating DynamoDBChatMessageHistory for session {session_id}"
-                )
-                chat_history = DynamoDBChatMessageHistory(
-                    table_name=os.environ["SESSIONS_TABLE_NAME"],
-                    session_id=session_id,
-                    user_id=user_id,
-                )
-                
-                # Add user message with metadata
-                user_metadata = {
-                    "agentId": agent_id,
-                    "sessionId": session_id,
-                    "modelName": data.get("modelName"),
-                    "provider": "bedrock-agents",
-                }
-                logger.info("Adding user message to history")
-                chat_history.add_user_message(prompt)
-                chat_history.add_metadata(user_metadata)
-                
-                # Add AI message with metadata
-                ai_metadata = {
-                    "agentId": agent_id,
-                    "sessionId": session_id,
-                    "runtimeSessionId": response.get("runtimeSessionId"),
-                    "traceId": response.get("traceId"),
-                    "provider": "bedrock-agents",
-                }
-                logger.info("Adding AI message to history")
-                chat_history.add_ai_message(accumulated_content)
-                chat_history.add_metadata(ai_metadata)
-                logger.info("Session history saved successfully")
-
-                # Ensure LastActivity is set
-                update_session_activity(session_id, user_id)
-            except Exception as e:
-                logger.error(f"Error saving session history: {e}", exc_info=True)
+            # Save session history
+            save_session_history(session_id, user_id, prompt, accumulated_content)
         else:
             # Handle standard JSON response
             try:
@@ -382,48 +357,8 @@ def handle_run(record, context):
                 }
             )
 
-            # Save session history and update activity
-            try:
-                logger.info(
-                    f"Creating DynamoDBChatMessageHistory for session {session_id}"
-                )
-                chat_history = DynamoDBChatMessageHistory(
-                    table_name=os.environ["SESSIONS_TABLE_NAME"],
-                    session_id=session_id,
-                    user_id=user_id,
-                )
-                
-                # Add user message with metadata
-                user_metadata = {
-                    "agentId": agent_id,
-                    "sessionId": session_id,
-                    "modelName": data.get("modelName"),
-                    "provider": "bedrock-agents",
-                }
-                logger.info("Adding user message to history")
-                chat_history.add_user_message(prompt)
-                chat_history.add_metadata(user_metadata)
-                
-                # Add AI message with metadata
-                ai_metadata = {
-                    "agentId": agent_id,
-                    "sessionId": session_id,
-                    "runtimeSessionId": response.get("runtimeSessionId"),
-                    "traceId": response.get("traceId"),
-                    "provider": "bedrock-agents",
-                }
-                if 'metrics' in response:
-                    ai_metadata["metrics"] = response["metrics"]
-                    
-                logger.info("Adding AI message to history")
-                chat_history.add_ai_message(content)
-                chat_history.add_metadata(ai_metadata)
-                logger.info("Session history saved successfully")
-
-                # Ensure LastActivity is set
-                update_session_activity(session_id, user_id)
-            except Exception as e:
-                logger.error(f"Error saving session history: {e}", exc_info=True)
+            # Save session history
+            save_session_history(session_id, user_id, prompt, content)
 
     except ValueError as e:
         # Input validation errors
