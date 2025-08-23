@@ -1,4 +1,4 @@
-import os
+import re
 import json
 import uuid
 from datetime import datetime
@@ -71,6 +71,22 @@ def check_session_expired(session_id, user_id):
     except Exception as e:
         logger.error(f"Error checking session expiration: {e}")
         return True, []  # Assume expired on error
+
+
+def validate_agent_id(agent_id: str) -> bool:
+    """Validate agent ID format to prevent injection attacks"""
+    if not agent_id or not isinstance(agent_id, str):
+        return False
+    
+    # Allow ARN format or simple agent ID format
+    if agent_id.startswith("arn:"):
+        # Validate full ARN format
+        arn_pattern = r"^arn:aws:bedrock-agentcore:[a-z0-9-]+:\d{12}:runtime/[a-zA-Z0-9_-]+$"
+        return bool(re.match(arn_pattern, agent_id))
+    else:
+        # Validate simple agent ID (alphanumeric, hyphens, underscores only)
+        agent_id_pattern = r"^[a-zA-Z0-9_-]+$"
+        return bool(re.match(agent_id_pattern, agent_id)) and len(agent_id) <= 100
 
 
 def get_conversation_history(session_id, user_id):
@@ -162,6 +178,11 @@ def handle_run(record, context):
         # Load conversation history
         conversation_history = get_conversation_history(session_id, user_id)
         logger.info(f"Loaded {len(conversation_history)} messages from history")
+
+        # Validate agent ID to prevent injection attacks
+        if not validate_agent_id(agent_id):
+            logger.error(f"Invalid agent ID format: {agent_id}")
+            raise ValueError("Invalid agent ID format")
 
         # Convert agent ID to full ARN format
         if not agent_id.startswith("arn:"):
@@ -404,6 +425,26 @@ def handle_run(record, context):
             except Exception as e:
                 logger.error(f"Error saving session history: {e}", exc_info=True)
 
+    except ValueError as e:
+        # Input validation errors
+        logger.error(
+            f"Input validation error for agent {agent_id}: {str(e)}",
+            extra={"agent_id": agent_id, "session_id": session_id, "error_type": "validation"},
+        )
+        send_to_client(
+            {
+                "type": "text",
+                "action": "error",
+                "direction": "OUT",
+                "userId": user_id,
+                "timestamp": str(int(round(datetime.now().timestamp()))),
+                "data": {
+                    "sessionId": session_id,
+                    "content": "Invalid request parameters. Please check your input.",
+                    "type": "text",
+                },
+            }
+        )
     except (ClientError, BotoCoreError) as e:
         # AWS service errors - log details but send generic message
         logger.error(
