@@ -3,6 +3,7 @@ import json
 import uuid
 from datetime import datetime
 import boto3
+from botocore.exceptions import ClientError, BotoCoreError
 from aws_lambda_powertools import Logger, Tracer
 from aws_lambda_powertools.utilities.batch import BatchProcessor, EventType
 from aws_lambda_powertools.utilities.batch.exceptions import BatchProcessingError
@@ -403,10 +404,11 @@ def handle_run(record, context):
             except Exception as e:
                 logger.error(f"Error saving session history: {e}", exc_info=True)
 
-    except Exception as e:
+    except (ClientError, BotoCoreError) as e:
+        # AWS service errors - log details but send generic message
         logger.error(
-            f"Error invoking agent {agent_id}: {str(e)}",
-            extra={"agent_id": agent_id, "session_id": session_id},
+            f"AWS service error invoking agent {agent_id}: {str(e)}",
+            extra={"agent_id": agent_id, "session_id": session_id, "error_type": "aws_service"},
         )
         send_to_client(
             {
@@ -417,7 +419,48 @@ def handle_run(record, context):
                 "timestamp": str(int(round(datetime.now().timestamp()))),
                 "data": {
                     "sessionId": session_id,
-                    "content": "Error invoking agent",
+                    "content": "Service temporarily unavailable. Please try again.",
+                    "type": "text",
+                },
+            }
+        )
+    except json.JSONDecodeError as e:
+        # JSON parsing errors
+        logger.error(
+            f"JSON parsing error for agent {agent_id}: {str(e)}",
+            extra={"agent_id": agent_id, "session_id": session_id, "error_type": "json_parse"},
+        )
+        send_to_client(
+            {
+                "type": "text",
+                "action": "error",
+                "direction": "OUT",
+                "userId": user_id,
+                "timestamp": str(int(round(datetime.now().timestamp()))),
+                "data": {
+                    "sessionId": session_id,
+                    "content": "Unable to process response. Please try again.",
+                    "type": "text",
+                },
+            }
+        )
+    except Exception as e:
+        # Catch-all for unexpected errors - log details but send generic message
+        logger.error(
+            f"Unexpected error invoking agent {agent_id}: {type(e).__name__}",
+            extra={"agent_id": agent_id, "session_id": session_id, "error_type": "unexpected"},
+            exc_info=True,
+        )
+        send_to_client(
+            {
+                "type": "text",
+                "action": "error",
+                "direction": "OUT",
+                "userId": user_id,
+                "timestamp": str(int(round(datetime.now().timestamp()))),
+                "data": {
+                    "sessionId": session_id,
+                    "content": "An unexpected error occurred. Please try again.",
                     "type": "text",
                 },
             }
