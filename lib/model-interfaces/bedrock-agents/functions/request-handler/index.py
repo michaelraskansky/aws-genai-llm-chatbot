@@ -20,6 +20,77 @@ logger = Logger()
 bedrock_agentcore = boto3.client("bedrock-agentcore")
 
 
+def check_session_expired(session_id, user_id):
+    """Check if AgentCore session has expired based on time limits"""
+    try:
+        chat_history = DynamoDBChatMessageHistory(
+            table_name=os.environ["SESSIONS_TABLE_NAME"],
+            session_id=session_id,
+            user_id=user_id,
+        )
+
+        # Get session metadata from DynamoDB
+        session_data = chat_history.table.get_item(
+            Key={"SessionId": session_id, "UserId": user_id}
+        ).get("Item", {})
+
+        if not session_data:
+            return True, []  # New session
+
+        start_time = session_data.get("StartTime")
+        last_activity = session_data.get("LastActivity", start_time)
+
+        if not start_time:
+            return True, []
+
+        # Parse timestamps
+        start_dt = datetime.fromisoformat(start_time.replace("Z", "+00:00"))
+        last_dt = datetime.fromisoformat(last_activity.replace("Z", "+00:00"))
+        now = datetime.now().replace(tzinfo=start_dt.tzinfo)
+
+        # Check 8-hour limit or 15-minute inactivity
+        session_age = (now - start_dt).total_seconds()
+        inactivity = (now - last_dt).total_seconds()
+
+        expired = (
+            session_age > 8 * 3600 or inactivity > 15 * 60
+        )  # 8 hours or 15 minutes
+
+        # Get conversation history if expired
+        history = []
+        if expired and "History" in session_data:
+            # Convert DynamoDB history to AgentCore format
+            for msg in session_data["History"]:
+                if isinstance(msg, dict) and "type" in msg and "content" in msg:
+                    role = "user" if msg["type"] == "human" else "assistant"
+                    history.append({"role": role, "content": msg["content"]})
+
+        return expired, history
+
+    except Exception as e:
+        logger.error(f"Error checking session expiration: {e}")
+        return True, []  # Assume expired on error
+
+
+def update_session_activity(session_id, user_id):
+    """Update last activity timestamp for session tracking"""
+    try:
+        chat_history = DynamoDBChatMessageHistory(
+            table_name=os.environ["SESSIONS_TABLE_NAME"],
+            session_id=session_id,
+            user_id=user_id,
+        )
+
+        # Update LastActivity timestamp
+        chat_history.table.update_item(
+            Key={"SessionId": session_id, "UserId": user_id},
+            UpdateExpression="SET LastActivity = :timestamp",
+            ExpressionAttributeValues={":timestamp": datetime.now().isoformat()},
+        )
+    except Exception as e:
+        logger.error(f"Error updating session activity: {e}")
+
+
 def handle_heartbeat(record):
     user_id = record["userId"]
     session_id = record["data"]["sessionId"]
@@ -49,6 +120,11 @@ def handle_run(record, context):
         session_id = str(uuid.uuid4())
 
     try:
+        # Check if AgentCore session has expired
+        session_expired, conversation_history = check_session_expired(
+            session_id, user_id
+        )
+
         # Convert agent ID to full ARN format
         if not agent_id.startswith("arn:"):
             region = os.environ.get("AWS_REGION")
@@ -61,13 +137,29 @@ def handle_run(record, context):
 
         logger.info(f"Using agent runtime ARN: {agent_runtime_arn}")
 
-        payload = json.dumps(record)
+        # Prepare payload with conversation history if session expired
+        if session_expired and conversation_history:
+            logger.info(
+                f"Session expired, sending {len(conversation_history)} previous messages"
+            )
+            # Add conversation history to the data section
+            enhanced_record = record.copy()
+            enhanced_record["data"] = {
+                **data,
+                "conversation_history": conversation_history,
+            }
+            payload = json.dumps(enhanced_record)
+        else:
+            payload = json.dumps(record)
 
         response = bedrock_agentcore.invoke_agent_runtime(
             agentRuntimeArn=agent_runtime_arn,
             runtimeSessionId=session_id,
             payload=payload,
         )
+
+        # Update session activity timestamp
+        update_session_activity(session_id, user_id)
 
         # Handle streaming or standard response
         if "text/event-stream" in response.get("contentType", ""):
@@ -79,7 +171,7 @@ def handle_run(record, context):
                     line = line.decode("utf-8")
                     if line.startswith("data: "):
                         line = line[6:]
-                    
+
                     try:
                         # Parse the outer JSON string
                         outer_data = json.loads(line)
@@ -87,10 +179,10 @@ def handle_run(record, context):
                         if outer_data.startswith("data: "):
                             inner_data = outer_data[6:].strip()
                             chunk_data = json.loads(inner_data)
-                            
+
                             if "event" in chunk_data:
                                 chunk_content = chunk_data["event"]
-                                
+
                                 if chunk_content:
                                     sequence_number += 1
                                     accumulated_content += chunk_content
@@ -99,7 +191,9 @@ def handle_run(record, context):
                                         {
                                             "type": "text",
                                             "action": ChatbotAction.LLM_NEW_TOKEN.value,
-                                            "timestamp": str(int(round(datetime.now().timestamp()))),
+                                            "timestamp": str(
+                                                int(round(datetime.now().timestamp()))
+                                            ),
                                             "userId": user_id,
                                             "data": {
                                                 "sessionId": session_id,
@@ -113,7 +207,7 @@ def handle_run(record, context):
                                     )
                     except json.JSONDecodeError:
                         continue
-            
+
             # Send final response with accumulated content
             logger.info("Sending final response to end streaming")
             send_to_client(
@@ -137,15 +231,46 @@ def handle_run(record, context):
                     },
                 }
             )
-            
-            # Save session history
-            chat_history = DynamoDBChatMessageHistory(
-                table_name=os.environ["SESSIONS_TABLE_NAME"],
-                session_id=session_id,
-                user_id=user_id,
-            )
-            chat_history.add_user_message(prompt)
-            chat_history.add_ai_message(accumulated_content)
+
+            # Save session history and update activity
+            try:
+                logger.info(
+                    f"Creating DynamoDBChatMessageHistory for session {session_id}"
+                )
+                chat_history = DynamoDBChatMessageHistory(
+                    table_name=os.environ["SESSIONS_TABLE_NAME"],
+                    session_id=session_id,
+                    user_id=user_id,
+                )
+                
+                # Add user message with metadata
+                user_metadata = {
+                    "agentId": agent_id,
+                    "sessionId": session_id,
+                    "modelName": data.get("modelName"),
+                    "provider": "bedrock-agents",
+                }
+                logger.info("Adding user message to history")
+                chat_history.add_user_message(prompt)
+                chat_history.add_metadata(user_metadata)
+                
+                # Add AI message with metadata
+                ai_metadata = {
+                    "agentId": agent_id,
+                    "sessionId": session_id,
+                    "runtimeSessionId": response.get("runtimeSessionId"),
+                    "traceId": response.get("traceId"),
+                    "provider": "bedrock-agents",
+                }
+                logger.info("Adding AI message to history")
+                chat_history.add_ai_message(accumulated_content)
+                chat_history.add_metadata(ai_metadata)
+                logger.info("Session history saved successfully")
+
+                # Ensure LastActivity is set
+                update_session_activity(session_id, user_id)
+            except Exception as e:
+                logger.error(f"Error saving session history: {e}", exc_info=True)
         else:
             # Handle standard JSON response
             try:
@@ -153,7 +278,10 @@ def handle_run(record, context):
                     response_body = response["response"].read().decode("utf-8")
                     response_data = json.loads(response_body)
 
-                    if "result" in response_data and "content" in response_data["result"]:
+                    if (
+                        "result" in response_data
+                        and "content" in response_data["result"]
+                    ):
                         content_items = response_data["result"]["content"]
                         content = ""
                         for item in content_items:
@@ -174,13 +302,13 @@ def handle_run(record, context):
                 "agentId": agent_id,
                 "sessionId": session_id,
             }
-            
+
             # Add any additional metadata from the agent response
-            if 'runtimeSessionId' in response:
+            if "runtimeSessionId" in response:
                 metadata["runtimeSessionId"] = response["runtimeSessionId"]
-            if 'traceId' in response:
+            if "traceId" in response:
                 metadata["traceId"] = response["traceId"]
-            if 'metrics' in response:
+            if "metrics" in response:
                 metadata["metrics"] = response["metrics"]
 
             send_to_client(
@@ -199,15 +327,49 @@ def handle_run(record, context):
                     },
                 }
             )
-            
-            # Save session history
-            chat_history = DynamoDBChatMessageHistory(
-                table_name=os.environ["SESSIONS_TABLE_NAME"],
-                session_id=session_id,
-                user_id=user_id,
-            )
-            chat_history.add_user_message(prompt)
-            chat_history.add_ai_message(content)
+
+            # Save session history and update activity
+            try:
+                logger.info(
+                    f"Creating DynamoDBChatMessageHistory for session {session_id}"
+                )
+                chat_history = DynamoDBChatMessageHistory(
+                    table_name=os.environ["SESSIONS_TABLE_NAME"],
+                    session_id=session_id,
+                    user_id=user_id,
+                )
+                
+                # Add user message with metadata
+                user_metadata = {
+                    "agentId": agent_id,
+                    "sessionId": session_id,
+                    "modelName": data.get("modelName"),
+                    "provider": "bedrock-agents",
+                }
+                logger.info("Adding user message to history")
+                chat_history.add_user_message(prompt)
+                chat_history.add_metadata(user_metadata)
+                
+                # Add AI message with metadata
+                ai_metadata = {
+                    "agentId": agent_id,
+                    "sessionId": session_id,
+                    "runtimeSessionId": response.get("runtimeSessionId"),
+                    "traceId": response.get("traceId"),
+                    "provider": "bedrock-agents",
+                }
+                if 'metrics' in response:
+                    ai_metadata["metrics"] = response["metrics"]
+                    
+                logger.info("Adding AI message to history")
+                chat_history.add_ai_message(content)
+                chat_history.add_metadata(ai_metadata)
+                logger.info("Session history saved successfully")
+
+                # Ensure LastActivity is set
+                update_session_activity(session_id, user_id)
+            except Exception as e:
+                logger.error(f"Error saving session history: {e}", exc_info=True)
 
     except Exception as e:
         logger.error(
@@ -252,7 +414,7 @@ def handler(event, context: LambdaContext):
         with processor(
             records=batch, handler=lambda record: record_handler(record, context)
         ):
-            processed_messages = processor.process()
+            processor.process()
     except BatchProcessingError as e:
         logger.error(e)
 
