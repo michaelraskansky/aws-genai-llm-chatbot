@@ -128,7 +128,10 @@ def get_conversation_history(session_id, user_id)::
 
 
 def save_session_history(session_id, user_id, prompt, response_content):
-    """Save conversation to session history"""
+    """Save conversation to session history with error recovery"""
+    chat_history = None
+    user_message_added = False
+    
     try:
         chat_history = DynamoDBChatMessageHistory(
             table_name=os.environ["SESSIONS_TABLE_NAME"],
@@ -142,6 +145,7 @@ def save_session_history(session_id, user_id, prompt, response_content):
             "sessionId": session_id,
         }
         chat_history.add_user_message(prompt)
+        user_message_added = True
         chat_history.add_metadata(user_metadata)
         
         # Add AI message with metadata  
@@ -156,6 +160,21 @@ def save_session_history(session_id, user_id, prompt, response_content):
         
     except Exception as e:
         logger.error(f"Error saving session history: {e}", exc_info=True)
+        
+        # Attempt recovery if user message was added but AI message failed
+        if user_message_added and chat_history:
+            try:
+                logger.info("Attempting to recover from partial session save failure")
+                # Try to add a placeholder AI message to maintain conversation integrity
+                chat_history.add_ai_message("Error processing response. Please try again.")
+                chat_history.add_metadata({
+                    "provider": "bedrock-agents",
+                    "sessionId": session_id,
+                    "error_recovery": True,
+                })
+                logger.info("Recovery message added to maintain session integrity")
+            except Exception as recovery_error:
+                logger.error(f"Session recovery failed: {recovery_error}", exc_info=True)
 
 
 def handle_heartbeat(record):
