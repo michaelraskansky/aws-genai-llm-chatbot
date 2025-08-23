@@ -14,12 +14,11 @@ from aws_lambda_powertools.utilities.typing import LambdaContext
 from genai_core.utils.websocket import send_to_client
 from genai_core.types import ChatbotAction
 from genai_core.langchain import DynamoDBChatMessageHistory
+from genai_core.clients import get_agentcore_client
 
 processor = BatchProcessor(event_type=EventType.SQS)
 tracer = Tracer()
 logger = Logger()
-
-bedrock_agentcore = boto3.client("bedrock-agentcore")
 
 
 def check_session_expired(session_id, user_id):
@@ -243,6 +242,7 @@ def handle_run(record, context):
         }
         payload = json.dumps(enhanced_record)
 
+        bedrock_agentcore = get_agentcore_client()
         response = bedrock_agentcore.invoke_agent_runtime(
             agentRuntimeArn=agent_runtime_arn,
             runtimeSessionId=session_id,
