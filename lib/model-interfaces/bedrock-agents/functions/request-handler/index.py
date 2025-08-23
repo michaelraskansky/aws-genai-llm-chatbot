@@ -1,3 +1,4 @@
+import os
 import re
 import json
 import uuid
@@ -247,9 +248,6 @@ def handle_run(record, context):
             runtimeSessionId=session_id,
             payload=payload,
         )
-
-        # Update session activity timestamp
-        update_session_activity(session_id, user_id)
 
         # Handle streaming or standard response
         if "text/event-stream" in response.get("contentType", ""):
