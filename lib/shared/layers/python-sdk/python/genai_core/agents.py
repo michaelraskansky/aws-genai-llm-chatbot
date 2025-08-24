@@ -16,9 +16,7 @@ def list_agents() -> list[dict[str, Any]]:
         list[dict[str, Any]]: List of agent information dictionaries
     """
     try:
-        client = genai_core.clients.get_bedrock_client(
-            service_name="bedrock-agentcore-control"
-        )
+        client = genai_core.clients.get_agentcore_control_client()
         response = client.list_agent_runtimes()
 
         agents = response.get("agentRuntimes", [])

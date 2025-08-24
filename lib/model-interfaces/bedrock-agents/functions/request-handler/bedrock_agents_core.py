@@ -1,10 +1,14 @@
 import os
 import re
 import json
+import uuid
 from datetime import datetime
 from aws_lambda_powertools import Logger
-from langchain_community.chat_message_histories import DynamoDBChatMessageHistory
+from botocore.exceptions import ClientError, BotoCoreError
+from genai_core.langchain import DynamoDBChatMessageHistory
 import genai_core.clients
+from genai_core.utils.websocket import send_to_client
+from genai_core.types import ChatbotAction
 
 logger = Logger()
 
@@ -34,6 +38,7 @@ def get_conversation_history(session_id, user_id, max_messages=20):
         chat_history = DynamoDBChatMessageHistory(
             table_name=os.environ["SESSIONS_TABLE_NAME"],
             session_id=session_id,
+            user_id=user_id,
         )
 
         # Get all messages and limit them
@@ -63,6 +68,7 @@ def save_session_history(session_id, user_id, prompt, response_content):
         chat_history = DynamoDBChatMessageHistory(
             table_name=os.environ["SESSIONS_TABLE_NAME"],
             session_id=session_id,
+            user_id=user_id,
         )
 
         # Add user message
@@ -89,127 +95,309 @@ def save_session_history(session_id, user_id, prompt, response_content):
         return False
 
 
-def send_to_client(user_id, session_id, request_id, content, run_id=None):
-    """Send response to client via SNS"""
-    try:
-        sns_client = genai_core.clients.get_sns_client()
-
-        message = {
-            "type": "text",
-            "userId": user_id,
-            "sessionId": session_id,
-            "requestId": request_id,
-            "content": content,
-            "runId": run_id,
-            "timestamp": datetime.utcnow().isoformat(),
-        }
-
-        topic_arn = os.environ.get("MESSAGES_TOPIC_ARN")
-        if not topic_arn:
-            logger.error("MESSAGES_TOPIC_ARN environment variable not set")
-            return False
-
-        response = sns_client.publish(TopicArn=topic_arn, Message=json.dumps(message))
-
-        logger.info(f"Message sent to SNS: {response['MessageId']}")
-        return True
-
-    except Exception as e:
-        logger.error(f"Error sending message to client: {str(e)}")
-        return False
-
-
 def handle_heartbeat(record):
     """Handle heartbeat requests"""
     user_id = record["userId"]
     session_id = record["data"]["sessionId"]
 
-    message = {
-        "type": "text",
-        "action": "heartbeat",
-        "timestamp": datetime.utcnow().isoformat(),
-        "userId": user_id,
-        "data": {
-            "sessionId": session_id,
-        },
-    }
-
-    try:
-        sns_client = genai_core.clients.get_sns_client()
-        topic_arn = os.environ.get("MESSAGES_TOPIC_ARN")
-        if topic_arn:
-            sns_client.publish(TopicArn=topic_arn, Message=json.dumps(message))
-            logger.info(f"Heartbeat sent for session {session_id}")
-        else:
-            logger.error("MESSAGES_TOPIC_ARN not configured")
-    except Exception as e:
-        logger.error(f"Error sending heartbeat: {str(e)}")
+    send_to_client(
+        {
+            "type": "text",
+            "action": ChatbotAction.HEARTBEAT.value,
+            "timestamp": str(int(round(datetime.now().timestamp()))),
+            "userId": user_id,
+            "data": {
+                "sessionId": session_id,
+            },
+        }
+    )
 
 
 def handle_run(record, context):
     """Main handler function for processing agent requests"""
     user_id = record["userId"]
-    session_id = record["sessionId"]
-    request_id = record["requestId"]
-    prompt = record["data"]["text"]
-    agent_id = record["data"]["modelName"]
+    user_groups = record["userGroups"]
+    data = record["data"]
+    agent_id = data["agentId"]
+    prompt = data["text"]
+    session_id = data.get("sessionId")
+
+    if not session_id:
+        session_id = str(uuid.uuid4())
 
     logger.info(f"Processing agent request: {agent_id} for user {user_id}")
 
-    # Validate agent ID
-    if not validate_agent_id(agent_id):
-        error_msg = f"Invalid agent ID format: {agent_id}"
-        logger.error(error_msg)
-        send_to_client(user_id, session_id, request_id, error_msg)
-        return
-
     try:
+        # Validate agent ID
+        if not validate_agent_id(agent_id):
+            error_msg = f"Invalid agent ID format: {agent_id}"
+            logger.error(error_msg)
+            raise ValueError("Invalid agent ID format")
+
+        # Load conversation history
+        conversation_history = get_conversation_history(session_id, user_id)
+        logger.info(f"Loaded {len(conversation_history)} messages from history")
+
         # Convert agent ID to full ARN format
         if not agent_id.startswith("arn:"):
-            region = os.environ.get("AWS_REGION", "us-east-1")
-            # Handle mock context in tests
-            if hasattr(context, "invoked_function_arn"):
-                account_id = context.invoked_function_arn.split(":")[4]
-            else:
-                account_id = "123456789012"  # Default for tests
+            region = os.environ.get("AWS_REGION")
+            account_id = context.invoked_function_arn.split(":")[4]
             agent_runtime_arn = (
-                f"arn:aws:bedrock:{region}:{account_id}:agent/{agent_id}"
+                f"arn:aws:bedrock-agentcore:{region}:{account_id}:runtime/{agent_id}"
             )
         else:
             agent_runtime_arn = agent_id
 
-        # Get AgentCore client
-        agentcore_client = genai_core.clients.get_agentcore_client()
+        logger.info(f"Using agent runtime ARN: {agent_runtime_arn}")
 
-        # Get conversation history (for context, not used in current implementation)
-        get_conversation_history(session_id, user_id)
+        # Always include conversation history (populated or empty list)
+        logger.info(
+            f"Sending {len(conversation_history)} messages in conversation_history"
+        )
+        # Add conversation history to the data section
+        enhanced_record = record.copy()
+        enhanced_record["data"] = {
+            **data,
+            "conversation_history": conversation_history,
+        }
+        payload = json.dumps(enhanced_record)
 
-        # Invoke agent
-        logger.info(f"Invoking agent: {agent_runtime_arn}")
-        response = agentcore_client.invoke_agent(
-            agentId=agent_id,
-            agentAliasId="TSTALIASID",
-            sessionId=session_id,
-            inputText=prompt,
+        bedrock_agentcore = genai_core.clients.get_agentcore_client()
+        response = bedrock_agentcore.invoke_agent_runtime(
+            agentRuntimeArn=agent_runtime_arn,
+            runtimeSessionId=session_id,
+            payload=payload,
         )
 
-        # Process response
-        response_content = ""
-        for event in response.get("completion", []):
-            if "chunk" in event:
-                chunk = event["chunk"]
-                if "bytes" in chunk:
-                    response_content += chunk["bytes"].decode("utf-8")
+        # Handle streaming or standard response
+        if "text/event-stream" in response.get("contentType", ""):
+            # Handle streaming response
+            sequence_number = 0
+            accumulated_content = ""
+            for line in response["response"].iter_lines(chunk_size=10):
+                if line:
+                    line = line.decode("utf-8")
+                    if line.startswith("data: "):
+                        line = line[6:]
 
-        # Send response to client
-        send_to_client(user_id, session_id, request_id, response_content)
+                    try:
+                        # Parse the outer JSON string
+                        outer_data = json.loads(line)
+                        # Parse the inner data string
+                        if outer_data.startswith("data: "):
+                            inner_data = outer_data[6:].strip()
+                            chunk_data = json.loads(inner_data)
 
-        # Save to session history
-        save_session_history(session_id, user_id, prompt, response_content)
+                            if "event" in chunk_data:
+                                chunk_content = chunk_data["event"]
+
+                                if chunk_content:
+                                    sequence_number += 1
+                                    accumulated_content += chunk_content
+                                    # Send streaming token to client
+                                    send_to_client(
+                                        {
+                                            "type": "text",
+                                            "action": ChatbotAction.LLM_NEW_TOKEN.value,
+                                            "timestamp": str(
+                                                int(round(datetime.now().timestamp()))
+                                            ),
+                                            "userId": user_id,
+                                            "data": {
+                                                "sessionId": session_id,
+                                                "token": {
+                                                    "runId": session_id,
+                                                    "sequenceNumber": sequence_number,
+                                                    "value": chunk_content,
+                                                },
+                                            },
+                                        }
+                                    )
+                    except json.JSONDecodeError:
+                        continue
+
+            # Send final response with accumulated content
+            logger.info("Sending final response to end streaming")
+            send_to_client(
+                {
+                    "type": "text",
+                    "action": ChatbotAction.FINAL_RESPONSE.value,
+                    "timestamp": str(int(round(datetime.now().timestamp()))),
+                    "userId": user_id,
+                    "userGroups": user_groups,
+                    "direction": "OUT",
+                    "data": {
+                        "sessionId": session_id,
+                        "type": "text",
+                        "content": accumulated_content,
+                        "metadata": {
+                            "agentId": agent_id,
+                            "sessionId": session_id,
+                            "runtimeSessionId": response.get("runtimeSessionId"),
+                            "traceId": response.get("traceId"),
+                        },
+                    },
+                }
+            )
+
+            # Save session history
+            save_session_history(session_id, user_id, prompt, accumulated_content)
+        else:
+            # Handle standard JSON response
+            try:
+                if "response" in response:
+                    response_body = response["response"].read().decode("utf-8")
+                    response_data = json.loads(response_body)
+
+                    if (
+                        "result" in response_data
+                        and "content" in response_data["result"]
+                    ):
+                        content_items = response_data["result"]["content"]
+                        content = ""
+                        for item in content_items:
+                            if "text" in item:
+                                content += item["text"]
+                    else:
+                        content = response_body
+                else:
+                    content = str(response)
+            except Exception as e:
+                logger.error(f"Error parsing response: {e}")
+                content = str(response)
+
+            logger.info(f"Extracted content: {content}")
+
+            # Extract metadata from response if available
+            metadata = {
+                "agentId": agent_id,
+                "sessionId": session_id,
+            }
+
+            # Add any additional metadata from the agent response
+            if "runtimeSessionId" in response:
+                metadata["runtimeSessionId"] = response["runtimeSessionId"]
+            if "traceId" in response:
+                metadata["traceId"] = response["traceId"]
+            if "metrics" in response:
+                metadata["metrics"] = response["metrics"]
+
+            send_to_client(
+                {
+                    "type": "text",
+                    "action": ChatbotAction.FINAL_RESPONSE.value,
+                    "timestamp": str(int(round(datetime.now().timestamp()))),
+                    "userId": user_id,
+                    "userGroups": user_groups,
+                    "direction": "OUT",
+                    "data": {
+                        "sessionId": session_id,
+                        "content": content,
+                        "type": "text",
+                        "metadata": metadata,
+                    },
+                }
+            )
+
+            # Save session history
+            save_session_history(session_id, user_id, prompt, content)
 
         logger.info("Agent request processed successfully")
 
+    except ValueError as e:
+        # Input validation errors
+        logger.error(
+            f"Input validation error for agent {agent_id}: {str(e)}",
+            extra={
+                "agent_id": agent_id,
+                "session_id": session_id,
+                "error_type": "validation",
+            },
+        )
+        send_to_client(
+            {
+                "type": "text",
+                "action": "error",
+                "direction": "OUT",
+                "userId": user_id,
+                "timestamp": str(int(round(datetime.now().timestamp()))),
+                "data": {
+                    "sessionId": session_id,
+                    "content": "Invalid request parameters. Please check your input.",
+                    "type": "text",
+                },
+            }
+        )
+    except (ClientError, BotoCoreError) as e:
+        # AWS service errors - log details but send generic message
+        logger.error(
+            f"AWS service error invoking agent {agent_id}: {str(e)}",
+            extra={
+                "agent_id": agent_id,
+                "session_id": session_id,
+                "error_type": "aws_service",
+            },
+        )
+        send_to_client(
+            {
+                "type": "text",
+                "action": "error",
+                "direction": "OUT",
+                "userId": user_id,
+                "timestamp": str(int(round(datetime.now().timestamp()))),
+                "data": {
+                    "sessionId": session_id,
+                    "content": "Service temporarily unavailable. Please try again.",
+                    "type": "text",
+                },
+            }
+        )
+    except json.JSONDecodeError as e:
+        # JSON parsing errors
+        logger.error(
+            f"JSON parsing error for agent {agent_id}: {str(e)}",
+            extra={
+                "agent_id": agent_id,
+                "session_id": session_id,
+                "error_type": "json_parse",
+            },
+        )
+        send_to_client(
+            {
+                "type": "text",
+                "action": "error",
+                "direction": "OUT",
+                "userId": user_id,
+                "timestamp": str(int(round(datetime.now().timestamp()))),
+                "data": {
+                    "sessionId": session_id,
+                    "content": "Unable to process response. Please try again.",
+                    "type": "text",
+                },
+            }
+        )
     except Exception as e:
-        error_msg = f"Error processing agent request: {str(e)}"
-        logger.error(error_msg)
-        send_to_client(user_id, session_id, request_id, error_msg)
+        # Catch-all for unexpected errors - log details but send generic message
+        logger.error(
+            f"Unexpected error invoking agent {agent_id}: {type(e).__name__}",
+            extra={
+                "agent_id": agent_id,
+                "session_id": session_id,
+                "error_type": "unexpected",
+            },
+            exc_info=True,
+        )
+        send_to_client(
+            {
+                "type": "text",
+                "action": "error",
+                "direction": "OUT",
+                "userId": user_id,
+                "timestamp": str(int(round(datetime.now().timestamp()))),
+                "data": {
+                    "sessionId": session_id,
+                    "content": "An unexpected error occurred. Please try again.",
+                    "type": "text",
+                },
+            }
+        )
