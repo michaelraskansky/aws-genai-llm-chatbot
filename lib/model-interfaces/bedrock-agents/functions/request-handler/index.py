@@ -77,11 +77,13 @@ def validate_agent_id(agent_id: str) -> bool:
     """Validate agent ID format to prevent injection attacks"""
     if not agent_id or not isinstance(agent_id, str):
         return False
-    
+
     # Allow ARN format or simple agent ID format
     if agent_id.startswith("arn:"):
         # Validate full ARN format
-        arn_pattern = r"^arn:aws:bedrock-agentcore:[a-z0-9-]+:\d{12}:runtime/[a-zA-Z0-9_-]+$"
+        arn_pattern = (
+            r"^arn:aws:bedrock-agentcore:[a-z0-9-]+:\d{12}:runtime/[a-zA-Z0-9_-]+$"
+        )
         return bool(re.match(arn_pattern, agent_id))
     else:
         # Validate simple agent ID (alphanumeric, hyphens, underscores only)
@@ -108,10 +110,14 @@ def get_conversation_history(session_id, user_id, max_messages=20):
         if session_data and "History" in session_data:
             messages = session_data["History"]
             # Limit to recent messages for performance
-            recent_messages = messages[-max_messages:] if len(messages) > max_messages else messages
-            
-            logger.info(f"Found {len(messages)} total messages, using {len(recent_messages)} recent messages")
-            
+            recent_messages = (
+                messages[-max_messages:] if len(messages) > max_messages else messages
+            )
+
+            logger.info(
+                f"Found {len(messages)} total messages, using {len(recent_messages)} recent messages"
+            )
+
             # Convert DynamoDB history to AgentCore format
             for i, msg in enumerate(recent_messages):
                 if isinstance(msg, dict) and "type" in msg and "data" in msg:
@@ -136,14 +142,14 @@ def save_session_history(session_id, user_id, prompt, response_content):
     """Save conversation to session history with error recovery"""
     chat_history = None
     user_message_added = False
-    
+
     try:
         chat_history = DynamoDBChatMessageHistory(
             table_name=os.environ["SESSIONS_TABLE_NAME"],
             session_id=session_id,
             user_id=user_id,
         )
-        
+
         # Add user message with metadata
         user_metadata = {
             "provider": "bedrock-agents",
@@ -152,34 +158,40 @@ def save_session_history(session_id, user_id, prompt, response_content):
         chat_history.add_user_message(prompt)
         user_message_added = True
         chat_history.add_metadata(user_metadata)
-        
-        # Add AI message with metadata  
+
+        # Add AI message with metadata
         ai_metadata = {
             "provider": "bedrock-agents",
             "sessionId": session_id,
         }
         chat_history.add_ai_message(response_content)
         chat_history.add_metadata(ai_metadata)
-        
+
         logger.info("Session history saved successfully")
-        
+
     except Exception as e:
         logger.error(f"Error saving session history: {e}", exc_info=True)
-        
+
         # Attempt recovery if user message was added but AI message failed
         if user_message_added and chat_history:
             try:
                 logger.info("Attempting to recover from partial session save failure")
                 # Try to add a placeholder AI message to maintain conversation integrity
-                chat_history.add_ai_message("Error processing response. Please try again.")
-                chat_history.add_metadata({
-                    "provider": "bedrock-agents",
-                    "sessionId": session_id,
-                    "error_recovery": True,
-                })
+                chat_history.add_ai_message(
+                    "Error processing response. Please try again."
+                )
+                chat_history.add_metadata(
+                    {
+                        "provider": "bedrock-agents",
+                        "sessionId": session_id,
+                        "error_recovery": True,
+                    }
+                )
                 logger.info("Recovery message added to maintain session integrity")
             except Exception as recovery_error:
-                logger.error(f"Session recovery failed: {recovery_error}", exc_info=True)
+                logger.error(
+                    f"Session recovery failed: {recovery_error}", exc_info=True
+                )
 
 
 def handle_heartbeat(record):
@@ -233,7 +245,9 @@ def handle_run(record, context):
         logger.info(f"Using agent runtime ARN: {agent_runtime_arn}")
 
         # Always include conversation history (populated or empty list)
-        logger.info(f"Sending {len(conversation_history)} messages in conversation_history")
+        logger.info(
+            f"Sending {len(conversation_history)} messages in conversation_history"
+        )
         # Add conversation history to the data section
         enhanced_record = record.copy()
         enhanced_record["data"] = {
@@ -386,7 +400,11 @@ def handle_run(record, context):
         # Input validation errors
         logger.error(
             f"Input validation error for agent {agent_id}: {str(e)}",
-            extra={"agent_id": agent_id, "session_id": session_id, "error_type": "validation"},
+            extra={
+                "agent_id": agent_id,
+                "session_id": session_id,
+                "error_type": "validation",
+            },
         )
         send_to_client(
             {
@@ -406,7 +424,11 @@ def handle_run(record, context):
         # AWS service errors - log details but send generic message
         logger.error(
             f"AWS service error invoking agent {agent_id}: {str(e)}",
-            extra={"agent_id": agent_id, "session_id": session_id, "error_type": "aws_service"},
+            extra={
+                "agent_id": agent_id,
+                "session_id": session_id,
+                "error_type": "aws_service",
+            },
         )
         send_to_client(
             {
@@ -426,7 +448,11 @@ def handle_run(record, context):
         # JSON parsing errors
         logger.error(
             f"JSON parsing error for agent {agent_id}: {str(e)}",
-            extra={"agent_id": agent_id, "session_id": session_id, "error_type": "json_parse"},
+            extra={
+                "agent_id": agent_id,
+                "session_id": session_id,
+                "error_type": "json_parse",
+            },
         )
         send_to_client(
             {
@@ -446,7 +472,11 @@ def handle_run(record, context):
         # Catch-all for unexpected errors - log details but send generic message
         logger.error(
             f"Unexpected error invoking agent {agent_id}: {type(e).__name__}",
-            extra={"agent_id": agent_id, "session_id": session_id, "error_type": "unexpected"},
+            extra={
+                "agent_id": agent_id,
+                "session_id": session_id,
+                "error_type": "unexpected",
+            },
             exc_info=True,
         )
         send_to_client(

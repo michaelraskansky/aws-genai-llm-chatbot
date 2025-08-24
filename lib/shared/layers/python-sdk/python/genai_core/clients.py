@@ -36,7 +36,7 @@ _agentcore_client = None
 def get_agentcore_client() -> Any:
     """
     Get bedrock-agentcore client with caching for optimal Lambda performance
-    
+
     Returns:
         boto3.client: Cached bedrock-agentcore client
     """

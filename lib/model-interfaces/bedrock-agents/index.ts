@@ -24,7 +24,11 @@ export class BedrockAgentsInterface extends Construct {
   public readonly ingestionQueue: sqs.Queue;
   public readonly requestHandler: lambda.Function;
 
-  constructor(scope: Construct, id: string, props: BedrockAgentsInterfaceProps) {
+  constructor(
+    scope: Construct,
+    id: string,
+    props: BedrockAgentsInterfaceProps
+  ) {
     super(scope, id);
 
     const ingestionQueue = new sqs.Queue(this, "IngestionQueue", {

@@ -23,13 +23,13 @@ def list_agents() -> list[dict[str, Any]]:
         response = client.list_agent_runtimes()
 
         agents = response.get("agentRuntimes", [])
-        
+
         # Convert datetime objects to strings for JSON serialization
         for agent in agents:
             for key, value in agent.items():
                 if isinstance(value, datetime):
                     agent[key] = value.isoformat()
-        
+
         return agents
     except ClientError as e:
         error_code = e.response.get("Error", {}).get("Code", "Unknown")
