@@ -1,4 +1,3 @@
-import pytest
 from unittest.mock import patch, Mock
 
 # Import using conftest.py path setup

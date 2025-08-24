@@ -1,6 +1,5 @@
-import pytest
 from unittest.mock import Mock, patch
-from botocore.exceptions import ClientError, BotoCoreError
+from botocore.exceptions import ClientError
 
 from genai_core.agents import list_agents
 

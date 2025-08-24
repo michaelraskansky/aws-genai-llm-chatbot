@@ -1,5 +1,4 @@
-import pytest
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 
 def test_agents_function_calls_list_agents():

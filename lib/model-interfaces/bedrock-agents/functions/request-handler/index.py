@@ -3,7 +3,6 @@ import re
 import json
 import uuid
 from datetime import datetime
-import boto3
 from botocore.exceptions import ClientError, BotoCoreError
 from aws_lambda_powertools import Logger, Tracer
 from aws_lambda_powertools.utilities.batch import BatchProcessor, EventType
@@ -115,7 +114,8 @@ def get_conversation_history(session_id, user_id, max_messages=20):
             )
 
             logger.info(
-                f"Found {len(messages)} total messages, using {len(recent_messages)} recent messages"
+                f"Found {len(messages)} total messages, "
+                f"using {len(recent_messages)} recent messages"
             )
 
             # Convert DynamoDB history to AgentCore format
