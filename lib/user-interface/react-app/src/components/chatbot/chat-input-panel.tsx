@@ -271,23 +271,27 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
         let modelsResult: GraphQLResult<any>;
         /* eslint-disable-next-line  @typescript-eslint/no-explicit-any */
         let workspacesResult: GraphQLResult<any>;
+        /* eslint-disable-next-line  @typescript-eslint/no-explicit-any */
+        let agentsResult: GraphQLResult<any>;
         try {
           if (props.setInitErrorMessage) props.setInitErrorMessage(undefined);
           if (appContext?.config.rag_enabled) {
-            [modelsResult, workspacesResult] = await Promise.all([
+            [modelsResult, workspacesResult, agentsResult] = await Promise.all([
               apiClient.models.getModels(),
               apiClient.workspaces.getWorkspaces(),
+              apiClient.agents.getAgents(),
             ]);
             workspaces = workspacesResult.data?.listWorkspaces;
             workspacesStatus =
               workspacesResult.errors === undefined ? "finished" : "error";
           } else {
-            modelsResult = await apiClient.models.getModels();
+            [modelsResult, agentsResult] = await Promise.all([
+              apiClient.models.getModels(),
+              apiClient.agents.getAgents(),
+            ]);
           }
 
-          const agentsResult = await apiClient.agents.getAgents();
           const agents = agentsResult.data ? agentsResult.data.listAgents : [];
-
           const models = modelsResult.data ? modelsResult.data.listModels : [];
 
           const selectedModelOption = getSelectedModelOption(models);
