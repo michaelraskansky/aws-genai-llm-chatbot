@@ -123,9 +123,11 @@ export class RealtimeResolvers extends Construct {
     );
 
     if (props.provisionedConcurrency) {
+      const version = outgoingMessageHandler.currentVersion;
+      version.applyRemovalPolicy(cdk.RemovalPolicy.RETAIN);
       const aliasOptions: AliasProps = {
         aliasName: "live",
-        version: outgoingMessageHandler.currentVersion,
+        version,
         provisionedConcurrentExecutions: props.provisionedConcurrency,
         description: `alias with ${props.provisionedConcurrency} provisioned concurrent executions`,
       };
@@ -159,9 +161,11 @@ export class RealtimeResolvers extends Construct {
 
     let functionDataSource;
     if (props.provisionedConcurrency) {
+      const version = resolverFunction.currentVersion;
+      version.applyRemovalPolicy(cdk.RemovalPolicy.RETAIN);
       const aliasOptions: AliasProps = {
         aliasName: "live",
-        version: resolverFunction.currentVersion,
+        version,
         provisionedConcurrentExecutions: props.provisionedConcurrency,
         description: `alias with ${props.provisionedConcurrency} provisioned concurrent executions`,
       };

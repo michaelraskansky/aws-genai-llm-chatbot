@@ -402,9 +402,11 @@ export class ApiResolvers extends Construct {
 
     let functionDataSource: appsync.LambdaDataSource;
     if (props.config.provisionedConcurrency) {
+      const version = appSyncLambdaResolver.currentVersion;
+      version.applyRemovalPolicy(cdk.RemovalPolicy.RETAIN);
       const aliasOptions: lambda.AliasProps = {
         aliasName: "live",
-        version: appSyncLambdaResolver.currentVersion,
+        version,
         provisionedConcurrentExecutions: props.config.provisionedConcurrency,
         description: `alias with ${props.config.provisionedConcurrency} provisioned concurrent executions`,
       };
