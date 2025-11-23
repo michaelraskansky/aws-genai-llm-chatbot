@@ -7,14 +7,19 @@ from abc import ABC
 from functools import lru_cache
 from typing import Any, Optional, Union
 
-from genai_core.types import EmbeddingsModel, Provider
+from genai_core.types import EmbeddingsModel, Provider, ModelInterface
 
-from ... import parameters
 from .. import ModelProvider
-from .nexus_client import NexusGatewayClient
+from .nexus_client import get_nexus_gateway_client
 from .types import ModelResponse
 
 logger = logging.getLogger(__name__)
+
+
+@lru_cache(maxsize=1)
+def _nexus_client():
+    """Get cached Nexus Gateway client."""
+    return get_nexus_gateway_client()
 
 
 class NexusModelProvider(ModelProvider, ABC):
@@ -97,15 +102,6 @@ class NexusModelProvider(ModelProvider, ABC):
             return []
 
 
-@lru_cache(maxsize=1)
-def _nexus_client() -> Optional[NexusGatewayClient]:
-    config = parameters.get_config()
-    nexus_config = config.get("nexus", {})
-    if not nexus_config.get("enabled", False):
-        return None
-    return NexusGatewayClient(nexus_config)
-
-
 def _transform_nexus_model(
     model: Union[dict[str, Any], ModelResponse]
 ) -> dict[str, Any]:
@@ -126,7 +122,8 @@ def _transform_nexus_model(
 
     # Extract provider information
     provider_info = model_dict.get("modelProvider", {})
-    provider_name = provider_info.get("modelProviderName", "Unknown Provider")
+    provider_name = provider_info.get("modelProviderName", None)
+    provider_name = f"nexus.{provider_name}" if provider_name else "nexus"
     provider_model_name = provider_info.get("model", model_name)
 
     # Determine model mode
@@ -138,7 +135,7 @@ def _transform_nexus_model(
 
     if mode == "chat" or mode == "completion":
         output_modalities = ["text"]
-        rag_supported = True
+        rag_supported = False
         streaming = True
     elif mode == "embedding":
         rag_supported = False
@@ -156,4 +153,5 @@ def _transform_nexus_model(
         "streaming": streaming,
         "inputModalities": input_modalities,
         "outputModalities": output_modalities,
+        "interface": ModelInterface.LANGCHAIN.value,
     }

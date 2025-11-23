@@ -118,6 +118,12 @@ export class LangChainInterface extends Construct {
           })
         );
       }
+
+      // Add Bedrock region environment variable
+      requestHandler.addEnvironment(
+        "BEDROCK_REGION",
+        props.config.bedrock.region || "us-east-1"
+      );
     }
 
     if (props.config.bedrock?.guardrails?.enabled) {
@@ -128,6 +134,34 @@ export class LangChainInterface extends Construct {
       requestHandler.addEnvironment(
         "BEDROCK_GUARDRAILS_VERSION",
         props.config.bedrock.guardrails.version
+      );
+    }
+
+    // Add Bedrock agent environment variables if enabled
+    if (props.config.bedrock?.agent?.enabled) {
+      requestHandler.addEnvironment("BEDROCK_AGENT_ENABLED", "true");
+
+      // Add agent ID and alias ID if available
+      if (props.config.bedrock.agent.agentId) {
+        requestHandler.addEnvironment(
+          "BEDROCK_AGENT_ID",
+          props.config.bedrock.agent.agentId
+        );
+
+        if (props.config.bedrock.agent.agentAliasId) {
+          requestHandler.addEnvironment(
+            "BEDROCK_AGENT_ALIAS_ID",
+            props.config.bedrock.agent.agentAliasId
+          );
+        }
+      }
+
+      // Add permissions to invoke Bedrock agent
+      requestHandler.addToRolePolicy(
+        new iam.PolicyStatement({
+          actions: ["bedrock:InvokeAgent", "bedrock:InvokeAgentAlias"],
+          resources: ["*"],
+        })
       );
     }
 

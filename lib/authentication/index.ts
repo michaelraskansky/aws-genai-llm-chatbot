@@ -26,6 +26,10 @@ export class Authentication extends Construct {
   ) {
     super(scope, id);
 
+    const customAttributes = config.cognitoFederation?.enabled
+      ? { chatbot_role: new cognito.StringAttribute({ mutable: true }) }
+      : undefined;
+
     const userPool = new cognito.UserPool(this, "UserPool", {
       removalPolicy:
         config.retainOnDelete === true
@@ -40,6 +44,7 @@ export class Authentication extends Construct {
       signInAliases: {
         email: true,
       },
+      ...(customAttributes && { customAttributes }),
     });
 
     new cognito.CfnUserPoolGroup(this, "AdminGroup", {
