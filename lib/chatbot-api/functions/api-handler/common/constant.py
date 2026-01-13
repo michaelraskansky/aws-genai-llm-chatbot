@@ -4,7 +4,7 @@ from pydantic import Field
 
 MAX_STR_INPUT_LENGTH = 1000000
 SAFE_STR_REGEX = r"^[A-Za-z0-9-_.:/]*$"
-SAFE_PROMPT_STR_REGEX = r"^[A-Za-z0-9-_., !?]*$"
+SAFE_PROMPT_STR_REGEX = r"^[A-Za-z0-9-_., !?\n\r\[\]();:#]*$"
 SAFE_HTTP_STR_REGEX = r"^[A-Za-z0-9-_.:/]*$"
 ID_FIELD_VALIDATION = Field(min_length=1, max_length=100, pattern=SAFE_STR_REGEX)
 ID_FIELD_VALIDATION_OPTIONAL = Field(

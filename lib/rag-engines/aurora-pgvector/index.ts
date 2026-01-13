@@ -47,7 +47,11 @@ export class AuroraPgVector extends Construct {
           : cdk.RemovalPolicy.DESTROY,
       writer: rds.ClusterInstance.serverlessV2("ServerlessInstance"),
       vpc: props.shared.vpc,
-      vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
+      vpcSubnets: props.config.vpc?.subnetIds
+        ? props.shared.vpcSubnets
+        : {
+            subnetType: ec2.SubnetType.PRIVATE_ISOLATED,
+          },
       iamAuthentication: true,
       backup: {
         // 35 days is the max value
@@ -68,7 +72,11 @@ export class AuroraPgVector extends Construct {
         runtime: props.shared.pythonRuntime,
         architecture: props.shared.lambdaArchitecture,
         handler: "index.lambda_handler",
-        layers: [props.shared.powerToolsLayer, props.shared.commonLayer],
+        layers: [
+          props.shared.powerToolsLayer,
+          props.shared.commonLayer,
+          ...(props.shared.caCertLayer ? [props.shared.caCertLayer] : []),
+        ],
         timeout: cdk.Duration.minutes(5),
         logRetention: props.config.logRetention ?? logs.RetentionDays.ONE_WEEK,
         loggingFormat: lambda.LoggingFormat.JSON,

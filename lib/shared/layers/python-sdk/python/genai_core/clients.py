@@ -59,9 +59,13 @@ def get_agentcore_control_client() -> Any:
     """
     global _agentcore_control_client
     if _agentcore_control_client is None:
+        config_params = genai_core.parameters.get_config()
+        bedrock_config = config_params.get("bedrock", {})
+        region = bedrock_config.get("region", "us-east-1")
+        
         config = Config(retries={"max_attempts": 15, "mode": "adaptive"})
         _agentcore_control_client = boto3.client(
-            "bedrock-agentcore-control", config=config
+            "bedrock-agentcore-control", region_name=region, config=config
         )
     return _agentcore_control_client
 

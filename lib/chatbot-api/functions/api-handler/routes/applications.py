@@ -30,10 +30,10 @@ class CreateApplicationRequest(BaseModel):
     name: str = Field(min_length=1, max_length=100, pattern=name_regex)
     model: str = SAFE_SHORT_STR_VALIDATION
     workspace: str = Field(None, max_length=512, pattern=SAFE_STR_REGEX)
-    systemPrompt: str = Field(None, max_length=256, pattern=SAFE_PROMPT_STR_REGEX)
-    systemPromptRag: str = Field(None, max_length=256, pattern=SAFE_PROMPT_STR_REGEX)
+    systemPrompt: str = Field(None, max_length=1000, pattern=SAFE_PROMPT_STR_REGEX)
+    systemPromptRag: str = Field(None, max_length=1000, pattern=SAFE_PROMPT_STR_REGEX)
     condenseSystemPrompt: str = Field(
-        None, max_length=256, pattern=SAFE_PROMPT_STR_REGEX
+        None, max_length=1000, pattern=SAFE_PROMPT_STR_REGEX
     )
     roles: list[str] = [SAFE_SHORT_STR_VALIDATION]
     allowImageInput: bool
@@ -51,10 +51,10 @@ class UpdateApplicationRequest(BaseModel):
     name: str = Field(min_length=1, max_length=100, pattern=name_regex)
     model: str = SAFE_SHORT_STR_VALIDATION
     workspace: str = Field(None, max_length=512, pattern=SAFE_STR_REGEX)
-    systemPrompt: str = Field(None, max_length=256, pattern=SAFE_PROMPT_STR_REGEX)
-    systemPromptRag: str = Field(None, max_length=256, pattern=SAFE_PROMPT_STR_REGEX)
+    systemPrompt: str = Field(None, max_length=1000, pattern=SAFE_PROMPT_STR_REGEX)
+    systemPromptRag: str = Field(None, max_length=1000, pattern=SAFE_PROMPT_STR_REGEX)
     condenseSystemPrompt: str = Field(
-        None, max_length=256, pattern=SAFE_PROMPT_STR_REGEX
+        None, max_length=1000, pattern=SAFE_PROMPT_STR_REGEX
     )
     roles: list[str] = [SAFE_SHORT_STR_VALIDATION]
     allowImageInput: bool

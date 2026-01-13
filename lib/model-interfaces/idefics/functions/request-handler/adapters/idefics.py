@@ -5,7 +5,7 @@ from aws_lambda_powertools import Logger
 from content_handler import ContentHandler
 from genai_core.registry import registry
 from genai_core.types import ChatbotMessageType
-from langchain.llms import SagemakerEndpoint
+from langchain_community.llms import SagemakerEndpoint
 
 from .base import MultiModalModelBase
 

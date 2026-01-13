@@ -59,7 +59,11 @@ export class ApiResolvers extends Construct {
           : lambda.Tracing.DISABLED,
         logRetention: props.config.logRetention ?? logs.RetentionDays.ONE_WEEK,
         loggingFormat: lambda.LoggingFormat.JSON,
-        layers: [props.shared.powerToolsLayer, props.shared.commonLayer],
+        layers: [
+          props.shared.powerToolsLayer,
+          props.shared.commonLayer,
+          ...(props.shared.caCertLayer ? [props.shared.caCertLayer] : []),
+        ],
         vpc: props.shared.vpc,
         securityGroups: [apiSecurityGroup],
         vpcSubnets: props.shared.vpc.privateSubnets as ec2.SubnetSelection,
@@ -130,6 +134,11 @@ export class ApiResolvers extends Construct {
           RSS_FEED_INGESTOR_FUNCTION:
             props.ragEngines?.dataImport.rssIngestorFunction?.functionArn ?? "",
           COGNITO_USER_POOL_ID: props.userPool.userPoolId,
+          UPLOAD_S3_TRANSFER_ACCELERATION: props.config
+            .enableS3TransferAcceleration
+            ? "TRUE"
+            : "FALSE",
+          UPLOAD_BUCKET_REGION: cdk.Stack.of(scope).region,
           ...(props.config?.bedrock?.enabled
             ? {
                 BEDROCK_REGION: props.config.bedrock.region,
@@ -391,10 +400,33 @@ export class ApiResolvers extends Construct {
       ["aoss:DescribeIndex", "aoss:ReadDocument", "aoss:WriteDocument"]
     );
 
-    const functionDataSource = props.api.addLambdaDataSource(
-      "proxyResolverFunction",
-      appSyncLambdaResolver
-    );
+    let functionDataSource: appsync.LambdaDataSource;
+    if (props.config.provisionedConcurrency) {
+      const version = appSyncLambdaResolver.currentVersion;
+      version.applyRemovalPolicy(cdk.RemovalPolicy.RETAIN);
+      const aliasOptions: lambda.AliasProps = {
+        aliasName: "live",
+        version,
+        provisionedConcurrentExecutions: props.config.provisionedConcurrency,
+        description: `alias with ${props.config.provisionedConcurrency} provisioned concurrent executions`,
+      };
+
+      const alias = new lambda.Alias(
+        this,
+        "GraphQLApiHandlerAlias",
+        aliasOptions
+      );
+
+      functionDataSource = props.api.addLambdaDataSource(
+        "proxyResolverFunction",
+        alias
+      );
+    } else {
+      functionDataSource = props.api.addLambdaDataSource(
+        "proxyResolverFunction",
+        appSyncLambdaResolver
+      );
+    }
 
     const schema = parse(
       readFileSync("lib/chatbot-api/schema/schema.graphql", "utf8")

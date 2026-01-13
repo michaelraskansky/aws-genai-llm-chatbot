@@ -10,6 +10,7 @@ import * as s3 from "aws-cdk-lib/aws-s3";
 import { CfnEndpoint } from "aws-cdk-lib/aws-sagemaker";
 import * as sns from "aws-cdk-lib/aws-sns";
 import * as sqs from "aws-cdk-lib/aws-sqs";
+import * as appsync from "aws-cdk-lib/aws-appsync";
 import { Construct } from "constructs";
 import * as path from "path";
 import { Shared } from "../../shared";
@@ -23,6 +24,7 @@ interface IdeficsInterfaceProps {
   readonly sessionsTable: dynamodb.Table;
   readonly byUserIdIndex: string;
   readonly chatbotFilesBucket: s3.Bucket;
+  readonly graphqlApi: appsync.GraphqlApi;
 }
 
 export class IdeficsInterface extends Construct {
@@ -51,7 +53,11 @@ export class IdeficsInterface extends Construct {
         description: "Multi modal request handler",
         runtime: props.shared.pythonRuntime,
         handler: "index.handler",
-        layers: [props.shared.powerToolsLayer, props.shared.commonLayer],
+        layers: [
+          props.shared.powerToolsLayer,
+          props.shared.commonLayer,
+          ...(props.shared.caCertLayer ? [props.shared.caCertLayer] : []),
+        ],
         architecture: props.shared.lambdaArchitecture,
         tracing: props.config.advancedMonitoring
           ? lambda.Tracing.ACTIVE
@@ -68,9 +74,12 @@ export class IdeficsInterface extends Construct {
           MESSAGES_TOPIC_ARN: props.messagesTopic.topicArn,
           CHATBOT_FILES_BUCKET_NAME: props.chatbotFilesBucket.bucketName,
           CHATBOT_FILES_PRIVATE_API: api?.url ?? "",
+          APPSYNC_ENDPOINT: props.graphqlApi.graphqlUrl,
+          DIRECT_SEND: props.config.directSend ? "true" : "false",
         },
       }
     );
+
     if (props.config.bedrock?.roleArn) {
       requestHandler.addToRolePolicy(
         new iam.PolicyStatement({
@@ -79,7 +88,8 @@ export class IdeficsInterface extends Construct {
         })
       );
     }
-
+    props.graphqlApi.grantQuery(requestHandler);
+    props.graphqlApi.grantMutation(requestHandler);
     props.chatbotFilesBucket.grantReadWrite(requestHandler);
     props.sessionsTable.grantReadWriteData(requestHandler);
     props.messagesTopic.grantPublish(requestHandler);
@@ -132,7 +142,24 @@ export class IdeficsInterface extends Construct {
       })
     );
 
-    requestHandler.addEventSource(new lambdaEventSources.SqsEventSource(queue));
+    if (props.config.provisionedConcurrency) {
+      const aliasOptions: lambda.AliasProps = {
+        aliasName: "live",
+        version: requestHandler.currentVersion,
+        provisionedConcurrentExecutions: props.config.provisionedConcurrency,
+        description: `alias with ${props.config.provisionedConcurrency} provisioned concurrent executions`,
+      };
+      const alias = new lambda.Alias(
+        this,
+        "MultiModalInterfaceRequestHandlerAlias",
+        aliasOptions
+      );
+      alias.addEventSource(new lambdaEventSources.SqsEventSource(queue));
+    } else {
+      requestHandler.addEventSource(
+        new lambdaEventSources.SqsEventSource(queue)
+      );
+    }
 
     this.ingestionQueue = queue;
     this.requestHandler = requestHandler;

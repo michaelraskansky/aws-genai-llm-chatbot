@@ -1,5 +1,5 @@
 import json
-from langchain.llms.sagemaker_endpoint import LLMContentHandler
+from langchain_community.llms.sagemaker_endpoint import LLMContentHandler
 
 
 class ContentHandler(LLMContentHandler):

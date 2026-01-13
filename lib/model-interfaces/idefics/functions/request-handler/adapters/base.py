@@ -52,8 +52,11 @@ class MultiModalModelBase:
             "Fetching file", bucket=os.environ["CHATBOT_FILES_BUCKET_NAME"], key=key
         )
         extension = mimetypes.guess_extension(file["key"]) or file["key"].split(".")[-1]
-        mime_type = mimetypes.guess_type(file["key"])[0]
-        file_type = mime_type.split("/")[0]
+        maybe_mime_type = mimetypes.guess_type(file["key"])[0]
+        mime_type = (
+            maybe_mime_type if maybe_mime_type is not None else f"document/{extension}"
+        )
+        file_type = self.map_mime_type_to_file_type(mime_type)
         logger.info("File type", file_type=file_type)
         logger.info("File extension", extension=extension)
         logger.info("File mime type", mime_type=mime_type)
@@ -78,6 +81,7 @@ class MultiModalModelBase:
             }
         }
 
+    # Michael history
     def format_prompt(self, prompt: str, messages: list, files: list) -> str:
         prompts = []
 
@@ -156,7 +160,13 @@ class MultiModalModelBase:
             "messages": input["messages"],
             "inferenceConfig": inf_params,
         }
-        logger.info("Stream params", stream_params=stream_params)
+        logger.info(
+            "Stream params (messages omited)",
+            stream_params={
+                "modelId": self.model_id,
+                "inferenceConfig": inf_params,
+            },
+        )
 
         if streaming:
             logger.info("Calling converse_stream")
@@ -188,3 +198,11 @@ class MultiModalModelBase:
         return {
             "content": content,
         }
+
+    def map_mime_type_to_file_type(self, mime_type: str) -> str:
+        if mime_type.startswith("image/"):
+            return "image"
+        elif mime_type.startswith("video/"):
+            return "video"
+        else:
+            return "document"

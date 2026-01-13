@@ -39,13 +39,18 @@ export class DeleteDocument extends Construct {
       runtime: props.shared.pythonRuntime,
       architecture: props.shared.lambdaArchitecture,
       handler: "index.lambda_handler",
-      layers: [props.shared.powerToolsLayer, props.shared.commonLayer],
+      layers: [
+        props.shared.powerToolsLayer,
+        props.shared.commonLayer,
+        ...(props.shared.caCertLayer ? [props.shared.caCertLayer] : []),
+      ],
       timeout: cdk.Duration.minutes(15),
       logRetention: props.config.logRetention ?? logs.RetentionDays.ONE_WEEK,
       loggingFormat: lambda.LoggingFormat.JSON,
       environment: {
         ...props.shared.defaultEnvironmentVariables,
         AURORA_DB_USER: AURORA_DB_USERS.WRITE,
+        CONFIG_PARAMETER_NAME: props.shared.configParameter.parameterName,
         AURORA_DB_HOST:
           props.auroraPgVector?.database?.clusterEndpoint?.hostname ?? "",
         AURORA_DB_PORT:
@@ -66,6 +71,7 @@ export class DeleteDocument extends Construct {
           props.openSearchVector?.openSearchCollectionEndpoint ?? "",
       },
     });
+    props.shared.configParameter.grantRead(deleteFunction);
 
     if (props.auroraPgVector) {
       props.auroraPgVector.database.grantConnect(
