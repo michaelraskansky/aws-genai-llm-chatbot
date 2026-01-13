@@ -19,29 +19,29 @@ export interface GeneralConfigProps {
 
 export default function GeneralConfig(props: GeneralConfigProps) {
   return (
-    <Container header={<Header variant="h2">Statistics</Header>}>
+    <Container header={<Header variant="h2">סטטיסטיקה</Header>}>
       <ColumnLayout columns={4} variant="text-grid">
         <div>
-          <Box variant="awsui-key-label">Workspaces</Box>
+          <Box variant="awsui-key-label">סביבות עבודה</Box>
           <div style={{ padding: "0.8rem 0", fontSize: "2.5rem" }}>
             {!props.statistics ? "-" : props.statistics.count}
           </div>
         </div>
         <div>
-          <Box variant="awsui-key-label">Documents</Box>
+          <Box variant="awsui-key-label">מסמכים</Box>
           <div style={{ padding: "0.8rem 0", fontSize: "2.5rem" }}>
             {!props.statistics ? "-" : props.statistics.documents}
           </div>
         </div>
         <div>
-          <Box variant="awsui-key-label">Vectors</Box>
+          <Box variant="awsui-key-label">וקטורים</Box>
           <div style={{ padding: "0.8rem 0", fontSize: "2.5rem" }}>
             {" "}
             {!props.statistics ? "-" : props.statistics.vectors}
           </div>
         </div>
         <div>
-          <Box variant="awsui-key-label">Size</Box>
+          <Box variant="awsui-key-label">נפח</Box>
           <div style={{ padding: "0.8rem 0", fontSize: "2.5rem" }}>
             {!props.statistics
               ? "-"

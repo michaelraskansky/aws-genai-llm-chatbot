@@ -28,6 +28,7 @@ export interface AppConfig {
     default_embeddings_model: string;
     default_cross_encoder_model: string;
     privateWebsite: boolean;
+    locale?: string;
   };
 }
 
@@ -64,6 +65,7 @@ export enum DocumentSubscriptionStatus {
 export enum UserRole {
   ADMIN = "admin",
   WORKSPACE_MANAGER = "workspace_manager",
+  USER = "user",
 }
 
 export interface AuroraWorkspaceCreateInput {

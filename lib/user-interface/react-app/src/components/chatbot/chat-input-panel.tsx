@@ -74,6 +74,7 @@ export interface ChatInputPanelProps {
   setInitErrorMessage?: (error?: string) => void;
   applicationId?: string;
   setApplication: Dispatch<React.SetStateAction<Application>>;
+  reloadChat: () => void;
 }
 
 export abstract class ChatScrollState {
@@ -270,23 +271,27 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
         let modelsResult: GraphQLResult<any>;
         /* eslint-disable-next-line  @typescript-eslint/no-explicit-any */
         let workspacesResult: GraphQLResult<any>;
+        /* eslint-disable-next-line  @typescript-eslint/no-explicit-any */
+        let agentsResult: GraphQLResult<any>;
         try {
           if (props.setInitErrorMessage) props.setInitErrorMessage(undefined);
           if (appContext?.config.rag_enabled) {
-            [modelsResult, workspacesResult] = await Promise.all([
+            [modelsResult, workspacesResult, agentsResult] = await Promise.all([
               apiClient.models.getModels(),
               apiClient.workspaces.getWorkspaces(),
+              apiClient.agents.getAgents(),
             ]);
             workspaces = workspacesResult.data?.listWorkspaces;
             workspacesStatus =
               workspacesResult.errors === undefined ? "finished" : "error";
           } else {
-            modelsResult = await apiClient.models.getModels();
+            [modelsResult, agentsResult] = await Promise.all([
+              apiClient.models.getModels(),
+              apiClient.agents.getAgents(),
+            ]);
           }
 
-          const agentsResult = await apiClient.agents.getAgents();
           const agents = agentsResult.data ? agentsResult.data.listAgents : [];
-
           const models = modelsResult.data ? modelsResult.data.listModels : [];
 
           const selectedModelOption = getSelectedModelOption(models);
@@ -883,8 +888,8 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
                 listening
                   ? "Listening..."
                   : props.running
-                    ? "Generating a response"
-                    : "Send a message"
+                    ? "מחזיר תשובה"
+                    : "כאן כתובים את ההנחיה"
               }
               actionButtonAriaLabel="Send"
               maxRows={6}
@@ -979,6 +984,14 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
               }
             />
             <span className={styles.icon}>{outputModalityIcon}</span>
+            <span className={styles.refresh_button}>
+              <Button
+                ariaLabel="Reload Chat"
+                variant="inline-icon"
+                onClick={props.reloadChat}
+                iconName="refresh"
+              ></Button>
+            </span>
           </Box>
         </div>
       </Box>
@@ -1121,9 +1134,7 @@ export default function ChatInputPanel(props: ChatInputPanelProps) {
                         : "error"
                   }
                 >
-                  {readyState === ReadyState.OPEN
-                    ? "Connected"
-                    : connectionStatus}
+                  {readyState === ReadyState.OPEN ? "מחובר" : connectionStatus}
                 </StatusIndicator>
               </SpaceBetween>
             </div>

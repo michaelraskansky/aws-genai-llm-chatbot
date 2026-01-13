@@ -9,43 +9,68 @@ import { useContext, useState } from "react";
 import { CHATBOT_NAME } from "../common/constants";
 import { UserContext } from "../common/user-context";
 import { UserRole } from "../common/types";
+import { useParams } from "react-router-dom";
 
 export default function NavigationPanel() {
   const appContext = useContext(AppContext);
   const userContext = useContext(UserContext);
   const onFollow = useOnFollow();
+  const { applicationId } = useParams();
   const [navigationPanelState, setNavigationPanelState] =
     useNavigationPanelState();
   const [items] = useState<SideNavigationProps.Item[]>(() => {
     const items: SideNavigationProps.Item[] = [];
+
+    if (
+      applicationId &&
+      userContext.userRoles.includes(UserRole.USER) &&
+      !userContext.userRoles.includes(UserRole.ADMIN) &&
+      !userContext.userRoles.includes(UserRole.WORKSPACE_MANAGER)
+    ) {
+      const constBasicUserRoutes: SideNavigationProps.Item[] = [
+        {
+          type: "link",
+          text: "צ׳אטבוט",
+          href: `/chat/application/${applicationId}`,
+        },
+        {
+          type: "link",
+          text: "הסטוריה",
+          href: `/chat/application/${applicationId}/sessions`,
+        },
+      ];
+      items.push(...constBasicUserRoutes);
+    }
+
     if (
       userContext.userRoles.includes(UserRole.ADMIN) ||
       userContext.userRoles.includes(UserRole.WORKSPACE_MANAGER)
     ) {
       const adminAndWorkspaceManagerItems: SideNavigationProps.Item[] = [
+        { type: "link", text: "צ׳אטבוט", href: "/chatbot/playground" },
         {
           type: "link",
-          text: "Home",
-          href: "/",
+          text: "הסטוריה",
+          href: "/chatbot/sessions",
+        },
+        {
+          type: "link",
+          text: "אודות",
+          href: "/about",
         },
         {
           type: "section",
-          text: "Chatbot",
+          text: "מתקדם",
           items: [
-            { type: "link", text: "Playground", href: "/chatbot/playground" },
             {
               type: "link",
-              text: "Multi-chat playground",
+              text: "השוואת מודלים",
               href: "/chatbot/multichat",
             },
+
             {
               type: "link",
-              text: "Sessions",
-              href: "/chatbot/sessions",
-            },
-            {
-              type: "link",
-              text: "Models",
+              text: "מודלים",
               href: "/chatbot/models",
             },
           ],
@@ -59,7 +84,7 @@ export default function NavigationPanel() {
           ? [
               {
                 type: "link",
-                text: "Cross-encoders",
+                text: "מקודדים",
                 href: "/rag/cross-encoders",
               },
             ]
@@ -67,22 +92,30 @@ export default function NavigationPanel() {
 
         items.push({
           type: "section",
-          text: "Retrieval-Augmented Generation (RAG)",
+          text: "יצירה מעושרת נתונים (RAG)",
           items: [
-            { type: "link", text: "Dashboard", href: "/rag" },
             {
               type: "link",
-              text: "Semantic search",
+              text: "לוח בקרה",
+              href: "/rag",
+            },
+            {
+              type: "link",
+              text: "חיפוש סמנטי",
               href: "/rag/semantic-search",
             },
-            { type: "link", text: "Workspaces", href: "/rag/workspaces" },
             {
               type: "link",
-              text: "Embeddings",
+              text: "סביבות עבודה",
+              href: "/rag/workspaces",
+            },
+            {
+              type: "link",
+              text: "הטבעות (Embeddings)",
               href: "/rag/embeddings",
             },
             ...crossEncodersItems,
-            { type: "link", text: "Engines", href: "/rag/engines" },
+            { type: "link", text: "מנועי RAG", href: "/rag/engines" },
           ],
         });
       }
@@ -91,11 +124,11 @@ export default function NavigationPanel() {
     if (userContext.userRoles.includes(UserRole.ADMIN)) {
       items.push({
         type: "section",
-        text: "Admin",
+        text: "מנהל",
         items: [
           {
             type: "link",
-            text: "Applications",
+            text: "יישומים",
             href: "/admin/applications",
           },
         ],
@@ -105,7 +138,7 @@ export default function NavigationPanel() {
         { type: "divider" },
         {
           type: "link",
-          text: "Documentation",
+          text: "תיעוד",
           href: "https://aws-samples.github.io/aws-genai-llm-chatbot/",
           external: true,
         }

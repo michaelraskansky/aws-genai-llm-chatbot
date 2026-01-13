@@ -44,7 +44,8 @@
     "vet-all": "npm run format-lint-all && npm run test-all",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
-    "docs:preview": "vitepress preview docs"
+    "docs:preview": "vitepress preview docs",
+    "set-user-default-application-id": ". scripts/tools.sh && update_user_default_application"
   },
   "devDependencies": {
     "@aws-amplify/cli": "^12.10.1",

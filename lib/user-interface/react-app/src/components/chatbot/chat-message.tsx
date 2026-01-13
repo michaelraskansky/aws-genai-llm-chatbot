@@ -289,7 +289,7 @@ export default function ChatMessage(props: ChatMessageProps) {
   }
 
   return (
-    <div style={{ marginTop: message.type == "ai" ? "0" : "0.5em" }}>
+    <div dir="rtl" style={{ marginTop: message.type == "ai" ? "0" : "0.5em" }}>
       <BaseChatMessage
         data-locator="chatbot-ai-container"
         role={props.message?.type === ChatBotMessageType.AI ? "ai" : "human"}
@@ -308,70 +308,73 @@ export default function ChatMessage(props: ChatMessageProps) {
           ((props?.showMetadata && props.message.metadata) ||
             (props.message.metadata && props.configuration?.showMetadata)) ? (
             <>
-              <JsonView
-                shouldInitiallyExpand={(level) => level < 2}
-                data={JSON.parse(
-                  JSON.stringify(props.message.metadata).replace(
-                    /\\n/g,
-                    "\\\\n"
-                  )
-                )}
-                style={{
-                  ...darkStyles,
-                  stringValue: "jsonStrings",
-                  numberValue: "jsonNumbers",
-                  booleanValue: "jsonBool",
-                  nullValue: "jsonNull",
-                  container: "jsonContainer",
-                }}
-              />
-              {props.message.metadata.documents &&
-                (props.message.metadata.documents as RagDocument[]).length >
-                  0 && (
-                  <>
-                    <div className={styles.btn_chabot_metadata_copy}>
-                      <CopyWithPopoverButton
-                        onCopy={() => {
-                          navigator.clipboard.writeText(
-                            (props.message.metadata.documents as RagDocument[])[
-                              parseInt(documentIndex)
-                            ].page_content
-                          );
-                        }}
+              <div dir="ltr">
+                <JsonView
+                  shouldInitiallyExpand={(level) => level < 2}
+                  data={JSON.parse(
+                    JSON.stringify(props.message.metadata).replace(
+                      /\\n/g,
+                      "\\\\n"
+                    )
+                  )}
+                  style={{
+                    ...darkStyles,
+                    stringValue: "jsonStrings",
+                    numberValue: "jsonNumbers",
+                    booleanValue: "jsonBool",
+                    nullValue: "jsonNull",
+                    container: "jsonContainer",
+                  }}
+                />
+                {props.message.metadata.documents &&
+                  (props.message.metadata.documents as RagDocument[]).length >
+                    0 && (
+                    <>
+                      <div className={styles.btn_chabot_metadata_copy}>
+                        <CopyWithPopoverButton
+                          onCopy={() => {
+                            navigator.clipboard.writeText(
+                              (
+                                props.message.metadata
+                                  .documents as RagDocument[]
+                              )[parseInt(documentIndex)].page_content
+                            );
+                          }}
+                        />
+                      </div>
+                      <Tabs
+                        tabs={(
+                          props.message.metadata.documents as RagDocument[]
+                        ).map((p: RagDocument, i) => {
+                          return {
+                            id: `${i}`,
+                            label:
+                              p.metadata.path?.split("/").at(-1) ??
+                              p.metadata.title ??
+                              p.metadata.document_id.slice(-8),
+                            content: (
+                              <Textarea
+                                value={p.page_content}
+                                readOnly={true}
+                                rows={8}
+                              />
+                            ),
+                          };
+                        })}
+                        activeTabId={documentIndex}
+                        onChange={({ detail }) =>
+                          setDocumentIndex(detail.activeTabId)
+                        }
                       />
-                    </div>
-                    <Tabs
-                      tabs={(
-                        props.message.metadata.documents as RagDocument[]
-                      ).map((p: RagDocument, i) => {
-                        return {
-                          id: `${i}`,
-                          label:
-                            p.metadata.path?.split("/").at(-1) ??
-                            p.metadata.title ??
-                            p.metadata.document_id.slice(-8),
-                          content: (
-                            <Textarea
-                              value={p.page_content}
-                              readOnly={true}
-                              rows={8}
-                            />
-                          ),
-                        };
-                      })}
-                      activeTabId={documentIndex}
-                      onChange={({ detail }) =>
-                        setDocumentIndex(detail.activeTabId)
-                      }
+                    </>
+                  )}
+                {props.message.metadata.prompts &&
+                  (props.message.metadata.prompts as string[]).length > 0 && (
+                    <PromptTabs
+                      prompts={props.message.metadata.prompts as string[]}
                     />
-                  </>
-                )}
-              {props.message.metadata.prompts &&
-                (props.message.metadata.prompts as string[]).length > 0 && (
-                  <PromptTabs
-                    prompts={props.message.metadata.prompts as string[]}
-                  />
-                )}
+                  )}
+              </div>
             </>
           ) : undefined
         }
@@ -405,9 +408,11 @@ export default function ChatMessage(props: ChatMessageProps) {
               pre(props) {
                 const { children, ...rest } = props;
                 return (
-                  <pre {...rest} className={styles.codeMarkdown}>
-                    {children}
-                  </pre>
+                  <div dir="ltr">
+                    <pre {...rest} className={styles.codeMarkdown}>
+                      {children}
+                    </pre>
+                  </div>
                 );
               },
               table(props) {
@@ -430,7 +435,7 @@ export default function ChatMessage(props: ChatMessageProps) {
                 const { children, ...rest } = props;
                 return (
                   <td {...rest} className={styles.markdownTableCell}>
-                    {children}
+                    <div dir="rtl">{children}</div>
                   </td>
                 );
               },

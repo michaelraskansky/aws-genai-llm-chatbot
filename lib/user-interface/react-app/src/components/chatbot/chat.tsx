@@ -3,6 +3,7 @@ import {
   ChatBotConfiguration,
   ChatBotHistoryItem,
   ChatBotMessageType,
+  ChatLayout,
   FeedbackData,
 } from "./types";
 import {
@@ -22,6 +23,7 @@ import { Application } from "../../API";
 export default function Chat(props: {
   sessionId?: string;
   applicationId?: string;
+  chatLayout?: ChatLayout;
 }) {
   const appContext = useContext(AppContext);
   const [running, setRunning] = useState<boolean>(false);
@@ -55,6 +57,13 @@ export default function Chat(props: {
     []
   );
 
+  const reloadChat = () => {
+    setMessageHistory([]); // Clear message history
+    setSession({ id: uuidv4(), loading: false }); // Create new session with new UUID
+    setRunning(false);
+    setInitError(undefined);
+  };
+
   useEffect(() => {
     if (!appContext) return;
     setMessageHistory([]);
@@ -78,7 +87,7 @@ export default function Chat(props: {
               .data!.getSession!.history.filter((x) => x !== null)
               .map((x) => ({
                 type: x!.type as ChatBotMessageType,
-                metadata: JSON.parse(x!.metadata!),
+                metadata: x!.metadata ? JSON.parse(x!.metadata!) : {},
                 content: x!.content,
               }))
           );
@@ -132,7 +141,11 @@ export default function Chat(props: {
   return (
     <div
       className={
-        props.applicationId ? styles.chat_app_container : styles.chat_container
+        props.chatLayout
+          ? styles[props.chatLayout]
+          : props.applicationId
+            ? styles.chat_app_container
+            : styles.chat_container
       }
     >
       {initError && (
@@ -185,6 +198,7 @@ export default function Chat(props: {
             setConfiguration={setConfiguration}
             applicationId={props.applicationId}
             setApplication={setApplication}
+            reloadChat={reloadChat}
           />
         )}
       </div>

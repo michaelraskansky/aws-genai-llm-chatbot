@@ -18,7 +18,17 @@ import { StorageHelper } from "../common/helpers/storage-helper";
 import { Mode } from "@cloudscape-design/global-styles";
 import "@aws-amplify/ui-react/styles.css";
 import { CHATBOT_NAME } from "../common/constants";
-import { UserContext, userContextDefault } from "../common/user-context";
+import {
+  UserContext,
+  userContextDefault,
+  UserProfile,
+} from "../common/user-context";
+import {
+  I18nProvider,
+  I18nProviderProps,
+} from "@cloudscape-design/components/i18n";
+import messages from "@cloudscape-design/components/i18n/messages/all.en";
+import { applyTheme } from "@cloudscape-design/components/theming";
 
 export default function AppConfigured() {
   const { tokens } = useTheme();
@@ -27,6 +37,9 @@ export default function AppConfigured() {
   const [theme, setTheme] = useState(StorageHelper.getTheme());
   const [userRoles, setUserRoles] = useState(userContextDefault.userRoles);
   const [userEmail, setUserEmail] = useState(userContextDefault.userEmail);
+  const [userProfile, setUserProfile] = useState(
+    userContextDefault.userProfile
+  );
 
   const updateUserContext = useCallback(
     (event: string) => {
@@ -34,7 +47,8 @@ export default function AppConfigured() {
         if (
           userRoles == undefined ||
           userRoles.length == 0 ||
-          userEmail === null
+          userEmail === null ||
+          userProfile == undefined
         ) {
           Auth.currentAuthenticatedUser()
             .then((user) => {
@@ -43,6 +57,14 @@ export default function AppConfigured() {
               ] as string[] | undefined;
               if (userGroups !== undefined) {
                 setUserRoles(userGroups);
+              }
+              if (
+                user.attributes !== undefined &&
+                user.attributes.profile !== undefined
+              ) {
+                setUserProfile(
+                  JSON.parse(user.attributes.profile) as UserProfile
+                );
               }
               if (user.attributes.email !== undefined) {
                 setUserEmail(user.attributes.email);
@@ -55,10 +77,13 @@ export default function AppConfigured() {
       } else if (event === "signOut") {
         setUserRoles([]);
         setUserEmail("");
+        setUserProfile({ defaultApplicationId: "" });
       }
     },
-    [userRoles, userEmail]
+    [userRoles, userEmail, userProfile]
   );
+  const [customMessages, setCustomMessages] =
+    useState<I18nProviderProps.Messages | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -66,6 +91,13 @@ export default function AppConfigured() {
         const result = await fetch("/aws-exports.json");
         const awsExports = await result.json();
         const currentConfig = Amplify.configure(awsExports) as AppConfig | null;
+        const customMesagesReulst = await fetch("/custom_messages.json");
+        const customMessages = {
+          "@cloudscape-design/components": await customMesagesReulst.json(),
+        };
+        const customThemeResult = await fetch("/theme.json");
+        const customTheme = await customThemeResult.json();
+        applyTheme(customTheme);
 
         // Extract the query string from the current URL
         const queryString = window.location.search;
@@ -101,6 +133,7 @@ export default function AppConfigured() {
           }
         }
 
+        setCustomMessages(customMessages);
         setConfig(currentConfig);
       } catch (e) {
         console.error(e);
@@ -186,7 +219,14 @@ export default function AppConfigured() {
   return (
     <AppContext.Provider value={config}>
       <UserContext.Provider
-        value={{ setUserRoles, userRoles, setUserEmail, userEmail }}
+        value={{
+          setUserRoles,
+          userRoles,
+          setUserEmail,
+          userEmail,
+          setUserProfile,
+          userProfile,
+        }}
       >
         <ThemeProvider
           theme={{
@@ -239,7 +279,14 @@ export default function AppConfigured() {
               },
             }}
           >
-            <App />
+            <I18nProvider
+              locale={config.config.locale}
+              messages={
+                customMessages ? [messages, customMessages] : [messages]
+              }
+            >
+              <App />
+            </I18nProvider>
           </Authenticator>
         </ThemeProvider>
       </UserContext.Provider>

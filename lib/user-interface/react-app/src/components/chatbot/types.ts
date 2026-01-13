@@ -47,6 +47,11 @@ export interface ChatInputState {
   applicationStatus?: LoadingStatus;
 }
 
+export enum ChatLayout {
+  Application = "chat_app_container",
+  Chatbot = "chat_container",
+}
+
 export enum ChatBotMessageType {
   AI = "ai",
   Human = "human",

@@ -24,23 +24,23 @@ export default function WorkspacesTable(props: WorkspacesTableProps) {
   return (
     <Table
       loading={props.loading}
-      loadingText="Loading Workspaces"
+      loadingText="טוען סביבות עבודה"
       selectionType="single"
       sortingDisabled={true}
       empty={
         <Box margin={{ vertical: "xs" }} textAlign="center" color="inherit">
           <SpaceBetween size="xxs">
             <div>
-              <b>No Workspaces</b>
+              <b>אין סביבות עבודה</b>
               <Box variant="p" color="inherit">
-                Workspace is a collection of documents
+                סביבת עבודה זה אוסף של מסמכים
               </Box>
             </div>
             <RouterButton
               href="/rag/workspaces/create"
               data-locator="create-workspace"
             >
-              Create Workspace
+              צור סביבת עבודה
             </RouterButton>
           </SpaceBetween>
         </Box>
@@ -66,20 +66,22 @@ export default function WorkspacesTable(props: WorkspacesTableProps) {
                   selectedItems.length > 0 ? selectedItems[0].id : ""
                 }`}
               >
-                View
+                הצג
               </RouterButton>
               <RouterButton href="/rag/workspaces/create">
-                Create Workspace
+                צור סביבת עבודה
               </RouterButton>
             </SpaceBetween>
           }
         >
-          Workspaces
+          סביבות עבודה
         </Header>
       }
       footer={
         <Box textAlign="center">
-          <RouterLink href="/rag/workspaces">View all Workspaces</RouterLink>
+          <RouterLink href="/rag/workspaces">
+            הצג את כל סביבות העבודה
+          </RouterLink>
         </Box>
       }
     />

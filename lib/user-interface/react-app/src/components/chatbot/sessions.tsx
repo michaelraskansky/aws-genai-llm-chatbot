@@ -12,7 +12,7 @@ import {
 } from "@cloudscape-design/components";
 import { DateTime } from "luxon";
 import { useState, useEffect, useContext, useCallback } from "react";
-import { Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 import { useCollection } from "@cloudscape-design/collection-hooks";
 import { ApiClient } from "../../common/api-client/api-client";
@@ -34,6 +34,11 @@ export default function Sessions(props: SessionsProps) {
   const [showModalDelete, setShowModalDelete] = useState(false);
   const [deleteAllSessions, setDeleteAllSessions] = useState(false);
   const [globalError, setGlobalError] = useState<string | undefined>(undefined);
+  const { applicationId } = useParams();
+  const basedUri =
+    applicationId != undefined
+      ? `/chat/application/${applicationId}/sessions/`
+      : "/chatbot/playground/";
 
   const { items, collectionProps, paginationProps } = useCollection(sessions, {
     filtering: {
@@ -220,16 +225,16 @@ export default function Sessions(props: SessionsProps) {
         }
         header={
           <Header
-            description="List of past sessions"
+            description="רשימת הפעלות קודמות"
             variant="awsui-h1-sticky"
             actions={
               <SpaceBetween direction="horizontal" size="m" alignItems="center">
                 <RouterButton
                   iconName="add-plus"
-                  href={`/chatbot/playground/${uuidv4()}`}
+                  href={`${basedUri}${uuidv4()}`}
                   variant="inline-link"
                 >
-                  New session
+                  הפעלה חדשה
                 </RouterButton>
                 <Button
                   iconAlt="Refresh list"
@@ -237,7 +242,7 @@ export default function Sessions(props: SessionsProps) {
                   variant="inline-link"
                   onClick={() => getSessions()}
                 >
-                  Refresh
+                  רענן
                 </Button>
                 <Button
                   disabled={selectedItems.length == 0}
@@ -248,7 +253,7 @@ export default function Sessions(props: SessionsProps) {
                     if (selectedItems.length > 0) setShowModalDelete(true);
                   }}
                 >
-                  Delete
+                  מחק
                 </Button>
                 <Button
                   iconAlt="Delete all sessions"
@@ -257,30 +262,28 @@ export default function Sessions(props: SessionsProps) {
                   variant="inline-link"
                   onClick={() => setDeleteAllSessions(true)}
                 >
-                  Delete all sessions
+                  מחק הכל
                 </Button>
               </SpaceBetween>
             }
           >
-            Session History
+            הסטוריה
           </Header>
         }
         columnDefinitions={
           [
             {
               id: "title",
-              header: "Title",
+              header: "תיאור",
               sortingField: "title",
               width: 800,
               minWidth: 200,
-              cell: (e) => (
-                <Link to={`/chatbot/playground/${e.id}`}>{e.title}</Link>
-              ),
+              cell: (e) => <Link to={`${basedUri}${e.id}`}>{e.title}</Link>,
               isRowHeader: true,
             },
             {
               id: "startTime",
-              header: "Time",
+              header: "זמן",
               sortingField: "startTime",
               cell: (e: Session) =>
                 DateTime.fromISO(

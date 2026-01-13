@@ -1,0 +1,398 @@
+{
+  "he": {
+    "[charts]": {
+      "loadingText": "טוען תרשים",
+      "errorText": "לא ניתן לאחזר את הנתונים. נסה שוב מאוחר יותר.",
+      "recoveryText": "נסה שוב",
+      "i18nStrings.filterLabel": "סנן נתונים מוצגים",
+      "i18nStrings.filterPlaceholder": "סנן נתונים",
+      "i18nStrings.legendAriaLabel": "מקרא",
+      "i18nStrings.chartAriaRoleDescription": "תרשים",
+      "i18nStrings.xAxisAriaRoleDescription": "ציר x",
+      "i18nStrings.yAxisAriaRoleDescription": "ציר y"
+    },
+    "alert": {
+      "dismissAriaLabel": "סגור התראה"
+    },
+    "annotation-context": {
+      "i18nStrings.nextButtonText": "הבא",
+      "i18nStrings.previousButtonText": "קודם",
+      "i18nStrings.finishButtonText": "סיום",
+      "i18nStrings.labelDismissAnnotation": "סגור פרשנות",
+      "i18nStrings.stepCounterText": "צעד {stepNumber} מתוך {totalStepCount}",
+      "i18nStrings.taskTitle": "משימה {taskNumber}: {taskTitle}",
+      "i18nStrings.labelHotspot": "{openState, select, true {סגור פרשנות לצעד {stepNumber} מתוך {totalStepCount}} false {פתח פרשנות לצעד {stepNumber} מתוך {totalStepCount}} other {}}"
+    },
+    "app-layout": {
+      "ariaLabels.drawers": "מגירות",
+      "ariaLabels.drawersOverflow": "עודף מגירות",
+      "ariaLabels.drawersOverflowWithBadge": "עודף מגירות עם סמל",
+      "ariaLabels.navigation": "ניווט צידי",
+      "ariaLabels.navigationClose": "סגור ניווט צידי",
+      "ariaLabels.navigationToggle": "פתח ניווט צידי",
+      "ariaLabels.notifications": "התראות",
+      "ariaLabels.tools": "לוח עזרה",
+      "ariaLabels.toolsClose": "סגור לוח עזרה",
+      "ariaLabels.toolsToggle": "פתח לוח עזרה"
+    },
+    "area-chart": {
+      "i18nStrings.detailTotalLabel": "סך הכול"
+    },
+    "attribute-editor": {
+      "removeButtonText": "הסר"
+    },
+    "autosuggest": {
+      "errorIconAriaLabel": "שגיאה",
+      "selectedAriaLabel": "נבחר",
+      "enteredTextLabel": "השתמש: \"{value}\"",
+      "recoveryText": "נסה שוב"
+    },
+    "breadcrumb-group": {
+      "expandAriaLabel": "הצג נתיב"
+    },
+    "calendar": {
+      "nextMonthAriaLabel": "חודש הבא",
+      "previousMonthAriaLabel": "חודש קודם",
+      "todayAriaLabel": "היום",
+      "i18nStrings.nextYearAriaLabel": "שנה הבאה",
+      "i18nStrings.previousYearAriaLabel": "שנה קודמת",
+      "i18nStrings.currentMonthAriaLabel": "חודש נוכחי"
+    },
+    "cards": {
+      "ariaLabels.selectionGroupLabel": "בחירת פריט"
+    },
+    "code-editor": {
+      "i18nStrings.loadingState": "טוען עורך קוד",
+      "i18nStrings.errorState": "אירעה שגיאה בטעינת עורך הקוד.",
+      "i18nStrings.errorStateRecovery": "נסה שוב",
+      "i18nStrings.editorGroupAriaLabel": "עורך קוד",
+      "i18nStrings.statusBarGroupAriaLabel": "סרגל מצב",
+      "i18nStrings.cursorPosition": "שור {row}, עמ' {column}",
+      "i18nStrings.errorsTab": "שגיאות",
+      "i18nStrings.warningsTab": "אזהרות",
+      "i18nStrings.preferencesButtonAriaLabel": "העדפות",
+      "i18nStrings.paneCloseButtonAriaLabel": "סגור",
+      "i18nStrings.preferencesModalHeader": "העדפות",
+      "i18nStrings.preferencesModalCancel": "ביטול",
+      "i18nStrings.preferencesModalConfirm": "אשר",
+      "i18nStrings.preferencesModalWrapLines": "עטוף שורות",
+      "i18nStrings.preferencesModalTheme": "ערכת נושא",
+      "i18nStrings.preferencesModalLightThemes": "ערכות נושא בהירות",
+      "i18nStrings.preferencesModalDarkThemes": "ערכות נושא כהות",
+      "i18nStrings.cursorPositionAriaLabel": "הסמן בשורה {row}"
+    },
+    "collection-preferences": {
+      "title": "העדפות",
+      "confirmLabel": "אשר",
+      "cancelLabel": "ביטול",
+      "pageSizePreference.title": "גודל דף",
+      "wrapLinesPreference.label": "עטוף שורות",
+      "wrapLinesPreference.description": "בחר כדי לראות את כל הטקסט ולעטוף את השורות",
+      "stripedRowsPreference.label": "שורות מודגשות",
+      "stripedRowsPreference.description": "בחר להוסיף שורות מודגשות לחלופין",
+      "contentDensityPreference.label": "מצב קומפקטי",
+      "contentDensityPreference.description": "בחר להציג תוכן במצב צפוף, יותר קומפקטי",
+      "stickyColumnsPreference.firstColumns.title": "דבק עמודות ראשונות",
+      "stickyColumnsPreference.firstColumns.description": "שמור על העמודה/ות הראשונה/ות נראית/ות בזמן גלילה אופקית של תוכן הטבלה.",
+      "stickyColumnsPreference.firstColumns.options[0].label": "כלום",
+      "stickyColumnsPreference.firstColumns.options[1].label": "עמודה ראשונה",
+      "stickyColumnsPreference.firstColumns.options[2].label": "שתי עמודות ראשונות",
+      "stickyColumnsPreference.lastColumns.title": "דבק עמודה אחרונה",
+      "stickyColumnsPreference.lastColumns.description": "שמור על העמודה האחרונה נראית בזמן גלילה אופקית של תוכן הטבלה.",
+      "stickyColumnsPreference.lastColumns.options[0].label": "כלום",
+      "stickyColumnsPreference.lastColumns.options[1].label": "עמודה אחרונה",
+      "contentDisplayPreference.title": "העדפות עמודה",
+      "contentDisplayPreference.description": "התאם אישית את הראייה והסדר של העמודות.",
+      "contentDisplayPreference.dragHandleAriaLabel": "ידית גרירה",
+      "contentDisplayPreference.dragHandleAriaDescription": "השתמש במקף או Enter כדי להפעיל גרירה לפריט, ואז השתמש בחץ כדי להזיז את מיקום הפריט. כדי להשלים את העברת המיקום, השתמש במקף או Enter, או כדי לבטל את ההעברה, השתמש במקלדת.",
+      "contentDisplayPreference.liveAnnouncementDndStarted": "הרמת פריט במיקום {position} מתוך {total}",
+      "contentDisplayPreference.liveAnnouncementDndDiscarded": "סידור מחדש בוטל",
+      "contentDisplayPreference.i18nStrings.columnFilteringPlaceholder": "סנן עמודות",
+      "contentDisplayPreference.i18nStrings.columnFilteringAriaLabel": "סנן עמודות",
+      "contentDisplayPreference.i18nStrings.columnFilteringNoMatchText": "לא נמצאו התאמות",
+      "contentDisplayPreference.i18nStrings.columnFilteringClearFilterText": "נקה מסנן",
+      "contentDisplayPreference.liveAnnouncementDndItemReordered": "{isInitialPosition, select, true {מעביר פריט אחורה למיקום {currentPosition} מתוך {total}} false {מעביר פריט למיקום {currentPosition} מתוך {total}} other {}}",
+      "contentDisplayPreference.liveAnnouncementDndItemCommitted": "{isInitialPosition, select, true {הפריט הועבר אחורה למיקום המקורי {initialPosition} מתוך {total}} false {הפריט הועבר ממיקום {initialPosition} למיקום {finalPosition} מתוך {total}} other {}}",
+      "contentDisplayPreference.i18nStrings.columnFilteringCountText": "{count, plural, zero {0 התאמות} one {1 התאמה} other {{count} התאמות}}"
+    },
+    "copy-to-clipboard": {
+      "i18nStrings.copyButtonText": "העתק"
+    },
+    "date-range-picker": {
+      "i18nStrings.relativeModeTitle": "מצב יחסי",
+      "i18nStrings.absoluteModeTitle": "מצב מוחלט",
+      "i18nStrings.relativeRangeSelectionHeading": "בחר טווח",
+      "i18nStrings.cancelButtonLabel": "ביטול",
+      "i18nStrings.clearButtonLabel": "נקה והתעלם",
+      "i18nStrings.applyButtonLabel": "אישור",
+      "i18nStrings.customRelativeRangeOptionLabel": "טווח מותאם אישית",
+      "i18nStrings.customRelativeRangeOptionDescription": "הגדר טווח מותאם אישית בעבר",
+      "i18nStrings.customRelativeRangeUnitLabel": "יחידת זמן",
+      "i18nStrings.customRelativeRangeDurationLabel": "משך",
+      "i18nStrings.customRelativeRangeDurationPlaceholder": "הזן משך",
+      "i18nStrings.startDateLabel": "תאריך התחלה",
+      "i18nStrings.startTimeLabel": "זמן התחלה",
+      "i18nStrings.endDateLabel": "תאריך סיום",
+      "i18nStrings.endTimeLabel": "זמן סיום",
+      "i18nStrings.dateTimeConstraintText": "לתאריך, השתמש בפורמט YYYY/MM/DD. לזמן, השתמש בפורמט 24 שעות.",
+      "i18nStrings.errorIconAriaLabel": "שגיאה",
+      "i18nStrings.renderSelectedAbsoluteRangeAriaLive": "נבחר טווח מ{startDate} עד {endDate}",
+      "i18nStrings.formatRelativeRange": "{unit, select, second {{amount, plural, zero {Last {amount} seconds} one {Last {amount} second} other {Last {amount} seconds}}} minute {{amount, plural, zero {Last {amount} minutes} one {Last {amount} minute} other {Last {amount} minutes}}} hour {{amount, plural, zero {Last {amount} hours} one {Last {amount} hour} other {Last {amount} hours}}} day {{amount, plural, zero {Last {amount} days} one {Last {amount} day} other {Last {amount} days}}} week {{amount, plural, zero {Last {amount} weeks} one {Last {amount} week} other {Last {amount} weeks}}} month {{amount, plural, zero {Last {amount} months} one {Last {amount} month} other {Last {amount} months}}} year {{amount, plural, zero {Last {amount} years} one {Last {amount} year} other {Last {amount} years}}} other {}}",
+      "i18nStrings.formatUnit": "{unit, select, second {{amount, plural, zero {seconds} one {second} other {seconds}}} minute {{amount, plural, zero {minutes} one {minute} other {minutes}}} hour {{amount, plural, zero {hours} one {hour} other {hours}}} day {{amount, plural, zero {days} one {day} other {days}}} week {{amount, plural, zero {weeks} one {week} other {weeks}}} month {{amount, plural, zero {months} one {month} other {months}}} year {{amount, plural, zero {years} one {year} other {years}}} other {}}"
+    },
+    "drawer": {
+      "i18nStrings.loadingText": "טוען תוכן"
+    },
+    "flashbar": {
+      "i18nStrings.ariaLabel": "התראות",
+      "i18nStrings.errorIconAriaLabel": "שגיאה",
+      "i18nStrings.inProgressIconAriaLabel": "בתהליך",
+      "i18nStrings.infoIconAriaLabel": "מידע",
+      "i18nStrings.notificationBarAriaLabel": "כל ההתראות",
+      "i18nStrings.notificationBarText": "התראות",
+      "i18nStrings.successIconAriaLabel": "הצלחה",
+      "i18nStrings.warningIconAriaLabel": "אזהרה"
+    },
+    "form-field": {
+      "i18nStrings.errorIconAriaLabel": "שגיאה",
+      "i18nStrings.warningIconAriaLabel": "אזהרה"
+    },
+    "form": {
+      "errorIconAriaLabel": "שגיאה"
+    },
+    "help-panel": {
+      "loadingText": "טוען תוכן"
+    },
+    "input": {
+      "clearAriaLabel": "נקה"
+    },
+    "link": {
+      "externalIconAriaLabel": "נפתח בכרטיסיה חדשה"
+    },
+    "modal": {
+      "closeAriaLabel": "סגור מודל"
+    },
+    "multiselect": {
+      "deselectAriaLabel": "הסר {option__label}"
+    },
+    "pagination": {
+      "ariaLabels.nextPageLabel": "עמוד הבא",
+      "ariaLabels.pageLabel": "עמוד {pageNumber} מתוך כל העמודים",
+      "ariaLabels.previousPageLabel": "עמוד קודם"
+    },
+    "pie-chart": {
+      "i18nStrings.detailsValue": "ערך",
+      "i18nStrings.detailsPercentage": "אחוז",
+      "i18nStrings.chartAriaRoleDescription": "תרשים עוגה",
+      "i18nStrings.segmentAriaRoleDescription": "מקטע"
+    },
+    "popover": {
+      "dismissAriaLabel": "סגור popover"
+    },
+    "property-filter": {
+      "i18nStrings.allPropertiesLabel": "כל המאפיינים",
+      "i18nStrings.applyActionText": "אישור",
+      "i18nStrings.cancelActionText": "ביטול",
+      "i18nStrings.clearFiltersText": "נקה מסננים",
+      "i18nStrings.editTokenHeader": "ערוך מסנן",
+      "i18nStrings.groupPropertiesText": "מאפיינים",
+      "i18nStrings.groupValuesText": "ערכים",
+      "i18nStrings.operationAndText": "וגם",
+      "i18nStrings.operationOrText": "או",
+      "i18nStrings.operatorContainsText": "מכיל",
+      "i18nStrings.operatorDoesNotContainText": "לא מכיל",
+      "i18nStrings.operatorDoesNotEqualText": "אינו שווה",
+      "i18nStrings.operatorEqualsText": "שווה ל",
+      "i18nStrings.operatorGreaterOrEqualText": "גדול או שווה מ",
+      "i18nStrings.operatorGreaterText": "גדול מ",
+      "i18nStrings.operatorLessOrEqualText": "קטן או שווה מ",
+      "i18nStrings.operatorLessText": "קטן מ",
+      "i18nStrings.operatorStartsWithText": "מתחיל ב",
+      "i18nStrings.operatorDoesNotStartWithText": "לא מתחיל ב",
+      "i18nStrings.operatorText": "מפעיל",
+      "i18nStrings.operatorsText": "מפעילים",
+      "i18nStrings.propertyText": "מאפיין",
+      "i18nStrings.removeTokenButtonAriaLabel": "הסר מסנן, {token__formattedText}",
+      "i18nStrings.tokenEditorTokenActionsAriaLabel": "פעולות מסנן, {token__formattedText}",
+      "i18nStrings.tokenEditorTokenRemoveAriaLabel": "הסר מסנן, {token__formattedText}",
+      "i18nStrings.tokenEditorTokenRemoveLabel": "הסר מסנן",
+      "i18nStrings.tokenEditorTokenRemoveFromGroupLabel": "הסר מסנן מהקבוצה",
+      "i18nStrings.tokenEditorAddTokenActionsAriaLabel": "הוסף פעולות מסנן",
+      "i18nStrings.tokenEditorAddNewTokenLabel": "הוסף מסנן חדש",
+      "i18nStrings.tokenEditorAddExistingTokenAriaLabel": "הוסף מסנן {token__formattedText} לקבוצה",
+      "i18nStrings.tokenEditorAddExistingTokenLabel": "הוסף מסנן {token__propertyLabel} {token__operator} {token__value} לקבוצה",
+      "i18nStrings.tokenLimitShowFewer": "הצג פחות",
+      "i18nStrings.tokenLimitShowMore": "הצג יותר",
+      "i18nStrings.valueText": "ערך",
+      "i18nStrings.formatToken": "{token__operator, select, equals {{token__propertyLabel} שווה ל {token__value}} not_equals {{token__propertyLabel} אינו שווה ל {token__value}} greater_than {{token__propertyLabel} גדול מ {token__value}} greater_than_equal {{token__propertyLabel} גדול או שווה ל {token__value}} less_than {{token__propertyLabel} קטן מ {token__value}} less_than_equal {{token__propertyLabel} קטן או שווה ל {token__value}} contains {{token__propertyLabel} מכיל {token__value}} not_contains {{token__propertyLabel} לא מכיל {token__value}} starts_with {{token__propertyLabel} מתחיל ב {token__value}} not_starts_with {{token__propertyLabel} לא מתחיל ב {token__value}} other {}}",
+      "i18nStrings.groupEditAriaLabel": "{group__formattedTokens__length, select, 2 {ערוך קבוצת מסננים {group__formattedTokens0__formattedText} {group__operationLabel} {group__formattedTokens1__formattedText}} 3 {ערוך קבוצת מסננים {group__formattedTokens0__formattedText} {group__operationLabel} {group__formattedTokens1__formattedText} {group__operationLabel} {group__formattedTokens2__formattedText}} 4 {ערוך קבוצת מסננים {group__formattedTokens0__formattedText} {group__operationLabel} {group__formattedTokens1__formattedText} {group__operationLabel} {group__formattedTokens2__formattedText} {group__operationLabel} {group__formattedTokens3__formattedText}} 5 {ערוך קבוצת מסננים {group__formattedTokens0__formattedText} {group__operationLabel} {group__formattedTokens1__formattedText} {group__operationLabel} {group__formattedTokens2__formattedText} {group__operationLabel} {group__formattedTokens3__formattedText} {group__operationLabel} 1 נוסף} other {ערוך קבוצת מסננים {group__formattedTokens0__formattedText} {group__operationLabel} {group__formattedTokens1__formattedText} {group__operationLabel} {group__formattedTokens2__formattedText} {group__operationLabel} {group__formattedTokens3__formattedText} {group__operationLabel} נוסף}}"
+    },
+    "s3-resource-selector": {
+      "i18nStrings.inContextSelectPlaceholder": "בחר גרסה",
+      "i18nStrings.inContextBrowseButton": "עיין ב-S3",
+      "i18nStrings.inContextViewButton": "הצג",
+      "i18nStrings.inContextViewButtonAriaLabel": "הצג (נפתח בכרטיסיה חדשה)",
+      "i18nStrings.inContextLoadingText": "טוען משאב",
+      "i18nStrings.inContextUriLabel": "URI של S3",
+      "i18nStrings.inContextVersionSelectLabel": "גרסת אובייקט",
+      "i18nStrings.modalTitle": "בחר אובייקט ב-S3",
+      "i18nStrings.modalCancelButton": "ביטול",
+      "i18nStrings.modalSubmitButton": "בחר",
+      "i18nStrings.modalBreadcrumbRootItem": "דלי של S3",
+      "i18nStrings.modalLastUpdatedText": "עודכן לאחרונה",
+      "i18nStrings.selectionBuckets": "דליים",
+      "i18nStrings.selectionObjects": "אובייקטים",
+      "i18nStrings.selectionVersions": "גרסאות",
+      "i18nStrings.selectionBucketsSearchPlaceholder": "מצא דלי",
+      "i18nStrings.selectionObjectsSearchPlaceholder": "מצא אובייקט לפי קידומת",
+      "i18nStrings.selectionVersionsSearchPlaceholder": "מצא גרסה",
+      "i18nStrings.selectionBucketsLoading": "טוען דליים",
+      "i18nStrings.selectionBucketsNoItems": "אין דליים",
+      "i18nStrings.selectionObjectsLoading": "טוען אובייקטים",
+      "i18nStrings.selectionObjectsNoItems": "אין אובייקטים",
+      "i18nStrings.selectionVersionsLoading": "טוען גרסאות",
+      "i18nStrings.selectionVersionsNoItems": "אין גרסאות",
+      "i18nStrings.filteringNoMatches": "אין התאמות",
+      "i18nStrings.filteringCantFindMatch": "לא מצאנו התאמה.",
+      "i18nStrings.clearFilterButtonText": "נקה מסנן",
+      "i18nStrings.columnBucketID": "מזהה",
+      "i18nStrings.columnBucketName": "שם",
+      "i18nStrings.columnBucketCreationDate": "תאריך יצירה",
+      "i18nStrings.columnBucketRegion": "אזור",
+      "i18nStrings.columnObjectKey": "מפתח",
+      "i18nStrings.columnObjectLastModified": "עודכן לאחרונה",
+      "i18nStrings.columnObjectSize": "גודל",
+      "i18nStrings.columnVersionID": "מזהה גרסה",
+      "i18nStrings.columnVersionLastModified": "עודכן לאחרונה",
+      "i18nStrings.columnVersionSize": "גודל",
+      "i18nStrings.validationPathMustBegin": "הנתיב חייב להתחיל ב-s3:// כדי להיות חוקי.",
+      "i18nStrings.validationBucketLowerCase": "שם הדלי חייב להתחיל באות קטנה או מספר.",
+      "i18nStrings.validationBucketMustNotContain": "שם הדלי לא יכול להכיל אותיות גדולות.",
+      "i18nStrings.validationBucketLength": "שם הדלי חייב להיות בין 3 ל-63 תווים.",
+      "i18nStrings.validationBucketMustComplyDns": "שם הדלי חייב לעמוד בכללי מתן שמות של DNS.",
+      "i18nStrings.labelSortedDescending": "{columnName}, ממוין בסדר יורד",
+      "i18nStrings.labelSortedAscending": "{columnName}, ממוין בסדר עולה",
+      "i18nStrings.labelNotSorted": "{columnName}, לא ממוין",
+      "i18nStrings.labelsBucketsSelection.selectionGroupLabel": "דליים",
+      "i18nStrings.labelsBucketsSelection.itemSelectionLabel": "{item__Name}",
+      "i18nStrings.labelsObjectsSelection.selectionGroupLabel": "אובייקטים",
+      "i18nStrings.labelsObjectsSelection.itemSelectionLabel": "{item__Key}",
+      "i18nStrings.labelsVersionsSelection.selectionGroupLabel": "גרסאות",
+      "i18nStrings.labelsVersionsSelection.itemSelectionLabel": "{item__VersionId}",
+      "i18nStrings.labelFiltering": "מצא {itemsType}",
+      "i18nStrings.labelRefresh": "רענן את הנתונים",
+      "i18nStrings.labelBreadcrumbs": "ניווט ב-S3",
+      "i18nStrings.filteringCounterText": "{count, plural, one {התאמה 1} other {{count} התאמות}}"
+    },
+    "select": {
+      "errorIconAriaLabel": "שגיאה",
+      "selectedAriaLabel": "נבחר",
+      "recoveryText": "נסה שוב"
+    },
+    "slider": {
+      "i18nStrings.valueTextRange": "{value}, בין {previousValue} ל{nextValue}"
+    },
+    "split-panel": {
+      "i18nStrings.closeButtonAriaLabel": "סגור לוח",
+      "i18nStrings.openButtonAriaLabel": "פתח לוח",
+      "i18nStrings.preferencesTitle": "העדפות לוח מפולג",
+      "i18nStrings.preferencesPositionLabel": "מיקום לוח מפולג",
+      "i18nStrings.preferencesPositionDescription": "בחר את המיקום המחדל של לוח מפולג עבור השירות.",
+      "i18nStrings.preferencesPositionSide": "צד",
+      "i18nStrings.preferencesPositionBottom": "תחתית",
+      "i18nStrings.preferencesConfirm": "אשר",
+      "i18nStrings.preferencesCancel": "ביטול",
+      "i18nStrings.resizeHandleAriaLabel": "שנה גודל לוח מפולג"
+    },
+    "table": {
+      "ariaLabels.resizerRoleDescription": "כפתור שינוי גודל",
+      "ariaLabels.submittingEditText": "מגיש עריכה",
+      "ariaLabels.successfulEditLabel": "העריכה הצליחה",
+      "ariaLabels.expandButtonLabel": "הרחב",
+      "ariaLabels.collapseButtonLabel": "כווץ",
+      "columnDefinitions.editConfig.errorIconAriaLabel": "שגיאה",
+      "columnDefinitions.editConfig.editIconAriaLabel": "ניתן לעריכה"
+    },
+    "tabs": {
+      "i18nStrings.scrollLeftAriaLabel": "גלול שמאלה",
+      "i18nStrings.scrollRightAriaLabel": "גלול ימינה",
+      "i18nStrings.tabsWithActionsAriaRoleDescription": "לשוניות עם פעולות"
+    },
+    "tag-editor": {
+      "i18nStrings.keyPlaceholder": "הזן מפתח",
+      "i18nStrings.valuePlaceholder": "הזן ערך",
+      "i18nStrings.addButton": "הוסף תגית חדשה",
+      "i18nStrings.removeButton": "הסר",
+      "i18nStrings.removeButtonAriaLabel": "הסר {tag__key}",
+      "i18nStrings.undoButton": "בטל",
+      "i18nStrings.undoPrompt": "תגית זו תוסר עם שמירת השינויים",
+      "i18nStrings.loading": "טוען תגיות המשויכות למשאב זה",
+      "i18nStrings.keyHeader": "מפתח",
+      "i18nStrings.valueHeader": "ערך",
+      "i18nStrings.optional": "אופציונלי",
+      "i18nStrings.keySuggestion": "מפתח תגית מותאם אישית",
+      "i18nStrings.valueSuggestion": "ערך תגית מותאם אישית",
+      "i18nStrings.emptyTags": "אין תגיות משויכות למשאב.",
+      "i18nStrings.tooManyKeysSuggestion": "יש לך יותר מפתחות ממה שניתן להציג",
+      "i18nStrings.tooManyValuesSuggestion": "יש לך יותר ערכים ממה שניתן להציג",
+      "i18nStrings.keysSuggestionLoading": "טוען מפתחות תגיות",
+      "i18nStrings.keysSuggestionError": "לא ניתן לאחזר את מפתחות התגיות",
+      "i18nStrings.valuesSuggestionLoading": "טוען ערכי תגיות",
+      "i18nStrings.valuesSuggestionError": "לא ניתן לאחזר את ערכי התגיות",
+      "i18nStrings.emptyKeyError": "עליך לציין מפתח תגית",
+      "i18nStrings.maxKeyCharLengthError": "המספר המרבי של תווים שניתן להשתמש במפתח תגית הוא 128.",
+      "i18nStrings.maxValueCharLengthError": "המספר המרבי של תווים שניתן להשתמש בערך תגית הוא 256.",
+      "i18nStrings.duplicateKeyError": "עליך לציין מפתח תגית ייחודי.",
+      "i18nStrings.invalidKeyError": "מפתח לא חוקי. מפתחות יכולים להכיל רק אותיות, ספרות ורווחים באוניקוד וכל אחד מהבאים: _.:/=+@-",
+      "i18nStrings.invalidValueError": "ערך לא חוקי. ערכים יכולים להכיל רק אותיות, ספרות ורווחים באוניקוד וכל אחד מהבאים: _.:/=+@-",
+      "i18nStrings.awsPrefixError": "לא ניתן להתחיל ב-aws:",
+      "i18nStrings.tagLimitReached": "{tagLimit, plural, one {הגעת למגבלה של תגית 1.} other {הגעת למגבלה של {tagLimit} תגיות.}}",
+      "i18nStrings.tagLimitExceeded": "{tagLimit, plural, one {חרגת ממגבלה של תגית 1.} other {חרגת ממגבלה של {tagLimit} תגיות.}}",
+      "i18nStrings.tagLimit": "{tagLimitAvailable, select, true {{availableTags, plural, other {ניתן להוסיף עד {tagLimit} תגיות.}}} false {{availableTags, plural, one {ניתן להוסיף עוד תגית אחת.} other {ניתן להוסיף עוד {availableTags} תגיות.}}} other {}}"
+    },
+    "token-group": {
+      "i18nStrings.limitShowFewer": "הצג פחות",
+      "i18nStrings.limitShowMore": "הצג יותר"
+    },
+    "top-navigation": {
+      "i18nStrings.searchIconAriaLabel": "חיפוש",
+      "i18nStrings.searchDismissIconAriaLabel": "סגור חיפוש",
+      "i18nStrings.overflowMenuTriggerText": "עוד",
+      "i18nStrings.overflowMenuDismissIconAriaLabel": "סגור תפריט",
+      "i18nStrings.overflowMenuBackIconAriaLabel": "חזור",
+      "i18nStrings.overflowMenuTitleText": "הכל"
+    },
+    "tutorial-panel": {
+      "i18nStrings.loadingText": "טוען",
+      "i18nStrings.tutorialListTitle": "בחר טיוטוריאל",
+      "i18nStrings.tutorialListDownloadLinkText": "הורד גרסת PDF",
+      "i18nStrings.labelTutorialListDownloadLink": "הורד גרסת PDF של טיוטוריאל זה",
+      "i18nStrings.tutorialCompletedText": "הטיוטוריאל הושלם",
+      "i18nStrings.learnMoreLinkText": "מידע נוסף",
+      "i18nStrings.startTutorialButtonText": "התחל טיוטוריאל",
+      "i18nStrings.restartTutorialButtonText": "הפעל מחדש את הטיוטוריאל",
+      "i18nStrings.completionScreenTitle": "ברכות! סיימת את הטיוטוריאל.",
+      "i18nStrings.feedbackLinkText": "משוב",
+      "i18nStrings.dismissTutorialButtonText": "התעלם מהטיוטוריאל",
+      "i18nStrings.taskTitle": "משימה {taskNumber}: {taskTitle}",
+      "i18nStrings.stepTitle": "צעד {stepNumber}: {stepTitle}",
+      "i18nStrings.labelExitTutorial": "התעלם מהטיוטוריאל",
+      "i18nStrings.labelTotalSteps": "סך הכול צעדים: {totalStepCount}",
+      "i18nStrings.labelsTaskStatus.pending": "ממתין",
+      "i18nStrings.labelsTaskStatus.in-progress": "בתהליך",
+      "i18nStrings.labelsTaskStatus.success": "הצלחה"
+    },
+    "wizard": {
+      "i18nStrings.stepNumberLabel": "צעד {stepNumber}",
+      "i18nStrings.collapsedStepsLabel": "צעד {stepNumber} מתוך {stepsCount}",
+      "i18nStrings.skipToButtonLabel": "דלג אל {task__title}",
+      "i18nStrings.navigationAriaLabel": "צעדים",
+      "i18nStrings.cancelButton": "ביטול",
+      "i18nStrings.previousButton": "קודם",
+      "i18nStrings.nextButton": "הבא",
+      "i18nStrings.optional": "אופציונלי",
+      "i18nStrings.nextButtonLoadingAnnouncement": "טוען את הצעד הבא",
+      "i18nStrings.submitButtonLoadingAnnouncement": "שולח את הטופס"
+    }
+  }
+}
