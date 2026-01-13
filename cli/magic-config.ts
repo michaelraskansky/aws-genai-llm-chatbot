@@ -19,6 +19,7 @@ import { tz } from "moment-timezone";
 import { getData } from "country-list";
 import { randomBytes } from "crypto";
 import { StringUtils } from "turbocommons-ts";
+import { resolveConfigFile } from "./utils";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -71,7 +72,8 @@ function isValidDate(dateString: string): boolean {
 
 const timeZoneData = getTimeZonesWithCurrentTime();
 const cfCountries = getCountryCodesAndNames();
-
+// test s3 bucket arn regexp
+const s3BucketArnRegExp = RegExp(/^arn:aws:s3:::(?!-)[a-z0-9.-]{3,63}(?<!-)$/);
 const iamRoleRegExp = RegExp(/arn:aws:iam::\d+:role\/[\w-_]+/);
 const acmCertRegExp = RegExp(/arn:aws:acm:[\w-_]+:\d+:certificate\/[\w-_]+/);
 const cfAcmCertRegExp = RegExp(
@@ -201,15 +203,24 @@ function getTypedEnvVar<T>(
   );
 
   program.action(async (options) => {
-    if (fs.existsSync("./bin/config.json")) {
+    const configFile = resolveConfigFile();
+    if (fs.existsSync(configFile)) {
       const config: SystemConfig = JSON.parse(
-        fs.readFileSync("./bin/config.json").toString("utf8")
+        fs.readFileSync(configFile).toString("utf8")
       );
       options.prefix = config.prefix;
+      options.enableWaf = config.enableWaf;
+      options.provisionedConcurrency = config.provisionedConcurrency;
+      options.directSend = config.directSend;
+      options.caCerts = config.caCerts;
+      options.enableS3TransferAcceleration =
+        config.enableS3TransferAcceleration;
+      options.cloudfrontLogBucketArn = config.cloudfrontLogBucketArn;
       options.createCMKs = config.createCMKs;
       options.retainOnDelete = config.retainOnDelete;
       options.ddbDeletionProtection = config.ddbDeletionProtection;
       options.vpcId = config.vpc?.vpcId;
+      options.vpcSubnetIds = config.vpc?.subnetIds;
       options.bedrockEnable = config.bedrock?.enabled;
       options.bedrockRegion = config.bedrock?.region;
       options.bedrockRoleArn = config.bedrock?.roleArn;
@@ -337,6 +348,16 @@ function getTypedEnvVar<T>(
           ),
           ddbDeletionProtection: getTypedEnvVar<boolean>(
             "DDB_DELETION_PROTECTION",
+            false,
+            options.envPrefix
+          ),
+          enableWaf: getTypedEnvVar<boolean>(
+            "ENABLE_WAF",
+            false,
+            options.envPrefix
+          ),
+          enableS3TransferAcceleration: getTypedEnvVar<boolean>(
+            "ENABLE_S3_TRANSFER_ACCELERATION",
             false,
             options.envPrefix
           ),
@@ -777,8 +798,8 @@ function getTypedEnvVar<T>(
 })();
 
 function createConfig(config: any): void {
-  fs.writeFileSync("./bin/config.json", JSON.stringify(config, undefined, 2));
-  console.log("Configuration written to ./bin/config.json");
+  fs.writeFileSync(resolveConfigFile(), JSON.stringify(config, undefined, 2));
+  console.log(`Configuration written to ${resolveConfigFile()}`);
 }
 
 /**
@@ -804,6 +825,55 @@ async function processCreateOptions(options: any): Promise<void> {
     },
     {
       type: "confirm",
+      name: "enableWaf",
+      message: "Do you want to enable waf rules?",
+      initial: options.enableWaf ?? true,
+    },
+    {
+      type: "confirm",
+      name: "enableS3TransferAcceleration",
+      message: "Do you want to enable S3 transfer acceleration",
+      initial: options.enableS3TransferAcceleration ?? true,
+    },
+    {
+      type: "confirm",
+      name: "directSend",
+      message: "Do you want to lambda handlers to send directly to client",
+      initial: options.directSend ?? false,
+    },
+    {
+      type: "input",
+      name: "provisionedConcurrency",
+      message: "Do you want to enable provisioned concurrency?",
+      hint: "Enter the number of provisioned concurrency 0 to disable",
+      initial: options.provisionedConcurrency ?? 0,
+      validate(value: string) {
+        return value.match(/^\d+$/) ? true : "Enter a valid number";
+      },
+    },
+    {
+      type: "input",
+      name: "caCert",
+      message: "add ca certificates that will be trusted",
+      hint: "this is required when called are being proxied",
+      initial: "",
+    },
+    {
+      type: "input",
+      name: "cloudfrontLogBucketArn",
+      message: "Cloudfront log bucket arn - leave empty to create one",
+      hint: "this should be used when Cloudfront dosen't support a log bucket in your target region",
+      initial: options.cloudfrontLogBucketArn ?? "",
+      validate(bucketArn: string) {
+        return (this as any).skipped || bucketArn === ""
+          ? true
+          : s3BucketArnRegExp.test(bucketArn)
+            ? true
+            : "Enter a valid S3 Bucket ARN in the format arn:aws:s3::bucket";
+      },
+    },
+    {
+      type: "confirm",
       name: "existingVpc",
       message:
         "Do you want to use existing vpc? (selecting false will create a new vpc)",
@@ -822,6 +892,34 @@ async function processCreateOptions(options: any): Promise<void> {
       },
       skip(): boolean {
         return !(this as any).state.answers.existingVpc;
+      },
+    },
+    {
+      type: "confirm",
+      name: "specificSubnets",
+      message:
+        "Do you want to use specifiy vpc subnets to use? (selecting false will use all private subnets with egress in the vpc)",
+      initial: options.vpcSubnetIds ? true : false,
+      skip(): boolean {
+        return !(this as any).state.answers.existingVpc;
+      },
+    },
+    {
+      type: "list",
+      name: "vpcSubnetIds",
+      message:
+        "Specify existing SubnetIds separated by comma (subnet-xxxxxxxxxxxxxxxxx, subnet-xxxxxxxxxxxxxxxxx)",
+      initial: options.vpcSubnetIds,
+      validate(vpcSubnetIds: any) {
+        return (this as any).skipped ||
+          (vpcSubnetIds as string[]).every((v) =>
+            RegExp(/^subnet-[0-9a-f]{8,17}$/i).test(v)
+          )
+          ? true
+          : "Enter valid SubnetIds in subnet-xxxxxxxxxxx format";
+      },
+      skip(): boolean {
+        return !(this as any).state.answers.specificSubnets;
       },
     },
     {
@@ -1820,6 +1918,11 @@ async function processCreateOptions(options: any): Promise<void> {
   // Create the config object
   const config = {
     prefix: answers.prefix,
+    enableS3TransferAcceleration: answers.enableS3TransferAcceleration,
+    enableWaf: answers.enableWaf,
+    directSend: answers.directSend,
+    provisionedConcurrency: parseInt(answers.provisionedConcurrency, 0),
+    cloudfrontLogBucketArn: answers.cloudfrontLogBucketArn,
     createCMKs: answers.createCMKs,
     retainOnDelete: answers.retainOnDelete,
     ddbDeletionProtection: answers.ddbDeletionProtection,
@@ -1827,6 +1930,7 @@ async function processCreateOptions(options: any): Promise<void> {
       ? {
           vpcId: answers.vpcId.toLowerCase(),
           createVpcEndpoints: advancedSettings.createVpcEndpoints,
+          subnetIds: answers.vpcSubnetIds,
         }
       : undefined,
     privateWebsite: advancedSettings.privateWebsite,

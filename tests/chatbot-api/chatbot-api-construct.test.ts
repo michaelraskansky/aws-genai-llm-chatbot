@@ -18,8 +18,13 @@ const app = new App({
 const stack = new Stack(app);
 
 const config = getTestConfig();
-const authentication = new Authentication(stack, "Authentication", config);
 const shared = new Shared(stack, "Shared", { config });
+const authentication = new Authentication(
+  stack,
+  "Authentication",
+  config,
+  shared
+);
 const ragEngines = new RagEngines(stack, "RagEngines", {
   shared,
   config,

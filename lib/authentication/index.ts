@@ -7,6 +7,7 @@ import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as cr from "aws-cdk-lib/custom-resources";
 import * as logs from "aws-cdk-lib/aws-logs";
+import { Shared } from "../shared";
 import { getConstructId } from "../utils";
 
 export class Authentication extends Construct {
@@ -17,7 +18,12 @@ export class Authentication extends Construct {
   public readonly customOidcProvider: cognito.UserPoolIdentityProviderOidc;
   public readonly customSamlProvider: cognito.UserPoolIdentityProviderSaml;
 
-  constructor(scope: Construct, id: string, config: SystemConfig) {
+  constructor(
+    scope: Construct,
+    id: string,
+    config: SystemConfig,
+    shared: Shared
+  ) {
     super(scope, id);
 
     const customAttributes = config.cognitoFederation?.enabled
@@ -124,6 +130,7 @@ export class Authentication extends Construct {
         {
           runtime: lambda.Runtime.NODEJS_20_X,
           handler: "index.handler",
+          layers: shared.caCertLayer ? [shared.caCertLayer] : [],
           code: lambda.Code.fromAsset(
             "lib/authentication/lambda/updateUserPoolClient"
           ),
@@ -217,6 +224,7 @@ export class Authentication extends Construct {
             code: lambda.Code.fromAsset(
               "lib/authentication/lambda/updateOidcSecret"
             ),
+            layers: shared.caCertLayer ? [shared.caCertLayer] : [],
             description: "Updates OIDC secret",
             role: lambdaRoleUpdateOidcSecret,
             logRetention: config.logRetention ?? logs.RetentionDays.ONE_WEEK,

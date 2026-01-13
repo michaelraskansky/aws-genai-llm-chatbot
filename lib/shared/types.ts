@@ -79,6 +79,12 @@ export interface ModelConfig {
 
 export interface SystemConfig {
   prefix: string;
+  enableWaf: boolean;
+  enableS3TransferAcceleration: boolean;
+  caCerts?: string;
+  provisionedConcurrency?: number;
+  directSend?: boolean;
+  cloudfrontLogBucketArn?: string;
   createCMKs?: boolean;
   retainOnDelete?: boolean;
   ddbDeletionProtection?: boolean;
@@ -86,6 +92,7 @@ export interface SystemConfig {
     vpcId?: string;
     createVpcEndpoints?: boolean;
     vpcDefaultSecurityGroup?: string;
+    subnetIds?: string[];
   };
   advancedMonitoring?: boolean;
   logRetention?: number;

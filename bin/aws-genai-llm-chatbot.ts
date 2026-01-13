@@ -9,7 +9,7 @@ import { Aspects } from "aws-cdk-lib";
 const app = new cdk.App();
 
 const config = getConfig();
-
+console.log("loaded config: ", JSON.stringify(config, null, 2));
 new AwsGenAILLMChatbotStack(app, `${config.prefix}GenAIChatBotStack`, {
   config,
   env: {

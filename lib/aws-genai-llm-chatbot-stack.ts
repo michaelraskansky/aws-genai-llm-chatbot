@@ -38,7 +38,8 @@ export class AwsGenAILLMChatbotStack extends cdk.Stack {
     const authentication = new Authentication(
       this,
       "Authentication",
-      props.config
+      props.config,
+      shared
     );
     const models = new Models(this, "Models", {
       config: props.config,
@@ -85,6 +86,7 @@ export class AwsGenAILLMChatbotStack extends cdk.Stack {
         byUserIdIndex: chatBotApi.byUserIdIndex,
         applicationTable: chatBotApi.applicationTable,
         chatbotFilesBucket: chatBotApi.filesBucket,
+        graphqlApi: chatBotApi.graphqlApi,
       });
 
       // Route all incoming messages targeted to langchain to the langchain model interface queue
@@ -164,6 +166,7 @@ export class AwsGenAILLMChatbotStack extends cdk.Stack {
         sessionsTable: chatBotApi.sessionsTable,
         byUserIdIndex: chatBotApi.byUserIdIndex,
         chatbotFilesBucket: chatBotApi.filesBucket,
+        graphqlApi: chatBotApi.graphqlApi,
       });
 
       // Route all incoming messages targeted to idefics to the idefics model interface queue
@@ -201,6 +204,11 @@ export class AwsGenAILLMChatbotStack extends cdk.Stack {
       api: chatBotApi,
       chatbotFilesBucket: chatBotApi.filesBucket,
       uploadBucket: ragEngines?.uploadBucket,
+      cloudfrontLogBucketArn: props.config.cloudfrontLogBucketArn,
+      crossEncodersEnabled:
+        typeof ragEngines?.sageMakerRagModels?.model !== "undefined",
+      sagemakerEmbeddingsEnabled:
+        typeof ragEngines?.sageMakerRagModels?.model !== "undefined",
     });
 
     if (props.config.cognitoFederation?.enabled) {

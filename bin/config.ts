@@ -1,10 +1,12 @@
 import { SupportedRegion, SystemConfig } from "../lib/shared/types";
 import { existsSync, readFileSync } from "fs";
+import { resolveConfigFile } from "../cli/utils";
 
 export function getConfig(): SystemConfig {
-  if (existsSync("./bin/config.json")) {
+  const configFile = resolveConfigFile();
+  if (existsSync(configFile)) {
     return JSON.parse(
-      readFileSync("./bin/config.json").toString("utf8")
+      readFileSync(configFile).toString("utf8")
     ) as SystemConfig;
   }
   // Default config
@@ -16,6 +18,10 @@ export function getConfig(): SystemConfig {
        vpcDefaultSecurityGroup: "sg-00000000000"
     },*/
     privateWebsite: false,
+    enableS3TransferAcceleration: true,
+    enableWaf: true,
+    caCerts: "",
+    cloudfrontLogBucketArn: "",
     certificate: "",
     cfGeoRestrictEnable: false,
     cfGeoRestrictList: [],
